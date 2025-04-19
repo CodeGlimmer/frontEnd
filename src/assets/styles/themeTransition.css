@@ -1,0 +1,13 @@
+.theme-transition-overlay {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  transform: scale(0);
+  display: none;
+  z-index: 1;
+  pointer-events: none; /* 确保点击可以穿透覆盖层 */
+  opacity: 0.6; /* 透明度 */
+  mix-blend-mode: difference; /* 使用不同的混合模式使效果更明显 */
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
