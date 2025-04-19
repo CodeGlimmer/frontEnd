@@ -163,7 +163,7 @@
               prepend-icon="mdi-calendar-clock"
               title="日程"
               value="calendar"
-              to="/calendar"
+              to="/index"
               @click="$vuetify.display.smAndDown && (showNavigationDrawer = false)"
             ></v-list-item>
           </v-list-group>
@@ -176,15 +176,11 @@
           <v-icon>mdi-tools</v-icon>
           TOOLS</v-list-subheader
         >
-        <KeepAlive>
-          <RouterView name="sidebar" />
-        </KeepAlive>
-
-        <RouterView v-slot="Component">
-          <v-scroll-x-transition :duration="{ enter: 500, leave: 500 }">
+        <router-view v-slot="{ Component }" name="sidebar">
+          <keep-alive>
             <component :is="Component" />
-          </v-scroll-x-transition>
-        </RouterView>
+          </keep-alive>
+        </router-view>
 
         <!-- 优化后的底部设置与登出部分 -->
         <template v-slot:append>
@@ -259,9 +255,11 @@
       <!-- Router内容区域 -->
       <v-main class="main-content">
         <div class="scrollable-content">
-          <v-scroll-x-transition :duration="{ enter: 1000, leave: 500 }">
-            <RouterView name="main" />
-          </v-scroll-x-transition>
+          <router-view v-slot="{ Component }" name="main">
+            <v-scroll-x-transition :duration="{ enter: 1000, leave: 500 }">
+              <component :is="Component" />
+            </v-scroll-x-transition>
+          </router-view>
         </div>
       </v-main>
 

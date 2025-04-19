@@ -14,7 +14,7 @@
       class="register-card mx-auto"
       elevation="3"
       icon="mdi-weather-sunny"
-      max-width="500"
+      max-width="450"
       rounded="lg"
       :loading="loading"
       :disabled="loading"
@@ -105,16 +105,18 @@
             :class="{ 'dark-field': isDarkTheme }"
           ></v-text-field>
 
+          <!-- label原话是这个：I agree to the Terms of Service and Privacy Policy -->
           <v-checkbox
             v-model="agreeTerms"
-            label="I agree to the Terms of Service and Privacy Policy"
+            label="I agree to the ToS & PP"
             :color="isDarkTheme ? 'amber' : 'primary'"
             hide-details
             class="mb-4 animate-fade"
             :rules="[rules.agreeTerms]"
             :error-messages="errors.agreeTerms"
             @change="clearError('agreeTerms')"
-          ></v-checkbox>
+          >
+          </v-checkbox>
 
           <v-btn
             :color="isDarkTheme ? 'amber' : 'primary'"

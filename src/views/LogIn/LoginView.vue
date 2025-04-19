@@ -92,13 +92,13 @@
           <div class="d-flex justify-space-between align-center mb-5">
             <v-checkbox
               v-model="rememberMe"
-              label="Remember me"
+              label="Remember me on this device"
               :color="isDarkTheme ? 'amber' : 'primary'"
               hide-details
               density="compact"
               class="animate-fade"
             ></v-checkbox>
-            <v-btn
+            <!-- <v-btn
               variant="text"
               :color="isDarkTheme ? 'amber' : 'primary'"
               class="animate-fade forgot-password"
@@ -106,7 +106,7 @@
               @click="forgotPassword"
             >
               Forgot Password?
-            </v-btn>
+            </v-btn> -->
           </div>
 
           <v-btn
@@ -287,6 +287,9 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    clearError(item) {
+      this[item] = ''
     },
     goToRegister() {
       // 在这里替换成实际的注册页面跳转
