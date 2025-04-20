@@ -1,5 +1,5 @@
 <template>
-  <v-card class="mx-auto my-4 timeline-chart-card" elevation="2" rounded="lg">
+  <v-card class="mx-auto my-4 timeline-chart-card" elevation="2" rounded="lg" :theme="currentTheme">
     <v-card-title class="d-flex align-center flex-wrap py-4 px-6">
       <div class="d-flex align-center">
         <v-icon color="primary" class="mr-3" size="large">mdi-chart-timeline-variant</v-icon>
@@ -17,7 +17,7 @@
             class="ml-2"
           ></v-btn>
         </template>
-        <v-card class="pa-2" elevation="4" rounded="lg">
+        <v-card class="pa-2" elevation="4" rounded="lg" :theme="currentTheme">
           <span>调整滑动条选择时间范围</span>
         </v-card>
       </v-tooltip>
@@ -26,7 +26,7 @@
     <v-divider></v-divider>
 
     <v-card-text class="px-4 pt-6 pb-4">
-      <div ref="chartContainerRef" class="chart-container">
+      <div ref="chartContainerRef" class="chart-container" :class="{ 'dark-mode': isDarkMode }">
         <div ref="chartRef" class="chart"></div>
       </div>
 
@@ -122,6 +122,7 @@
  * @description 交互式时间轴图表组件，提供两个滑动条用于选择日期范围。
  * 使用ECharts和Vuetify，遵循Material Design 3风格。
  * 支持动态更新数据，图表会自动重绘。
+ * 支持深色模式和浅色模式切换。
  *
  * @props {string[]} labels - 日期标签数组，以字符串格式提供
  * @props {number[]} values - 对应的数值数组
@@ -148,6 +149,7 @@ import {
   MarkLineComponent,
 } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
+import { useThemeStore } from '@/stores'
 
 // 注册ECharts组件
 echarts.use([
@@ -173,6 +175,11 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['range-change'])
+
+// 获取主题信息
+const themeStore = useThemeStore()
+const currentTheme = computed(() => themeStore.theme)
+const isDarkMode = computed(() => currentTheme.value === 'dark')
 
 const chartContainerRef = ref(null)
 const chartRef = ref(null)
@@ -263,6 +270,7 @@ watch(
   },
   { immediate: true },
 )
+
 // 检测当前设备是否为移动设备
 const checkMobileDevice = () => {
   isMobile.value = window.innerWidth < 768
@@ -355,9 +363,49 @@ const handleRightSliderChange = (value) => {
   })
 }
 
+// 获取基于当前主题的颜色配置
+const getThemeColors = () => {
+  if (isDarkMode.value) {
+    return {
+      backgroundColor: '#1C1B1F',
+      textColor: '#E6E1E5',
+      axisColor: 'rgba(255, 255, 255, 0.25)',
+      splitLineColor: 'rgba(255, 255, 255, 0.08)',
+      tooltipBackground: 'rgba(30, 30, 30, 0.95)',
+      tooltipTextColor: '#E6E1E5',
+      primaryColor: '#D0BCFF',
+      secondaryColor: '#CCC2DC',
+      areaColor: [
+        { offset: 0, color: 'rgba(208, 188, 255, 0.4)' },
+        { offset: 0.8, color: 'rgba(208, 188, 255, 0.1)' },
+        { offset: 1, color: 'rgba(208, 188, 255, 0.02)' },
+      ],
+    }
+  } else {
+    return {
+      backgroundColor: '#FFFBFF',
+      textColor: '#1C1B1F',
+      axisColor: 'rgba(0, 0, 0, 0.25)',
+      splitLineColor: 'rgba(0, 0, 0, 0.08)',
+      tooltipBackground: 'rgba(255, 255, 255, 0.95)',
+      tooltipTextColor: '#1C1B1F',
+      primaryColor: '#6750A4',
+      secondaryColor: '#B93E94',
+      areaColor: [
+        { offset: 0, color: 'rgba(103, 80, 164, 0.4)' },
+        { offset: 0.8, color: 'rgba(103, 80, 164, 0.1)' },
+        { offset: 1, color: 'rgba(103, 80, 164, 0.02)' },
+      ],
+    }
+  }
+}
+
 // 更新图表数据和配置
 const updateChart = () => {
   if (!chartInstance.value) return
+
+  // 获取当前主题颜色
+  const themeColors = getThemeColors()
 
   // 根据设备类型调整配置
   const labelRotation = isMobile.value ? 75 : props.labels.length > 12 ? 45 : 0
@@ -373,7 +421,7 @@ const updateChart = () => {
     markLines.push({
       symbol: ['none', 'none'],
       lineStyle: {
-        color: '#6750A4', // MD3 主色调
+        color: themeColors.primaryColor,
         width: 2,
         type: 'solid',
       },
@@ -392,7 +440,7 @@ const updateChart = () => {
     markLines.push({
       symbol: ['none', 'none'],
       lineStyle: {
-        color: '#B93E94', // MD3 次要色调
+        color: themeColors.secondaryColor,
         width: 2,
         type: 'solid',
       },
@@ -407,6 +455,7 @@ const updateChart = () => {
     animation: true,
     animationDuration: 800,
     animationEasing: 'cubicInOut',
+    backgroundColor: 'transparent',
     grid: {
       left: isMobile.value ? '15%' : '3%',
       right: isMobile.value ? '5%' : '4%',
@@ -421,10 +470,10 @@ const updateChart = () => {
         const dataIndex = params[0].dataIndex
         return `${props.labels[dataIndex]}: ${props.values[dataIndex]}`
       },
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      backgroundColor: themeColors.tooltipBackground,
       borderColor: 'rgba(0, 0, 0, 0.1)',
       textStyle: {
-        color: '#1C1B1F', // MD3 文本色
+        color: themeColors.tooltipTextColor,
       },
       extraCssText:
         'box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12); border-radius: 16px; padding: 12px;',
@@ -445,17 +494,17 @@ const updateChart = () => {
           }
           return value
         },
-        color: '#79747E', // MD3 文本辅助色
+        color: themeColors.textColor,
       },
       axisLine: {
         lineStyle: {
-          color: 'rgba(0, 0, 0, 0.25)',
+          color: themeColors.axisColor,
         },
       },
       axisTick: {
         alignWithLabel: true,
         lineStyle: {
-          color: 'rgba(0, 0, 0, 0.25)',
+          color: themeColors.axisColor,
         },
       },
     },
@@ -468,12 +517,12 @@ const updateChart = () => {
         show: false,
       },
       axisLabel: {
-        color: '#79747E', // MD3 文本辅助色
+        color: themeColors.textColor,
       },
       splitLine: {
         lineStyle: {
           type: 'dashed',
-          color: 'rgba(0, 0, 0, 0.08)',
+          color: themeColors.splitLineColor,
         },
       },
     },
@@ -502,12 +551,12 @@ const updateChart = () => {
           focus: 'series',
           itemStyle: {
             shadowBlur: 16,
-            shadowColor: 'rgba(103, 80, 164, 0.4)', // MD3 主色调阴影
+            shadowColor: isDarkMode.value ? 'rgba(208, 188, 255, 0.4)' : 'rgba(103, 80, 164, 0.4)',
           },
         },
         itemStyle: {
-          color: '#6750A4', // MD3 主色调
-          borderColor: '#fff',
+          color: themeColors.primaryColor,
+          borderColor: isDarkMode.value ? '#1C1B1F' : '#fff',
           borderWidth: 2,
         },
         lineStyle: {
@@ -523,15 +572,15 @@ const updateChart = () => {
             colorStops: [
               {
                 offset: 0,
-                color: '#9A82DB', // MD3 浅色调
+                color: isDarkMode.value ? '#D0BCFF' : '#9A82DB', // 主色调变化
               },
               {
                 offset: 1,
-                color: '#6750A4', // MD3 主色调
+                color: isDarkMode.value ? '#9A82DB' : '#6750A4', // 主色调变化
               },
             ],
           },
-          shadowColor: 'rgba(103, 80, 164, 0.2)', // MD3 主色调阴影
+          shadowColor: isDarkMode.value ? 'rgba(208, 188, 255, 0.2)' : 'rgba(103, 80, 164, 0.2)',
           shadowBlur: 10,
         },
         areaStyle: {
@@ -541,20 +590,7 @@ const updateChart = () => {
             y: 0,
             x2: 0,
             y2: 1,
-            colorStops: [
-              {
-                offset: 0,
-                color: 'rgba(103, 80, 164, 0.4)', // MD3 主色调
-              },
-              {
-                offset: 0.8,
-                color: 'rgba(103, 80, 164, 0.1)', // MD3 主色调
-              },
-              {
-                offset: 1,
-                color: 'rgba(103, 80, 164, 0.02)', // MD3 主色调
-              },
-            ],
+            colorStops: themeColors.areaColor,
           },
           opacity: 0.8,
         },
@@ -638,6 +674,17 @@ watch(
   { deep: true },
 )
 
+// 监听主题变化
+watch(
+  () => isDarkMode.value,
+  () => {
+    // 主题变化时更新图表
+    nextTick(() => {
+      updateChart()
+    })
+  },
+)
+
 // 组件挂载时
 onMounted(() => {
   initializeIndexPositions()
@@ -668,7 +715,6 @@ onBeforeUnmount(() => {
   transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
   will-change: transform, box-shadow;
   border-radius: 28px !important;
-  background-color: #fffbff !important; /* Material 3 背景色 */
 }
 
 .timeline-chart-card:hover {
@@ -682,7 +728,11 @@ onBeforeUnmount(() => {
   position: relative;
   border-radius: 24px;
   overflow: hidden;
-  background-color: #f7f2fa; /* Material 3 背景色偏紫 */
+  background-color: #f7f2fa; /* 浅色模式背景 */
+}
+
+.chart-container.dark-mode {
+  background-color: #2d2c33; /* 深色模式背景 */
 }
 
 @media (max-width: 767px) {
@@ -728,7 +778,7 @@ onBeforeUnmount(() => {
 /* Material Design 3 样式优化 */
 :deep(.v-slider-thumb__surface) {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
-  border: 3px solid white !important;
+  border: 3px solid var(--v-theme-surface) !important;
 }
 
 :deep(.v-slider-track__background) {

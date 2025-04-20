@@ -29,7 +29,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue'
-import { useDisplay, useTheme } from 'vuetify'
+import { useDisplay } from 'vuetify'
 import { useThemeStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import * as echarts from 'echarts/core'
@@ -86,6 +86,7 @@ const props = defineProps({
 
 const chartContainer = ref(null)
 let chartInstance = null
+let resizeObserverInstance = null
 const display = useDisplay()
 const themeStore = useThemeStore()
 const { theme } = storeToRefs(themeStore)
@@ -100,15 +101,25 @@ const isDataReady = computed(() => {
 
 // 创建和初始化图表
 const initChart = () => {
-  if (chartInstance) {
-    chartInstance.dispose()
-  }
-
+  // 确保DOM元素已经存在
   if (!chartContainer.value) return
+
+  // 安全销毁现有实例
+  if (chartInstance) {
+    try {
+      chartInstance.dispose()
+    } catch (e) {
+      console.log('销毁实例出错:', e)
+    }
+    chartInstance = null
+  }
 
   // 使用nextTick等待DOM更新
   nextTick(() => {
     try {
+      // 再次检查DOM元素是否存在
+      if (!chartContainer.value) return
+
       chartInstance = echarts.init(chartContainer.value, null, {
         renderer: 'canvas',
       })
@@ -315,7 +326,11 @@ const initChart = () => {
 // 监听窗口大小变化自适应调整
 const handleResize = () => {
   if (chartInstance) {
-    chartInstance.resize()
+    try {
+      chartInstance.resize()
+    } catch (e) {
+      console.log('调整大小出错:', e)
+    }
   }
 }
 
@@ -324,72 +339,101 @@ const resizeChartOnExpand = () => {
   // 使用setTimeout确保DOM已完全更新
   setTimeout(() => {
     if (chartInstance) {
-      chartInstance.resize()
+      try {
+        chartInstance.resize()
+      } catch (e) {
+        console.log('调整大小出错:', e)
+      }
     }
   }, 300) // 添加一个短暂的延迟，等待过渡动画完成
 }
 
-onMounted(() => {
-  if (isDataReady.value) {
+// 安全地设置图表
+const safeSetupChart = () => {
+  if (isDataReady.value && chartContainer.value) {
     initChart()
   }
+}
+
+onMounted(() => {
+  // 在mounted后等待一帧再初始化图表，确保DOM已渲染
+  nextTick(() => {
+    safeSetupChart()
+  })
+
   window.addEventListener('resize', handleResize)
 
   // 监听父元素大小变化
   if (typeof ResizeObserver !== 'undefined') {
-    const resizeObserver = new ResizeObserver(() => {
+    resizeObserverInstance = new ResizeObserver(() => {
       if (chartInstance) {
-        chartInstance.resize()
+        try {
+          chartInstance.resize()
+        } catch (e) {
+          console.log('ResizeObserver调整大小出错:', e)
+        }
       }
     })
 
     if (chartContainer.value && chartContainer.value.parentElement) {
-      resizeObserver.observe(chartContainer.value.parentElement)
+      resizeObserverInstance.observe(chartContainer.value.parentElement)
     }
   }
 })
 
 onUnmounted(() => {
+  // 移除事件监听
+  window.removeEventListener('resize', handleResize)
+
+  // 清理ResizeObserver
+  if (resizeObserverInstance) {
+    resizeObserverInstance.disconnect()
+    resizeObserverInstance = null
+  }
+
+  // 安全销毁图表实例
   if (chartInstance) {
-    chartInstance.dispose()
+    try {
+      chartInstance.dispose()
+    } catch (e) {
+      console.log('卸载时销毁实例出错:', e)
+    }
     chartInstance = null
   }
-  window.removeEventListener('resize', handleResize)
 })
 
-// 监听数据加载状态变化
+// 监听数据加载状态变化，使用防抖避免频繁重建
 watch(isDataReady, (newVal) => {
   if (newVal) {
     nextTick(() => {
-      initChart()
+      safeSetupChart()
     })
   }
 })
 
-// 监听具体数据内容变化
-watch(
-  () => [props.actualSales, props.predictedSales, props.dates],
-  () => {
-    if (isDataReady.value) {
-      initChart()
-    }
-  },
-  { deep: true },
-)
+// 使用一个合并的watcher来处理所有可能导致图表重绘的情况
+const debouncedUpdateChart = (() => {
+  let timeout = null
+  return () => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => {
+      if (chartInstance && isDataReady.value) {
+        safeSetupChart()
+      }
+    }, 100)
+  }
+})()
+
+// 监听数据变化
+watch(() => [props.actualSales, props.predictedSales, props.dates], debouncedUpdateChart, {
+  deep: true,
+})
 
 // 监听移动端状态变化
-watch(isMobile, () => {
-  if (isDataReady.value) {
-    initChart()
-  }
-})
+watch(isMobile, debouncedUpdateChart)
 
 // 监听深色模式变化
-watch(isDarkMode, () => {
-  if (isDataReady.value) {
-    initChart()
-  }
-})
+watch(isDarkMode, debouncedUpdateChart)
 
 // 监听展开状态变化
 watch(
