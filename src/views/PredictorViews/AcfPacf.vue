@@ -44,6 +44,7 @@ let pacfChartInstance = null
 let resizeObserver = null
 let mutationObserver = null
 let isVisible = false
+let intervalId = null
 
 function renderChart(chartRef, chartInstance, data, title) {
   if (!chartRef.value) return
@@ -243,7 +244,7 @@ function checkVisibility() {
 // 设置ResizeObserver来监听容器尺寸变化
 function setupResizeObserver() {
   if (typeof ResizeObserver !== 'undefined') {
-    resizeObserver = new ResizeObserver((entries) => {
+    resizeObserver = new ResizeObserver((/**entries*/) => {
       // 当尺寸变化时，触发重绘
       if (checkVisibility()) {
         handleResize()
@@ -305,7 +306,7 @@ function setupMutationObserver() {
 // 创建监听间隔
 function setupVisibilityInterval() {
   // 每200ms检查一次可见性，适用于手风琴动画完成后
-  const intervalId = setInterval(() => {
+  intervalId = setInterval(() => {
     checkVisibility()
   }, 200)
 
@@ -313,9 +314,10 @@ function setupVisibilityInterval() {
   setTimeout(() => {
     clearInterval(intervalId)
   }, 60000)
-
-  return intervalId
 }
+
+// 监视组件的可见性变化
+const visibilityObserver = ref(null)
 
 onMounted(() => {
   updateCharts()
@@ -329,49 +331,10 @@ onMounted(() => {
   nextTick(() => {
     checkVisibility()
     // 设置可见性监听
-    const intervalId = setupVisibilityInterval()
-
-    // 组件卸载时清除定时器
-    onBeforeUnmount(() => {
-      clearInterval(intervalId)
-    })
+    setupVisibilityInterval()
   })
-})
 
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', handleResize)
-
-  if (resizeObserver) {
-    resizeObserver.disconnect()
-  }
-
-  if (mutationObserver) {
-    mutationObserver.disconnect()
-  }
-
-  if (acfChartInstance) acfChartInstance.dispose()
-  if (pacfChartInstance) pacfChartInstance.dispose()
-})
-
-watch(
-  () => props.chartData,
-  () => {
-    updateCharts()
-  },
-  { deep: true },
-)
-
-// 添加一个特殊的处理函数，用于强制图表重绘
-function initializeCharts() {
-  nextTick(() => {
-    updateCharts()
-    forceResize()
-  })
-}
-
-// 监视组件的可见性变化
-const visibilityObserver = ref(null)
-onMounted(() => {
+  // 设置Intersection Observer
   if (typeof IntersectionObserver !== 'undefined' && acfChart.value) {
     visibilityObserver.value = new IntersectionObserver(
       (entries) => {
@@ -389,10 +352,43 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+  }
+
+  if (mutationObserver) {
+    mutationObserver.disconnect()
+  }
+
   if (visibilityObserver.value) {
     visibilityObserver.value.disconnect()
   }
+
+  if (intervalId) {
+    clearInterval(intervalId)
+  }
+
+  if (acfChartInstance) acfChartInstance.dispose()
+  if (pacfChartInstance) pacfChartInstance.dispose()
 })
+
+watch(
+  () => props.chartData,
+  () => {
+    updateCharts()
+  },
+  { deep: true },
+)
+
+// 添加一个特殊的处理函数，用于强制图表重绘
+// function initializeCharts() {
+//   nextTick(() => {
+//     updateCharts()
+//     forceResize()
+//   })
+// }
 </script>
 
 <style scoped>

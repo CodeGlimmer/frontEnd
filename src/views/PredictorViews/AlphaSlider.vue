@@ -50,7 +50,7 @@
           </v-col>
         </v-row>
 
-        <v-alert v-if="showPreview" class="mt-4" color="info" border="left" dense text>
+        <v-alert v-if="showPreview" class="mt-4" color="info" bordered="left" dense text>
           当前Alpha值为 {{ alpha.toFixed(2) }}，这意味着新数据对预测的影响权重为
           {{ (alpha * 100).toFixed(0) }}%， 历史数据的影响权重为
           {{ ((1 - alpha) * 100).toFixed(0) }}%

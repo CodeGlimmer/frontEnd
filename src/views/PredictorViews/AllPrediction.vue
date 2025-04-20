@@ -1,54 +1,58 @@
 <template>
-  <TimeSeriesForm :initial-store="1" :initial-item="1" @refresh-data="refreshData" />
-  <BaseChart :labels="dateData" :values="originData" @range-change="handleRangeChange" />
   <div>
-    <v-expansion-panels variant="popout">
-      <v-expansion-panel title="Naive Prediction" @click="refreshData">
-        <v-expansion-panel-text>
-          <BasePredictionChart
-            :actualSales="originData.slice(predictorModel.st, predictorModel.ed)"
-            :predictedSales="naivePrediction.pred_data"
-            :dates="dateData.slice(predictorModel.st, predictorModel.ed)"
-            :error="naivePrediction.error"
-          />
-        </v-expansion-panel-text>
-      </v-expansion-panel>
-      <v-expansion-panel title="Exponential Forecasting Method" @click="refreshData">
-        <v-expansion-panel-text>
-          <AlphaSlider @update:alpha="changeAlpha" />
-          <BasePredictionChart
-            :actualSales="originData.slice(predictorModel.st, predictorModel.ed)"
-            :predictedSales="expPrediction.pred_data"
-            :dates="dateData.slice(predictorModel.st, predictorModel.ed)"
-            :error="expPrediction.error"
-          />
-        </v-expansion-panel-text>
-      </v-expansion-panel>
-      <v-expansion-panel title="Exponential Forecasting Method" @click="refreshData">
-        <v-expansion-panel-text>
-          <updateArimaPrams @update-arima-params="handleArimaParamsUpdate" />
-          <DickeyFullerChart :testDataString="testResult.replace(new RegExp('NaN', 'g'), 'null')" />
-          <AcfPacf :chartData="acfPacf" />
-          <AcfPacf :chartData="resAcfPacf"> 残差分析</AcfPacf>
-          <BasePredictionChart
-            :actualSales="originData.slice(predictorModel.st, predictorModel.ed)"
-            :predictedSales="arimaPrediction.pred_data"
-            :dates="dateData.slice(predictorModel.st, predictorModel.ed)"
-            :error="arimaPrediction.error"
-          />
-        </v-expansion-panel-text>
-      </v-expansion-panel>
-      <v-expansion-panel title="Exponential Forecasting Method" @click="refreshData">
-        <v-expansion-panel-text>
-          <BasePredictionChart
-            :actualSales="originData.slice(predictorModel.st, predictorModel.ed)"
-            :predictedSales="neuPrediction.pred_data"
-            :dates="dateData.slice(predictorModel.st, predictorModel.ed)"
-            :error="neuPrediction.error"
-          />
-        </v-expansion-panel-text>
-      </v-expansion-panel>
-    </v-expansion-panels>
+    <TimeSeriesForm :initial-store="1" :initial-item="1" @refresh-data="refreshData" />
+    <BaseChart :labels="dateData" :values="originData" @range-change="handleRangeChange" />
+    <div>
+      <v-expansion-panels variant="popout">
+        <v-expansion-panel title="Naive Prediction" @click="refreshData">
+          <v-expansion-panel-text>
+            <BasePredictionChart
+              :actualSales="originData.slice(predictorModel.st, predictorModel.ed)"
+              :predictedSales="naivePrediction.pred_data"
+              :dates="dateData.slice(predictorModel.st, predictorModel.ed)"
+              :error="naivePrediction.error"
+            />
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+        <v-expansion-panel title="Exponential Forecasting Method" @click="refreshData">
+          <v-expansion-panel-text>
+            <AlphaSlider @update:alpha="changeAlpha" />
+            <BasePredictionChart
+              :actualSales="originData.slice(predictorModel.st, predictorModel.ed)"
+              :predictedSales="expPrediction.pred_data"
+              :dates="dateData.slice(predictorModel.st, predictorModel.ed)"
+              :error="expPrediction.error"
+            />
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+        <v-expansion-panel title="Exponential Forecasting Method" @click="refreshData">
+          <v-expansion-panel-text>
+            <updateArimaPrams @update-arima-params="handleArimaParamsUpdate" />
+            <DickeyFullerChart
+              :testDataString="testResult.replace(new RegExp('NaN', 'g'), 'null')"
+            />
+            <AcfPacf :chartData="acfPacf" />
+            <AcfPacf :chartData="resAcfPacf"> 残差分析</AcfPacf>
+            <BasePredictionChart
+              :actualSales="originData.slice(predictorModel.st, predictorModel.ed)"
+              :predictedSales="arimaPrediction.pred_data"
+              :dates="dateData.slice(predictorModel.st, predictorModel.ed)"
+              :error="arimaPrediction.error"
+            />
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+        <v-expansion-panel title="Exponential Forecasting Method" @click="refreshData">
+          <v-expansion-panel-text>
+            <BasePredictionChart
+              :actualSales="originData.slice(predictorModel.st, predictorModel.ed)"
+              :predictedSales="neuPrediction.pred_data"
+              :dates="dateData.slice(predictorModel.st, predictorModel.ed)"
+              :error="neuPrediction.error"
+            />
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+      </v-expansion-panels>
+    </div>
   </div>
 </template>
 
