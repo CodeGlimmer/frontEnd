@@ -1,74 +1,63 @@
 <template>
-  <div>
-    <v-menu
-      v-model="menu"
-      :close-on-content-click="false"
-      location="end"
-      transition="scale-transition"
-      offset="10"
-    >
-      <template v-slot:activator="{ props }">
-        <v-btn icon v-bind="props" variant="text" size="small">
-          <v-icon>mdi-cog</v-icon>
+  <div class="time-series-toolbar">
+    <v-card class="toolbar-card pa-3" elevation="1" rounded="lg">
+      <div class="d-flex align-center flex-wrap tw-gap-6">
+        <div class="text-subtitle-3 font-weight-medium mr-2">预测模型参数</div>
+
+        <v-text-field
+          v-model="localStore"
+          label="Store"
+          type="number"
+          variant="outlined"
+          density="compact"
+          hide-details
+          class="toolbar-field"
+          bg-color="surface"
+          :rules="[
+            (v) => !!v || '请输入Store值',
+            (v) => Number.isInteger(Number(v)) || 'Store必须是整数',
+          ]"
+        ></v-text-field>
+
+        <v-text-field
+          v-model="localItem"
+          label="Item"
+          type="number"
+          variant="outlined"
+          density="compact"
+          hide-details
+          class="toolbar-field"
+          bg-color="surface"
+          :rules="[
+            (v) => !!v || '请输入Item值',
+            (v) => Number.isInteger(Number(v)) || 'Item必须是整数',
+          ]"
+        ></v-text-field>
+        <v-spacer></v-spacer>
+        <v-btn
+          color="primary"
+          @click="emitRefresh"
+          size="large"
+          density="comfortable"
+          variant="elevated"
+          prepend-icon="mdi-refresh"
+          class="refresh-btn ml-2"
+          :loading="loading"
+          :disabled="loading"
+        >
+          刷新
+          <template v-slot:loader>
+            <v-progress-circular indeterminate size="24"></v-progress-circular>
+          </template>
         </v-btn>
-      </template>
-
-      <v-card class="pa-4 rounded-lg" elevation="1" max-width="300">
-        <v-form @submit.prevent="emitRefresh">
-          <v-card-title class="px-0 text-subtitle-1 font-weight-medium">
-            预测模型参数
-          </v-card-title>
-
-          <div class="mt-2">
-            <v-text-field
-              v-model="localStore"
-              label="Store"
-              type="number"
-              variant="outlined"
-              density="compact"
-              hide-details
-              class="mb-3"
-              :rules="[
-                (v) => !!v || '请输入Store值',
-                (v) => Number.isInteger(Number(v)) || 'Store必须是整数',
-              ]"
-            ></v-text-field>
-
-            <v-text-field
-              v-model="localItem"
-              label="Item"
-              type="number"
-              variant="outlined"
-              density="compact"
-              hide-details
-              class="mb-3"
-              :rules="[
-                (v) => !!v || '请输入Item值',
-                (v) => Number.isInteger(Number(v)) || 'Item必须是整数',
-              ]"
-            ></v-text-field>
-          </div>
-
-          <div class="d-flex justify-end">
-            <v-btn
-              color="primary"
-              type="submit"
-              size="small"
-              variant="elevated"
-              prepend-icon="mdi-refresh"
-            >
-              刷新
-            </v-btn>
-          </div>
-        </v-form>
-      </v-card>
-    </v-menu>
+      </div>
+    </v-card>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'TimeSeriesForm',
+  name: 'TimeSeriesToolbar',
 
   props: {
     initialStore: {
@@ -79,28 +68,86 @@ export default {
       type: Number,
       default: 1,
     },
+    loading: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   data() {
     return {
       localStore: this.initialStore,
       localItem: this.initialItem,
-      menu: false,
     }
   },
 
   methods: {
     emitRefresh() {
-      //
       const store = parseInt(this.localStore, 10)
       const item = parseInt(this.localItem, 10)
 
       if (!isNaN(store) && !isNaN(item)) {
+        console.log('刷新了')
         // 触发事件，把参数发送给父组件
         this.$emit('refresh-data', { store, item })
-        this.menu = false // 提交后关闭菜单
       }
+    },
+  },
+
+  watch: {
+    // 同步外部属性变化
+    initialStore(newVal) {
+      this.localStore = newVal
+    },
+    initialItem(newVal) {
+      this.localItem = newVal
     },
   },
 }
 </script>
+
+<style scoped>
+.time-series-toolbar {
+  margin-bottom: 16px;
+}
+
+.toolbar-card {
+  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: thin solid rgba(var(--v-theme-on-surface), 0.08);
+}
+
+.toolbar-card:hover {
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+}
+
+.toolbar-field {
+  min-width: 110px;
+  max-width: 180px;
+  flex-grow: 1;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.refresh-btn {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.refresh-btn:hover {
+  transform: scale(1.03);
+}
+
+@media (max-width: 600px) {
+  .d-flex {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbar-field {
+    max-width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .refresh-btn {
+    align-self: flex-end;
+  }
+}
+</style>

@@ -124,18 +124,10 @@ const initChart = () => {
         renderer: 'canvas',
       })
 
-      // 如果数据量大，优化取样
+      // 直接使用原始数据，不做采样处理
       let displayDates = props.dates
       let displayActual = props.actualSales
       let displayPredicted = props.predictedSales
-
-      // 超过100个数据点时做采样处理
-      if (props.dates.length > 100) {
-        const sampleInterval = Math.floor(props.dates.length / 100)
-        displayDates = props.dates.filter((_, index) => index % sampleInterval === 0)
-        displayActual = props.actualSales.filter((_, index) => index % sampleInterval === 0)
-        displayPredicted = props.predictedSales.filter((_, index) => index % sampleInterval === 0)
-      }
 
       // 深色模式颜色调整
       const textColor = isDarkMode.value ? '#e0e0e0' : '#333333'

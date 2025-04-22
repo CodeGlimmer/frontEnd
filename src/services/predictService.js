@@ -38,7 +38,7 @@ export const predictor = {
    * @param {ModelMessage} params
    */
   async changeModel(params) {
-    axios.post(availableHost + this.urls.changeModel, params)
+    await axios.post(availableHost + this.urls.changeModel, params)
   },
 
   /**

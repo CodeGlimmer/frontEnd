@@ -51,7 +51,11 @@
                 :error="arimaPrediction.error"
               />
             </div>
-            <v-skeleton-loader type="card" v-else></v-skeleton-loader>
+            <div v-else>
+              <v-skeleton-loader type="card"></v-skeleton-loader>
+              <v-skeleton-loader type="card"></v-skeleton-loader>
+              <v-skeleton-loader type="card"></v-skeleton-loader>
+            </div>
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel title="Neural Network Forecasting Method" @click="refreshData">
@@ -141,6 +145,7 @@ const refreshNaive = async () => {
     })
     .then(() => {
       naiveLoaded.value = true
+      console.log('数据长度：' + naivePrediction.value.pred_data.length)
     })
     .catch((err) => {
       console.error(err.message)
@@ -166,7 +171,6 @@ const refreshExp = async () => {
 // 分为四个子任务，全部完成之后才可以认为执行完毕
 const refreshArima = async () => {
   numOfLoaded.value = 0
-
   predictor
     .dickeyFullerTest()
     .then((result) => {
@@ -246,15 +250,16 @@ const changeModelStatus = async () => {
   refreshNeu()
 }
 
-const refreshData = ({ store, item }) => {
+const refreshData = async ({ store, item }) => {
   predictorModel.value.store = store
   predictorModel.value.item = item
-  // changeModelStatus()
+  await predictor.changeModel(predictorModel.value)
 }
 
 const handleRangeChange = async ({ leftIndex, rightIndex }) => {
   predictorModel.value.st = leftIndex
   predictorModel.value.ed = rightIndex
+  console.log(`预测数据长度: ${rightIndex - leftIndex}`)
   await predictor.changeModel(predictorModel.value) // 改变模型必须await
   refreshNaive()
   refreshExp()
@@ -270,44 +275,6 @@ const changeAlpha = async (alpha) => {
     expPrediction.value = result
   })
 }
-
-// const handleArimaParamsUpdate = async ({ p, d, q }) => {
-//   predictor.dickeyFullerTest().then((result) => {
-//     if (result == undefined) return
-//     testResult.value = result
-//   })
-//   predictor.getAcfPacf().then((result) => {
-//     if (result == undefined) return
-//     acfPacf.value = result
-//   })
-//   predictor.getResAcfPacf().then((result) => {
-//     if (result == undefined) return
-//     resAcfPacf.value = result
-//   })
-//   predictor.arimaPredict().then((result) => {
-//     if (result == undefined) return
-//     arimaPrediction.value = result
-//   })
-//   predictorModel.value.p = p
-//   predictorModel.value.d = d
-//   predictorModel.value.q = q
-//   predictor.dickeyFullerTest().then((result) => {
-//     if (result == undefined) return
-//     testResult.value = result
-//   })
-//   predictor.getAcfPacf().then((result) => {
-//     if (result == undefined) return
-//     acfPacf.value = result
-//   })
-//   predictor.getResAcfPacf().then((result) => {
-//     if (result == undefined) return
-//     resAcfPacf.value = result
-//   })
-//   predictor.arimaPredict().then((result) => {
-//     if (result == undefined) return
-//     arimaPrediction.value = result
-//   })
-// }
 
 // 初始化所有对象，并获取所有初始模型对应的数据
 onMounted(() => {
