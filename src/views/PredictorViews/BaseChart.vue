@@ -1,10 +1,8 @@
 <template>
-  <v-card class="mx-auto my-4 timeline-chart-card" elevation="2" rounded="lg" :theme="currentTheme">
-    <v-card-title class="d-flex align-center flex-wrap py-4 px-6">
-      <div class="d-flex align-center">
-        <v-icon color="primary" class="mr-3" size="large">mdi-chart-timeline-variant</v-icon>
-        <span class="text-h6 font-weight-medium">时间轴选择器</span>
-      </div>
+  <v-card class="timeline-selector-card" elevation="2" rounded="lg" :theme="currentTheme">
+    <v-card-title class="d-flex align-center py-4 px-6">
+      <v-icon color="primary" class="mr-3" size="large">mdi-chart-timeline-variant</v-icon>
+      <span class="text-h6 font-weight-medium">时间轴选择器</span>
       <v-spacer></v-spacer>
       <v-tooltip location="bottom">
         <template v-slot:activator="{ props }">
@@ -14,11 +12,10 @@
             icon="mdi-information-outline"
             color="primary"
             size="small"
-            class="ml-2"
           ></v-btn>
         </template>
         <v-card class="pa-2" elevation="4" rounded="lg" :theme="currentTheme">
-          <span>调整滑动条选择时间范围</span>
+          <span>拖动滑块选择时间范围，蓝色区域为预测区间</span>
         </v-card>
       </v-tooltip>
     </v-card-title>
@@ -26,90 +23,75 @@
     <v-divider></v-divider>
 
     <v-card-text class="px-4 pt-6 pb-4">
+      <!-- 图表容器 -->
       <div ref="chartContainerRef" class="chart-container" :class="{ 'dark-mode': isDarkMode }">
         <div ref="chartRef" class="chart"></div>
       </div>
 
-      <div class="sliders-container mt-4 px-2">
-        <!-- 左侧时间点滑动条 -->
-        <v-slider
-          v-model="leftIndexSlider"
-          :max="dataLength - 1"
+      <!-- 时间范围展示 -->
+      <div class="range-display mt-4 px-2 d-flex align-center flex-wrap">
+        <v-chip color="info" variant="elevated" class="mr-3 mb-2 font-weight-medium" size="large">
+          <v-icon start>mdi-calendar-range</v-icon>
+          预测区间
+        </v-chip>
+
+        <v-chip-group class="range-chips">
+          <v-chip color="primary" variant="elevated" class="mr-3 mb-2" size="large">
+            {{ labels[leftIndex] || '' }}
+          </v-chip>
+          <span class="range-separator ma-1 mt-3 me-3">至</span>
+          <v-chip color="secondary" variant="elevated" class="mb-2" size="large">
+            {{ labels[rightIndex] || '' }}
+          </v-chip>
+        </v-chip-group>
+
+        <v-spacer></v-spacer>
+
+        <v-btn
+          color="primary"
+          variant="tonal"
+          rounded="pill"
+          class="confirm-btn mb-2"
+          :disabled="!hasChanges"
+          @click="confirmSelection"
+        >
+          <v-icon start>mdi-check</v-icon>
+          确认选择
+        </v-btn>
+      </div>
+
+      <!-- 合并的范围滑块 -->
+      <div class="range-slider-container mt-6 px-2">
+        <div class="range-label-container d-flex justify-space-between mb-2">
+          <span class="text-body-2 text-primary font-weight-medium">{{ labels[0] || '' }}</span>
+          <span class="text-body-2 text-secondary font-weight-medium">{{
+            labels[labels.length - 1] || ''
+          }}</span>
+        </div>
+        <v-range-slider
+          v-model="rangeValue"
+          :max="labels.length - 1"
           :min="0"
           :step="1"
           thumb-label="always"
           color="primary"
-          track-color="primary-lighten-4"
+          track-color="grey-lighten-3"
+          track-fill-color="primary-lighten-3"
           density="comfortable"
-          class="mb-2"
-          :disabled="dataLength <= 1"
+          :disabled="labels.length <= 1"
           :thumb-size="28"
-          @update:model-value="handleLeftSliderChange"
+          show-ticks="always"
+          :ticks="generateTicks()"
+          @update:model-value="handleRangeChange"
         >
-          <template v-slot:thumb-label="{ modelValue }">
-            <div class="slider-label">
+          <template v-slot:thumb-label="{ modelValue, index }">
+            <div class="slider-label" :class="index === 0 ? 'primary--text' : 'secondary--text'">
               {{
                 modelValue >= 0 && labels[modelValue] ? formatThumbLabel(labels[modelValue]) : ''
               }}
             </div>
           </template>
-        </v-slider>
-
-        <!-- 右侧时间点滑动条 -->
-        <v-slider
-          v-model="rightIndexSlider"
-          :max="dataLength - 1"
-          :min="0"
-          :step="1"
-          thumb-label="always"
-          color="secondary"
-          track-color="secondary-lighten-4"
-          density="comfortable"
-          :disabled="dataLength <= 1"
-          :thumb-size="28"
-          @update:model-value="handleRightSliderChange"
-        >
-          <template v-slot:thumb-label="{ modelValue }">
-            <div class="slider-label">
-              {{
-                modelValue >= 0 && labels[modelValue] ? formatThumbLabel(labels[modelValue]) : ''
-              }}
-            </div>
-          </template>
-        </v-slider>
-      </div>
-
-      <div class="selection-info mt-4 px-2">
-        <v-scale-transition>
-          <v-chip color="info" variant="elevated" class="mr-3 mb-2 font-weight-medium" size="large">
-            预测区间
-          </v-chip>
-        </v-scale-transition>
-
-        <v-scale-transition>
-          <v-chip
-            v-if="leftIndex !== null"
-            color="primary"
-            variant="elevated"
-            class="mr-3 mb-2"
-            size="large"
-          >
-            <v-icon start size="small">mdi-arrow-left</v-icon>
-            {{ labels[leftIndex] }}
-          </v-chip>
-        </v-scale-transition>
-        <v-scale-transition>
-          <v-chip
-            v-if="rightIndex !== null"
-            color="secondary"
-            variant="elevated"
-            class="mb-2"
-            size="large"
-          >
-            <v-icon start size="small">mdi-arrow-right</v-icon>
-            {{ labels[rightIndex] }}
-          </v-chip>
-        </v-scale-transition>
+        </v-range-slider>
       </div>
     </v-card-text>
   </v-card>
@@ -117,26 +99,19 @@
 
 <script setup>
 /**
- * @component TimelineChart
+ * @component TimelineSelector
  *
- * @description 交互式时间轴图表组件，提供两个滑动条用于选择日期范围。
- * 使用ECharts和Vuetify，遵循Material Design 3风格。
- * 支持动态更新数据，图表会自动重绘。
- * 支持深色模式和浅色模式切换。
+ * @description 交互式时间轴选择器组件，提供范围滑块用于选择日期范围，
+ * 使用可视化区域突出显示预测区间，符合Material You设计风格。
  *
  * @props {string[]} labels - 日期标签数组，以字符串格式提供
  * @props {number[]} values - 对应的数值数组
+ * @props {number} initialLeftIndex - 初始左侧索引（可选，默认为数据长度的25%位置）
+ * @props {number} initialRightIndex - 初始右侧索引（可选，默认为数据长度的75%位置）
  *
- * @emits {Object} range-change - 选择范围变化时触发
+ * @emits {Object} range-confirmed - 用户确认选择范围时触发
  *  - leftIndex {number} - 左侧时间点的索引值（从0开始）
  *  - rightIndex {number} - 右侧时间点的索引值（从0开始）
- *
- * @example
- * <timeline-chart
- *   :labels="['2023-01-01', '2023-01-02', ...]"
- *   :values="[10, 20, ...]"
- *   @range-change="handleRangeChange"
- * />
  */
 
 import { ref, onMounted, watch, nextTick, onBeforeUnmount, computed } from 'vue'
@@ -146,6 +121,7 @@ import {
   GridComponent,
   TooltipComponent,
   DataZoomComponent,
+  MarkAreaComponent,
   MarkLineComponent,
 } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
@@ -157,6 +133,7 @@ echarts.use([
   GridComponent,
   TooltipComponent,
   DataZoomComponent,
+  MarkAreaComponent,
   MarkLineComponent,
   CanvasRenderer,
 ])
@@ -172,9 +149,17 @@ const props = defineProps({
     required: true,
     validator: (val) => val.every((item) => typeof item === 'number'),
   },
+  initialLeftIndex: {
+    type: Number,
+    default: null,
+  },
+  initialRightIndex: {
+    type: Number,
+    default: null,
+  },
 })
 
-const emit = defineEmits(['range-change'])
+const emit = defineEmits(['range-confirmed'])
 
 // 获取主题信息
 const themeStore = useThemeStore()
@@ -185,24 +170,23 @@ const chartContainerRef = ref(null)
 const chartRef = ref(null)
 const chartInstance = ref(null)
 
-// 使用computed保存当前数据，以便于比较变化
-const currentLabels = computed(() => props.labels)
-// const currentValues = computed(() => props.values)
-
 // 反应式存储左右索引位置
-const leftIndex = ref(null)
-const rightIndex = ref(null)
+const leftIndex = ref(0)
+const rightIndex = ref(0)
 
-// 对应的滑动条值
-const leftIndexSlider = ref(0)
-const rightIndexSlider = ref(0)
+// 已确认的索引位置（用于比较变化）
+const confirmedLeftIndex = ref(0)
+const confirmedRightIndex = ref(0)
 
-// 数据长度的计算属性
-const dataLength = computed(() => props.labels.length)
+// 范围滑块的值
+const rangeValue = ref([0, 0])
 
-// 计算宽度和单位像素
-const chartWidth = ref(0)
-const chartHeight = ref(0)
+// 计算是否有未确认的变更
+const hasChanges = computed(() => {
+  return (
+    leftIndex.value !== confirmedLeftIndex.value || rightIndex.value !== confirmedRightIndex.value
+  )
+})
 
 // 检测是否为移动设备
 const isMobile = ref(false)
@@ -217,59 +201,57 @@ const formatThumbLabel = (label) => {
   return label
 }
 
-// 初始化默认索引位置
-const initializeIndexPositions = () => {
-  const dataLen = dataLength.value
-  if (dataLen > 0) {
-    // 如果是首次初始化或数据长度有变化
-    if (leftIndex.value === null || rightIndex.value === null) {
-      // 先使用默认值，等数据加载完成后再设置固定值
-      leftIndex.value = Math.max(0, Math.floor(dataLen * 0.25))
-      rightIndex.value = Math.min(dataLen - 1, Math.floor(dataLen * 0.75))
-    } else {
-      // 如果已有选择，尝试维持相对位置
-      const oldPercentLeft = leftIndex.value / (dataLen - (rightIndex.value - leftIndex.value))
-      const oldPercentRight = rightIndex.value / (dataLen - (rightIndex.value - leftIndex.value))
-
-      // 计算新的索引位置，保持相对百分比位置
-      leftIndex.value = Math.min(Math.max(0, Math.floor(oldPercentLeft * dataLen)), dataLen - 2)
-      rightIndex.value = Math.min(
-        Math.max(leftIndex.value + 1, Math.floor(oldPercentRight * dataLen)),
-        dataLen - 1,
-      )
-    }
-
-    // 同步滑动条的值
-    leftIndexSlider.value = leftIndex.value
-    rightIndexSlider.value = rightIndex.value
+// 生成刻度
+const generateTicks = () => {
+  if (props.labels.length <= 5) {
+    return { 0: '', [props.labels.length - 1]: '' }
   }
+
+  const ticks = {}
+  const interval = Math.ceil(props.labels.length / 5)
+
+  for (let i = 0; i < props.labels.length; i += interval) {
+    if (i === 0 || i === props.labels.length - 1 || i % interval === 0) {
+      ticks[i] = ''
+    }
+  }
+
+  // 确保最后一个刻度存在
+  ticks[props.labels.length - 1] = ''
+
+  return ticks
 }
 
-// 监听数据加载
-watch(
-  dataLength,
-  (newLength) => {
-    if (newLength > 700) {
-      // 只有当数据长度足够时才设置固定的500和700
-      leftIndex.value = 500
-      rightIndex.value = 700
+// 初始化默认索引位置
+const initializeIndexPositions = () => {
+  const dataLen = props.labels.length
 
-      // 同步滑动条的值
-      leftIndexSlider.value = leftIndex.value
-      rightIndexSlider.value = rightIndex.value
-
-      // 更新图表
-      updateChart()
-
-      // 通知父组件新的选中范围
-      emit('range-change', {
-        leftIndex: leftIndex.value,
-        rightIndex: rightIndex.value,
-      })
+  if (dataLen <= 1) {
+    leftIndex.value = 0
+    rightIndex.value = dataLen > 0 ? 0 : 0
+  } else {
+    // 使用props中提供的初始索引，或者使用默认计算值
+    if (props.initialLeftIndex !== null && props.initialRightIndex !== null) {
+      // 确保提供的索引在有效范围内
+      leftIndex.value = Math.max(0, Math.min(props.initialLeftIndex, dataLen - 2))
+      rightIndex.value = Math.max(
+        leftIndex.value + 1,
+        Math.min(props.initialRightIndex, dataLen - 1),
+      )
+    } else {
+      // 使用默认计算值
+      leftIndex.value = Math.max(0, Math.floor(dataLen * 0.25))
+      rightIndex.value = Math.min(dataLen - 1, Math.floor(dataLen * 0.75))
     }
-  },
-  { immediate: true },
-)
+  }
+
+  // 同步范围滑块的值
+  rangeValue.value = [leftIndex.value, rightIndex.value]
+
+  // 保存确认的索引值
+  confirmedLeftIndex.value = leftIndex.value
+  confirmedRightIndex.value = rightIndex.value
+}
 
 // 检测当前设备是否为移动设备
 const checkMobileDevice = () => {
@@ -311,8 +293,6 @@ const updateChartSize = () => {
     ? Math.min(containerWidth * 0.8, 280)
     : Math.min(containerWidth * 0.6, 320)
 
-  chartWidth.value = containerWidth
-  chartHeight.value = containerHeight
   chartRef.value.style.width = containerWidth + 'px'
   chartRef.value.style.height = containerHeight + 'px'
   chartInstance.value.resize()
@@ -329,38 +309,24 @@ const handleResize = () => {
   }, 100)
 }
 
-// 左侧滑动条变化处理器
-const handleLeftSliderChange = (value) => {
-  // 确保左侧不超过右侧
-  if (value >= rightIndexSlider.value) {
-    leftIndexSlider.value = rightIndexSlider.value - 1
-    return
-  }
+// 确认选择
+const confirmSelection = () => {
+  // 更新已确认的索引
+  confirmedLeftIndex.value = leftIndex.value
+  confirmedRightIndex.value = rightIndex.value
 
-  leftIndex.value = value
-  updateChart()
-
-  emit('range-change', {
+  // 发送确认事件
+  emit('range-confirmed', {
     leftIndex: leftIndex.value,
     rightIndex: rightIndex.value,
   })
 }
 
-// 右侧滑动条变化处理器
-const handleRightSliderChange = (value) => {
-  // 确保右侧不低于左侧
-  if (value <= leftIndexSlider.value) {
-    rightIndexSlider.value = leftIndexSlider.value + 1
-    return
-  }
-
-  rightIndex.value = value
+// 范围滑块变化处理器
+const handleRangeChange = (value) => {
+  leftIndex.value = value[0]
+  rightIndex.value = value[1]
   updateChart()
-
-  emit('range-change', {
-    leftIndex: leftIndex.value,
-    rightIndex: rightIndex.value,
-  })
 }
 
 // 获取基于当前主题的颜色配置
@@ -375,6 +341,7 @@ const getThemeColors = () => {
       tooltipTextColor: '#E6E1E5',
       primaryColor: '#D0BCFF',
       secondaryColor: '#CCC2DC',
+      markAreaColor: 'rgba(208, 188, 255, 0.15)',
       areaColor: [
         { offset: 0, color: 'rgba(208, 188, 255, 0.4)' },
         { offset: 0.8, color: 'rgba(208, 188, 255, 0.1)' },
@@ -391,6 +358,7 @@ const getThemeColors = () => {
       tooltipTextColor: '#1C1B1F',
       primaryColor: '#6750A4',
       secondaryColor: '#B93E94',
+      markAreaColor: 'rgba(103, 80, 164, 0.15)',
       areaColor: [
         { offset: 0, color: 'rgba(103, 80, 164, 0.4)' },
         { offset: 0.8, color: 'rgba(103, 80, 164, 0.1)' },
@@ -413,43 +381,74 @@ const updateChart = () => {
     ? Math.max(0, Math.ceil(props.labels.length / 10) - 1)
     : Math.max(0, Math.ceil(props.labels.length / 20) - 1)
 
-  // 准备标记线数据
-  const markLines = []
+  // 定义标记区域（预测区间）
+  const markArea = {
+    itemStyle: {
+      color: themeColors.markAreaColor,
+      borderColor: 'transparent',
+      borderWidth: 0,
+    },
+    data: [
+      [
+        {
+          name: '预测区间',
+          xAxis: leftIndex.value,
+        },
+        {
+          xAxis: rightIndex.value,
+        },
+      ],
+    ],
+    silent: true,
+  }
 
-  // 只有当索引有效时才添加标记线
-  if (leftIndex.value !== null && leftIndex.value >= 0 && leftIndex.value < props.labels.length) {
-    markLines.push({
-      symbol: ['none', 'none'],
+  // 准备标记线数据 - 优化后的竖直线样式
+  const markLines = [
+    {
+      silent: true,
+      symbol: ['circle', 'none'],
+      symbolSize: [8, 0],
       lineStyle: {
         color: themeColors.primaryColor,
         width: 2,
         type: 'solid',
+        cap: 'round',
+      },
+      emphasis: {
+        lineStyle: {
+          width: 3,
+          shadowBlur: 6,
+          shadowColor: themeColors.primaryColor,
+        },
       },
       label: {
         show: false,
       },
       xAxis: leftIndex.value,
-    })
-  }
-
-  if (
-    rightIndex.value !== null &&
-    rightIndex.value >= 0 &&
-    rightIndex.value < props.labels.length
-  ) {
-    markLines.push({
-      symbol: ['none', 'none'],
+    },
+    {
+      silent: true,
+      symbol: ['circle', 'none'],
+      symbolSize: [8, 0],
       lineStyle: {
         color: themeColors.secondaryColor,
         width: 2,
         type: 'solid',
+        cap: 'round',
+      },
+      emphasis: {
+        lineStyle: {
+          width: 3,
+          shadowBlur: 6,
+          shadowColor: themeColors.secondaryColor,
+        },
       },
       label: {
         show: false,
       },
       xAxis: rightIndex.value,
-    })
-  }
+    },
+  ]
 
   const option = {
     animation: true,
@@ -594,6 +593,7 @@ const updateChart = () => {
           },
           opacity: 0.8,
         },
+        markArea: markArea,
         markLine: {
           silent: true,
           data: markLines,
@@ -605,74 +605,6 @@ const updateChart = () => {
 
   chartInstance.value.setOption(option, true) // 设置true选项强制重绘
 }
-
-// 重绘整个图表
-const rebuildChart = () => {
-  // 保存当前选中的区间索引（相对位置）
-  const oldLeftRatio =
-    leftIndex.value !== null ? leftIndex.value / (currentLabels.value.length - 1 || 1) : 0.25
-  const oldRightRatio =
-    rightIndex.value !== null ? rightIndex.value / (currentLabels.value.length - 1 || 1) : 0.75
-
-  // 根据新数据长度计算新的索引位置
-  const newDataLength = props.labels.length
-  if (newDataLength > 0) {
-    leftIndex.value = Math.floor(oldLeftRatio * (newDataLength - 1))
-    rightIndex.value = Math.max(
-      leftIndex.value + 1,
-      Math.floor(oldRightRatio * (newDataLength - 1)),
-    )
-
-    // 确保右索引不超过数组长度
-    rightIndex.value = Math.min(rightIndex.value, newDataLength - 1)
-
-    // 同步滑动条的值
-    leftIndexSlider.value = leftIndex.value
-    rightIndexSlider.value = rightIndex.value
-  } else {
-    // 如果没有数据，重置索引
-    leftIndex.value = null
-    rightIndex.value = null
-    leftIndexSlider.value = 0
-    rightIndexSlider.value = 0
-  }
-
-  // 完全重新初始化图表
-  nextTick(() => {
-    initChart()
-
-    // 通知父组件新的选中范围
-    if (leftIndex.value !== null && rightIndex.value !== null) {
-      emit('range-change', {
-        leftIndex: leftIndex.value,
-        rightIndex: rightIndex.value,
-      })
-    }
-  })
-}
-
-// 深度监听数据变化
-watch(
-  () => props.labels,
-  (newLabels, oldLabels) => {
-    if (JSON.stringify(newLabels) !== JSON.stringify(oldLabels)) {
-      // 数据发生根本变化，需要重建图表
-      rebuildChart()
-    }
-  },
-  { deep: true },
-)
-
-watch(
-  () => props.values,
-  (newValues, oldValues) => {
-    if (JSON.stringify(newValues) !== JSON.stringify(oldValues)) {
-      // 数据发生根本变化，需要重建图表
-      rebuildChart()
-    }
-  },
-  { deep: true },
-)
 
 // 监听主题变化
 watch(
@@ -690,12 +622,6 @@ onMounted(() => {
   initializeIndexPositions()
   nextTick(() => {
     initChart()
-    nextTick(() => {
-      emit('range-change', {
-        leftIndex: leftIndex.value,
-        rightIndex: rightIndex.value,
-      })
-    })
   })
 })
 
@@ -710,14 +636,14 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.timeline-chart-card {
+.timeline-selector-card {
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
   will-change: transform, box-shadow;
   border-radius: 28px !important;
 }
 
-.timeline-chart-card:hover {
+.timeline-selector-card:hover {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14) !important;
   transform: translateY(-2px);
 }
@@ -729,6 +655,7 @@ onBeforeUnmount(() => {
   border-radius: 24px;
   overflow: hidden;
   background-color: #f7f2fa; /* 浅色模式背景 */
+  transition: background-color 0.3s ease;
 }
 
 .chart-container.dark-mode {
@@ -750,17 +677,18 @@ onBeforeUnmount(() => {
   transition: all 0.3s ease;
 }
 
-.selection-info {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-top: 12px;
-  padding: 8px 0;
+.range-display {
+  position: relative;
+  transition: all 0.3s ease;
 }
 
-.sliders-container {
+.range-slider-container {
   padding: 0 12px;
   margin-top: 16px;
+}
+
+.range-label-container {
+  padding: 0 12px;
 }
 
 .v-chip {
@@ -771,6 +699,28 @@ onBeforeUnmount(() => {
 }
 
 .v-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.range-separator {
+  font-weight: 500;
+  color: var(--v-theme-on-surface-variant);
+}
+
+.range-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.confirm-btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.25px;
+  font-weight: 500;
+}
+
+.confirm-btn:not(:disabled):hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
@@ -798,7 +748,7 @@ onBeforeUnmount(() => {
 }
 
 .slider-label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   padding: 2px 4px;
   white-space: nowrap;
@@ -812,5 +762,17 @@ onBeforeUnmount(() => {
 :deep(.v-tooltip .v-overlay__content) {
   background: transparent;
   box-shadow: none;
+}
+
+@media (max-width: 600px) {
+  .v-btn-group {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .confirm-btn {
+    margin-top: 12px;
+    width: 100%;
+  }
 }
 </style>
