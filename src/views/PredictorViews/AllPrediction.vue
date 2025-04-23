@@ -10,7 +10,7 @@
     <v-skeleton-loader type="card" v-else></v-skeleton-loader>
     <div class="tw-mt-4">
       <v-expansion-panels variant="popout">
-        <v-expansion-panel title="Naive Prediction" @click="refreshData">
+        <v-expansion-panel title="Naive Prediction">
           <v-expansion-panel-text>
             <BasePredictionChart
               :actualSales="originData.slice(predictorModel.st, predictorModel.ed)"
@@ -22,7 +22,7 @@
             <v-skeleton-loader type="card" v-else></v-skeleton-loader>
           </v-expansion-panel-text>
         </v-expansion-panel>
-        <v-expansion-panel title="Exponential Forecasting Method" @click="refreshData">
+        <v-expansion-panel title="Exponential Forecasting Method">
           <v-expansion-panel-text>
             <AlphaSlider @update:alpha="changeAlpha" />
             <BasePredictionChart
@@ -35,7 +35,7 @@
             <v-skeleton-loader type="card" v-else></v-skeleton-loader>
           </v-expansion-panel-text>
         </v-expansion-panel>
-        <v-expansion-panel title="ARIMA Forecasting Method" @click="refreshData">
+        <v-expansion-panel title="ARIMA Forecasting Method">
           <v-expansion-panel-text>
             <div v-if="arimaLoaded">
               <updateArimaPrams @update-arima-params="handleArimaParamsUpdate" />
@@ -58,7 +58,7 @@
             </div>
           </v-expansion-panel-text>
         </v-expansion-panel>
-        <v-expansion-panel title="Neural Network Forecasting Method" @click="refreshData">
+        <v-expansion-panel title="Neural Network Forecasting Method">
           <v-expansion-panel-text>
             <BasePredictionChart
               :actualSales="originData.slice(predictorModel.st, predictorModel.ed)"
@@ -250,10 +250,11 @@ const changeModelStatus = async () => {
   refreshNeu()
 }
 
+/**used for refresh the item and store */
 const refreshData = async ({ store, item }) => {
   predictorModel.value.store = store
   predictorModel.value.item = item
-  await predictor.changeModel(predictorModel.value)
+  changeModelStatus()
 }
 
 const handleRangeChange = async ({ leftIndex, rightIndex }) => {
@@ -270,10 +271,7 @@ const handleRangeChange = async ({ leftIndex, rightIndex }) => {
 const changeAlpha = async (alpha) => {
   predictorModel.value.alpha = alpha
   await predictor.changeModel(predictorModel.value)
-  predictor.expPredict().then((result) => {
-    if (result == undefined) return
-    expPrediction.value = result
-  })
+  refreshExp()
 }
 
 // 初始化所有对象，并获取所有初始模型对应的数据

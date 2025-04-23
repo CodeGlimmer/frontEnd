@@ -94,15 +94,15 @@ export default {
     },
   },
 
-  watch: {
-    // 同步外部属性变化
-    initialStore(newVal) {
-      this.localStore = newVal
-    },
-    initialItem(newVal) {
-      this.localItem = newVal
-    },
-  },
+  // watch: {
+  //   // 同步外部属性变化
+  //   initialStore(newVal) {
+  //     this.localStore = newVal
+  //   },
+  //   initialItem(newVal) {
+  //     this.localItem = newVal
+  //   },
+  // },
 }
 </script>
 
