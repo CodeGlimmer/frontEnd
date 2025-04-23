@@ -267,22 +267,63 @@ const initChart = () => {
   // 如果图表已存在，销毁它
   if (chartInstance.value) {
     chartInstance.value.dispose()
+    chartInstance.value = null
   }
 
+  // 在创建新图表实例前先确保容器尺寸已设置正确
+  updateChartSize()
+
+  // 创建新的图表实例
   chartInstance.value = echarts.init(chartRef.value, null, {
     renderer: 'canvas',
     useDirtyRect: true,
   })
 
-  updateChartSize()
+  // 更新图表数据和配置
   updateChart()
 
+  // 添加窗口大小变化的监听器
   window.addEventListener('resize', handleResize)
+
+  // 添加ResizeObserver来监听容器大小的变化
+  if (window.ResizeObserver) {
+    const resizeObserver = new ResizeObserver(
+      debounce(() => {
+        if (chartContainerRef.value && chartInstance.value) {
+          updateChartSize()
+          chartInstance.value.resize()
+          updateChart()
+        }
+      }, 100),
+    )
+
+    if (chartContainerRef.value) {
+      resizeObserver.observe(chartContainerRef.value)
+    }
+
+    // 在组件销毁时清理
+    onBeforeUnmount(() => {
+      resizeObserver.disconnect()
+    })
+  }
+}
+
+// 防抖函数
+const debounce = (fn, delay) => {
+  let timer = null
+  return function () {
+    const context = this
+    const args = arguments
+    clearTimeout(timer)
+    timer = setTimeout(() => {
+      fn.apply(context, args)
+    }, delay)
+  }
 }
 
 // 更新图表大小
 const updateChartSize = () => {
-  if (!chartContainerRef.value || !chartInstance.value) return
+  if (!chartContainerRef.value) return
 
   // 检查设备类型
   checkMobileDevice()
@@ -293,19 +334,34 @@ const updateChartSize = () => {
     ? Math.min(containerWidth * 0.8, 280)
     : Math.min(containerWidth * 0.6, 320)
 
-  chartRef.value.style.width = containerWidth + 'px'
-  chartRef.value.style.height = containerHeight + 'px'
-  chartInstance.value.resize()
+  // 设置图表容器的明确高度
+  chartContainerRef.value.style.height = containerHeight + 'px'
+
+  // 设置图表的尺寸
+  if (chartRef.value) {
+    chartRef.value.style.width = '100%'
+    chartRef.value.style.height = '100%'
+  }
+
+  // 如果图表实例存在，调整其大小
+  if (chartInstance.value) {
+    chartInstance.value.resize()
+  }
 }
 
 // 节流处理的resize函数
 let resizeTimeout
 const handleResize = () => {
-  clearTimeout(resizeTimeout)
+  if (resizeTimeout) {
+    clearTimeout(resizeTimeout)
+  }
+
   resizeTimeout = setTimeout(() => {
     updateChartSize()
-    checkMobileDevice()
-    updateChart()
+    if (chartInstance.value) {
+      chartInstance.value.resize()
+      updateChart()
+    }
   }, 100)
 }
 
@@ -617,17 +673,41 @@ watch(
   },
 )
 
+// 监听props变化
+watch(
+  () => [props.labels, props.values],
+  () => {
+    // 当数据发生变化时重新初始化图表
+    nextTick(() => {
+      initializeIndexPositions()
+      if (chartInstance.value) {
+        updateChart()
+      } else {
+        initChart()
+      }
+    })
+  },
+  { deep: true },
+)
+
 // 组件挂载时
 onMounted(() => {
   initializeIndexPositions()
+
+  // 使用nextTick确保DOM已经渲染完成
   nextTick(() => {
-    initChart()
+    // 给DOM元素一些时间来设置布局
+    setTimeout(() => {
+      initChart()
+    }, 0)
   })
 })
 
 // 组件卸载前清理
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
+  clearTimeout(resizeTimeout)
+
   if (chartInstance.value) {
     chartInstance.value.dispose()
     chartInstance.value = null
@@ -650,31 +730,30 @@ onBeforeUnmount(() => {
 
 .chart-container {
   width: 100%;
-  height: 320px;
   position: relative;
   border-radius: 24px;
   overflow: hidden;
   background-color: #f7f2fa; /* 浅色模式背景 */
-  transition: background-color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    height 0.3s ease;
 }
 
 .chart-container.dark-mode {
   background-color: #2d2c33; /* 深色模式背景 */
 }
 
-@media (max-width: 767px) {
-  .chart-container {
-    height: 280px;
-  }
-}
-
 .chart {
   width: 100%;
   height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: relative;
   transition: all 0.3s ease;
+}
+
+@media (max-width: 767px) {
+  .chart-container {
+    max-height: 280px;
+  }
 }
 
 .range-display {
