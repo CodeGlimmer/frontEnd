@@ -214,314 +214,329 @@
   </v-container>
 </template>
 
-<script>
-export default {
+<script setup>
+// import { last } from 'lodash-es'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
+
+// 定义组件名称
+defineOptions({
   name: 'AlphaSliderTool',
+})
 
-  directives: {
-    textReveal: {
-      inserted: (el) => {
-        el.classList.add('text-reveal-animation')
-        setTimeout(() => {
-          el.classList.remove('text-reveal-animation')
-        }, 600)
-      },
-      update: (el) => {
-        el.classList.add('text-reveal-animation')
-        setTimeout(() => {
-          el.classList.remove('text-reveal-animation')
-        }, 600)
-      },
-    },
-  },
+// 定义emit
+const emit = defineEmits(['update:alpha', 'saved'])
 
-  data() {
-    return {
-      alpha: 0.6, // 默认值
-      alphaInput: '0.60',
-      defaultAlpha: 0.6,
-      isValidAlpha: true,
-      alphaErrorMsg: '',
-      showPreview: false,
-      isExpanded: false,
-      isSaving: false,
-      valueChanged: false,
-      initialLoad: true,
-      lastAppliedAlpha: 0.6,
-      snackbar: {
-        show: false,
-        text: '',
-        color: 'success',
-        timeout: 3000,
-        icon: 'mdi-check-circle',
-      },
-      alphaChangeAnimation: null,
-      sliderInteraction: false,
-    }
-  },
-
-  computed: {
-    getAlphaColor() {
-      if (this.alpha <= 0.3) return 'blue'
-      if (this.alpha <= 0.6) return 'primary'
-      if (this.alpha <= 0.8) return 'orange'
-      return 'red'
-    },
-
-    getAlphaColorClass() {
-      if (this.alpha <= 0.3) return 'blue--text'
-      if (this.alpha <= 0.6) return 'primary--text'
-      if (this.alpha <= 0.8) return 'orange--text'
-      return 'red--text'
-    },
-
-    hasChanges() {
-      return this.lastAppliedAlpha !== this.alpha
-    },
-  },
-
-  watch: {
-    alpha(newVal, oldVal) {
-      if (!this.initialLoad && Math.abs(newVal - oldVal) > 0.001) {
-        this.valueChanged = true
-        this.alphaInput = newVal.toFixed(2)
-
-        // Cancel previous animation
-        if (this.alphaChangeAnimation) {
-          clearTimeout(this.alphaChangeAnimation)
-        }
-
-        // If the change is not from slider interaction, add animation
-        if (!this.sliderInteraction) {
-          this.animateAlphaChange()
-        }
-      }
-    },
-
-    isExpanded(val) {
-      if (val) {
-        this.$nextTick(() => {
-          this.showPreview = true
-        })
-      }
-    },
-
-    hasChanges(val) {
-      if (val && this.isExpanded) {
-        this.pulseActionButtons()
-      }
-    },
-  },
-
-  methods: {
-    toggleExpand() {
-      this.isExpanded = !this.isExpanded
-
-      if (this.isExpanded) {
-        // Add entry animation
-        this.$nextTick(() => {
-          this.animateCardEntry()
-        })
-      }
-    },
-
-    animateCardEntry() {
-      const elements = document.querySelectorAll('.card-content > *')
-      elements.forEach((el, index) => {
-        el.style.opacity = '0'
-        el.style.transform = 'translateY(10px)'
-
-        setTimeout(
-          () => {
-            el.style.transition = 'opacity 0.3s ease, transform 0.3s ease'
-            el.style.opacity = '1'
-            el.style.transform = 'translateY(0)'
-          },
-          50 + index * 50,
-        )
-      })
-    },
-
-    animateAlphaChange() {
-      this.alphaChangeAnimation = setTimeout(() => {
-        const valueDisplay = document.querySelector('.alpha-value-display')
-        if (valueDisplay) {
-          valueDisplay.classList.add('pulse-animation')
-          setTimeout(() => {
-            valueDisplay.classList.remove('pulse-animation')
-          }, 600)
-        }
-      }, 100)
-    },
-
-    pulseActionButtons() {
-      const saveBtn = document.querySelector('.save-btn')
-      if (saveBtn) {
-        saveBtn.classList.add('pulse-animation')
-        setTimeout(() => {
-          saveBtn.classList.remove('pulse-animation')
-        }, 600)
-      }
-    },
-
-    onSliderInput() {
-      this.sliderInteraction = true
-      this.validateAlpha()
-      this.showPreview = true
-
-      // Reset the slider interaction flag after a short delay
-      setTimeout(() => {
-        this.sliderInteraction = false
-      }, 100)
-    },
-
-    validateAlpha() {
-      // 确保值在0到1之间
-      if (typeof this.alphaInput === 'string') {
-        this.alphaInput = this.alphaInput.replace(/[^\d.-]/g, '')
-      }
-
-      const parsedValue = parseFloat(this.alphaInput)
-
-      if (isNaN(parsedValue)) {
-        this.isValidAlpha = false
-        this.alphaErrorMsg = '请输入有效数字'
-        return
-      }
-
-      if (parsedValue < 0) {
-        this.isValidAlpha = false
-        this.alphaErrorMsg = 'Alpha不能小于0'
-      } else if (parsedValue > 1) {
-        this.isValidAlpha = false
-        this.alphaErrorMsg = 'Alpha不能大于1'
-      } else {
-        this.isValidAlpha = true
-        this.alphaErrorMsg = ''
-      }
-    },
-
-    applyManualInput() {
-      if (this.isValidAlpha) {
-        const parsedValue = parseFloat(this.alphaInput)
-        if (!isNaN(parsedValue)) {
-          this.alpha = Math.max(0, Math.min(1, parsedValue))
-          this.alphaInput = this.alpha.toFixed(2)
-          this.showPreview = true
-        }
-      }
-    },
-
-    applyAlpha() {
-      if (!this.isValidAlpha) return
-
-      // 视觉反馈
-      const applyBtn = document.querySelector('.apply-btn')
-      applyBtn.classList.add('button-pulse')
-      setTimeout(() => {
-        applyBtn.classList.remove('button-pulse')
-      }, 300)
-
-      this.lastAppliedAlpha = this.alpha
-      this.valueChanged = false
-      this.showPreview = true
-
-      // 动画展示预览
-      const previewEl = document.querySelector('.preview-container')
-      if (previewEl) {
-        previewEl.classList.add('preview-highlight')
-        setTimeout(() => {
-          previewEl.classList.remove('preview-highlight')
-        }, 600)
-      }
-
-      console.log(`应用Alpha值: ${this.alpha}`)
-      // 触发事件通知父组件
-      this.$emit('update:alpha', this.alpha)
-
-      this.showNotification('参数已应用', 'success', 'mdi-check-circle')
-    },
-
-    resetAlpha() {
-      const oldAlpha = this.alpha
-      this.alpha = this.defaultAlpha
-      this.alphaInput = this.alpha.toFixed(2)
-      this.validateAlpha()
-      this.showPreview = true
-
-      if (Math.abs(oldAlpha - this.alpha) > 0.001) {
-        this.showNotification('参数已重置为默认值', 'info', 'mdi-refresh')
-      }
-
-      // 触发事件通知父组件
-      this.$emit('update:alpha', this.alpha)
-    },
-
-    saveAlpha() {
-      this.isSaving = true
-
-      // 模拟保存操作延迟
-      setTimeout(() => {
-        // 保存当前设置的逻辑
-        console.log(`保存Alpha值: ${this.alpha}`)
-        // 保存到localStorage
-        localStorage.setItem('exponentialSmoothingAlpha', this.alpha)
-
-        this.lastAppliedAlpha = this.alpha
-        this.valueChanged = false
-        this.isSaving = false
-
-        // 显示成功消息
-        this.showNotification('设置已保存', 'success', 'mdi-content-save')
-        this.$emit('saved', this.alpha)
-      }, 600)
-    },
-
-    showNotification(text, color, icon) {
-      this.snackbar = {
-        show: true,
-        text,
-        color,
-        timeout: 3000,
-        icon,
-      }
-    },
-  },
-
-  created() {
-    // 从localStorage加载之前的设置（如果有）
-    const savedAlpha = localStorage.getItem('exponentialSmoothingAlpha')
-    if (savedAlpha !== null) {
-      this.alpha = parseFloat(savedAlpha)
-      this.lastAppliedAlpha = this.alpha
-    } else {
-      this.lastAppliedAlpha = this.defaultAlpha
-    }
-
-    this.alphaInput = this.alpha.toFixed(2)
-
-    // 设置短暂延迟后初始化完成
+// 自定义指令
+const vTextReveal = {
+  mounted: (el) => {
+    el.classList.add('text-reveal-animation')
     setTimeout(() => {
-      this.initialLoad = false
-    }, 500)
+      el.classList.remove('text-reveal-animation')
+    }, 600)
   },
-
-  mounted() {
-    // 添加滑块交互效果
-    const sliderThumb = document.querySelector('.v-slider__thumb')
-    if (sliderThumb) {
-      sliderThumb.addEventListener('mousedown', () => {
-        document.querySelector('.alpha-slider').classList.add('slider-active')
-      })
-
-      document.addEventListener('mouseup', () => {
-        document.querySelector('.alpha-slider').classList.remove('slider-active')
-      })
-    }
+  updated: (el) => {
+    el.classList.add('text-reveal-animation')
+    setTimeout(() => {
+      el.classList.remove('text-reveal-animation')
+    }, 600)
   },
 }
-</script>
 
+// 反应式状态
+const alpha = ref(0.6) // 默认值
+const alphaInput = ref('0.60')
+const defaultAlpha = ref(0.6)
+const isValidAlpha = ref(true)
+const alphaErrorMsg = ref('')
+const showPreview = ref(false)
+const isExpanded = ref(false)
+const isSaving = ref(false)
+const valueChanged = ref(false)
+const initialLoad = ref(true)
+const lastAppliedAlpha = ref(0.6)
+const snackbar = ref({
+  show: false,
+  text: '',
+  color: 'success',
+  timeout: 3000,
+  icon: 'mdi-check-circle',
+})
+let alphaChangeAnimation = null
+const sliderInteraction = ref(false)
+
+// 计算属性
+const getAlphaColor = computed(() => {
+  if (alpha.value <= 0.3) return 'blue'
+  if (alpha.value <= 0.6) return 'primary'
+  if (alpha.value <= 0.8) return 'orange'
+  return 'red'
+})
+
+const getAlphaColorClass = computed(() => {
+  if (alpha.value <= 0.3) return 'blue--text'
+  if (alpha.value <= 0.6) return 'primary--text'
+  if (alpha.value <= 0.8) return 'orange--text'
+  return 'red--text'
+})
+
+const hasChanges = computed(() => {
+  return lastAppliedAlpha.value !== alpha.value
+})
+
+// 侦听器
+watch(alpha, (newVal, oldVal) => {
+  if (!initialLoad.value && Math.abs(newVal - oldVal) > 0.001) {
+    valueChanged.value = true
+    alphaInput.value = newVal.toFixed(2)
+
+    // Cancel previous animation
+    if (alphaChangeAnimation) {
+      clearTimeout(alphaChangeAnimation)
+    }
+
+    // If the change is not from slider interaction, add animation
+    if (!sliderInteraction.value) {
+      animateAlphaChange()
+    }
+  }
+})
+
+watch(isExpanded, (val) => {
+  if (val) {
+    nextTick(() => {
+      showPreview.value = true
+    })
+  }
+})
+
+watch(hasChanges, (val) => {
+  if (val && isExpanded.value) {
+    pulseActionButtons()
+  }
+})
+
+// 方法
+function toggleExpand() {
+  isExpanded.value = !isExpanded.value
+
+  if (isExpanded.value) {
+    // Add entry animation
+    nextTick(() => {
+      animateCardEntry()
+    })
+  }
+}
+
+function animateCardEntry() {
+  const elements = document.querySelectorAll('.card-content > *')
+  elements.forEach((el, index) => {
+    el.style.opacity = '0'
+    el.style.transform = 'translateY(10px)'
+
+    setTimeout(
+      () => {
+        el.style.transition = 'opacity 0.3s ease, transform 0.3s ease'
+        el.style.opacity = '1'
+        el.style.transform = 'translateY(0)'
+      },
+      50 + index * 50,
+    )
+  })
+}
+
+function animateAlphaChange() {
+  alphaChangeAnimation = setTimeout(() => {
+    const valueDisplay = document.querySelector('.alpha-value-display')
+    if (valueDisplay) {
+      valueDisplay.classList.add('pulse-animation')
+      setTimeout(() => {
+        valueDisplay.classList.remove('pulse-animation')
+      }, 600)
+    }
+  }, 100)
+}
+
+function pulseActionButtons() {
+  const saveBtn = document.querySelector('.save-btn')
+  if (saveBtn) {
+    saveBtn.classList.add('pulse-animation')
+    setTimeout(() => {
+      saveBtn.classList.remove('pulse-animation')
+    }, 600)
+  }
+}
+
+function onSliderInput() {
+  sliderInteraction.value = true
+  validateAlpha()
+  showPreview.value = true
+
+  // Reset the slider interaction flag after a short delay
+  setTimeout(() => {
+    sliderInteraction.value = false
+  }, 100)
+}
+
+function validateAlpha() {
+  // 确保值在0到1之间
+  if (typeof alphaInput.value === 'string') {
+    alphaInput.value = alphaInput.value.replace(/[^\d.-]/g, '')
+  }
+
+  const parsedValue = parseFloat(alphaInput.value)
+
+  if (isNaN(parsedValue)) {
+    isValidAlpha.value = false
+    alphaErrorMsg.value = '请输入有效数字'
+    return
+  }
+
+  if (parsedValue < 0) {
+    isValidAlpha.value = false
+    alphaErrorMsg.value = 'Alpha不能小于0'
+  } else if (parsedValue > 1) {
+    isValidAlpha.value = false
+    alphaErrorMsg.value = 'Alpha不能大于1'
+  } else {
+    isValidAlpha.value = true
+    alphaErrorMsg.value = ''
+  }
+}
+
+function applyManualInput() {
+  if (isValidAlpha.value) {
+    const parsedValue = parseFloat(alphaInput.value)
+    if (!isNaN(parsedValue)) {
+      alpha.value = Math.max(0, Math.min(1, parsedValue))
+      alphaInput.value = alpha.value.toFixed(2)
+      showPreview.value = true
+    }
+  }
+}
+
+function applyAlpha() {
+  if (!isValidAlpha.value) return
+
+  // 视觉反馈
+  const applyBtn = document.querySelector('.apply-btn')
+  applyBtn.classList.add('button-pulse')
+  setTimeout(() => {
+    applyBtn.classList.remove('button-pulse')
+  }, 300)
+
+  lastAppliedAlpha.value = alpha.value
+  valueChanged.value = false
+  showPreview.value = true
+
+  // 动画展示预览
+  const previewEl = document.querySelector('.preview-container')
+  if (previewEl) {
+    previewEl.classList.add('preview-highlight')
+    setTimeout(() => {
+      previewEl.classList.remove('preview-highlight')
+    }, 600)
+  }
+
+  console.log(`应用Alpha值: ${alpha.value}`)
+  // 触发事件通知父组件
+  saveAlpha()
+  emit('update:alpha', alpha.value)
+
+  showNotification('参数已应用', 'success', 'mdi-check-circle')
+}
+
+function resetAlpha() {
+  const oldAlpha = alpha.value
+  alpha.value = defaultAlpha.value
+  alphaInput.value = alpha.value.toFixed(2)
+  validateAlpha()
+  showPreview.value = true
+
+  if (Math.abs(oldAlpha - alpha.value) > 0.001) {
+    showNotification('参数已重置为默认值', 'info', 'mdi-refresh')
+  }
+
+  // 触发事件通知父组件
+  emit('update:alpha', alpha.value)
+}
+
+function saveAlpha() {
+  isSaving.value = true
+
+  // 模拟保存操作延迟
+  setTimeout(() => {
+    // 保存当前设置的逻辑
+    console.log(`保存Alpha值: ${alpha.value}`)
+    // 保存到Storage
+    localStorage.setItem('exponentialSmoothingAlpha', alpha.value)
+
+    lastAppliedAlpha.value = alpha.value
+    valueChanged.value = false
+    isSaving.value = false
+
+    // 显示成功消息
+    showNotification('设置已保存', 'success', 'mdi-content-save')
+    emit('saved', alpha.value)
+  }, 600)
+}
+
+function showNotification(text, color, icon) {
+  snackbar.value = {
+    show: true,
+    text,
+    color,
+    timeout: 3000,
+    icon,
+  }
+}
+
+// 生命周期钩子
+// created
+;(() => {
+  // 从localStorage加载之前的设置（如果有）
+  console.log('Hello')
+  const savedAlpha = localStorage.getItem('exponentialSmoothingAlpha')
+  if (savedAlpha !== null) {
+    alpha.value = parseFloat(savedAlpha)
+    lastAppliedAlpha.value = alpha.value
+  } else {
+    lastAppliedAlpha.value = defaultAlpha.value
+  }
+
+  alphaInput.value = alpha.value.toFixed(2)
+
+  // 设置短暂延迟后初始化完成
+  setTimeout(() => {
+    initialLoad.value = false
+  }, 500)
+})()
+
+onMounted(() => {
+  // 添加滑块交互效果
+  const sliderThumb = document.querySelector('.v-slider__thumb')
+  if (sliderThumb) {
+    sliderThumb.addEventListener('mousedown', () => {
+      document.querySelector('.alpha-slider').classList.add('slider-active')
+    })
+
+    document.addEventListener('mouseup', () => {
+      document.querySelector('.alpha-slider').classList.remove('slider-active')
+    })
+  }
+})
+
+// 导出自定义指令和其他方法供模板使用
+defineExpose({
+  vTextReveal,
+  toggleExpand,
+  onSliderInput,
+  validateAlpha,
+  applyManualInput,
+  applyAlpha,
+  resetAlpha,
+  saveAlpha,
+})
+</script>
 <style scoped>
 .alpha-slider-container {
   position: relative;

@@ -662,6 +662,7 @@ const formatDate = (dateStr) => {
     const date = new Date(dateStr)
     return date.toLocaleDateString('zh-CN')
   } catch (e) {
+    console.log(e)
     return dateStr
   }
 }
@@ -713,7 +714,7 @@ const initChart = () => {
       // 主题颜色
       const actualColor = isDarkMode.value ? '#5CDF6C' : '#4CAF50' // 真实销售线
       const predictedColor = isDarkMode.value ? '#FFA726' : '#FF9800' // 预测销售线
-      const diffAreaColor = isDarkMode.value ? 'rgba(244, 67, 54, 0.3)' : 'rgba(244, 67, 54, 0.2)' // 误差区域
+      // const diffAreaColor = isDarkMode.value ? 'rgba(244, 67, 54, 0.3)' : 'rgba(244, 67, 54, 0.2)' // 误差区域
 
       // 实际销售面积渐变
       const actualAreaGradient = new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -748,7 +749,7 @@ const initChart = () => {
       ])
 
       // 计算最高销售额以确定Y轴上限
-      const maxSales = Math.max(...actual, ...predicted.filter((v) => v !== null))
+      // const maxSales = Math.max(...actual, ...predicted.filter((v) => v !== null))
 
       // 找到趋势线的起点和终点
       const trendStart = actual[0] || 0

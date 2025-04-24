@@ -24,8 +24,10 @@
 
     <v-card-text class="px-4 pt-6 pb-4">
       <!-- 图表容器 -->
-      <div ref="chartContainerRef" class="chart-container" :class="{ 'dark-mode': isDarkMode }">
-        <div ref="chartRef" class="chart"></div>
+      <div class="tw-flex tw-justify-center">
+        <div ref="chartContainerRef" class="chart-container" :class="{ 'dark-mode': isDarkMode }">
+          <div ref="chartRef" class="chart tw-flex tw-justify-center"></div>
+        </div>
       </div>
 
       <!-- 时间范围展示 -->
@@ -273,38 +275,40 @@ const initChart = () => {
   // 在创建新图表实例前先确保容器尺寸已设置正确
   updateChartSize()
 
-  // 创建新的图表实例
-  chartInstance.value = echarts.init(chartRef.value, null, {
-    renderer: 'canvas',
-    useDirtyRect: true,
-  })
-
-  // 更新图表数据和配置
-  updateChart()
-
-  // 添加窗口大小变化的监听器
-  window.addEventListener('resize', handleResize)
-
-  // 添加ResizeObserver来监听容器大小的变化
-  if (window.ResizeObserver) {
-    const resizeObserver = new ResizeObserver(
-      debounce(() => {
-        if (chartContainerRef.value && chartInstance.value) {
-          updateChartSize()
-          chartInstance.value.resize()
-          updateChart()
-        }
-      }, 100),
-    )
-
-    if (chartContainerRef.value) {
-      resizeObserver.observe(chartContainerRef.value)
-    }
-
-    // 在组件销毁时清理
-    onBeforeUnmount(() => {
-      resizeObserver.disconnect()
+  try {
+    // 创建新的图表实例
+    chartInstance.value = echarts.init(chartRef.value, null, {
+      renderer: 'canvas',
+      useDirtyRect: true,
     })
+
+    // 更新图表数据和配置
+    updateChart()
+
+    // 添加窗口大小变化的监听器
+    // window.addEventListener('resize', handleResize)
+
+    // 添加ResizeObserver来监听容器大小的变化
+    if (window.ResizeObserver) {
+      const resizeObserver = new ResizeObserver(
+        debounce(() => {
+          if (chartContainerRef.value && chartInstance.value) {
+            updateChart()
+          }
+        }, 100),
+      )
+
+      if (chartContainerRef.value) {
+        resizeObserver.observe(chartContainerRef.value)
+      }
+
+      // 在组件销毁时清理
+      // onBeforeUnmount(() => {
+      //   resizeObserver.disconnect()
+      // })
+    }
+  } catch (error) {
+    console.error('Chart initialization error:', error)
   }
 }
 
@@ -341,11 +345,6 @@ const updateChartSize = () => {
   if (chartRef.value) {
     chartRef.value.style.width = '100%'
     chartRef.value.style.height = '100%'
-  }
-
-  // 如果图表实例存在，调整其大小
-  if (chartInstance.value) {
-    chartInstance.value.resize()
   }
 }
 
@@ -428,238 +427,249 @@ const getThemeColors = () => {
 const updateChart = () => {
   if (!chartInstance.value) return
 
-  // 获取当前主题颜色
-  const themeColors = getThemeColors()
+  try {
+    // 获取当前主题颜色
+    const themeColors = getThemeColors()
 
-  // 根据设备类型调整配置
-  const labelRotation = isMobile.value ? 75 : props.labels.length > 12 ? 45 : 0
-  const labelInterval = isMobile.value
-    ? Math.max(0, Math.ceil(props.labels.length / 10) - 1)
-    : Math.max(0, Math.ceil(props.labels.length / 20) - 1)
+    // 根据设备类型调整配置
+    const labelRotation = isMobile.value ? 75 : props.labels.length > 12 ? 45 : 0
+    const labelInterval = isMobile.value
+      ? Math.max(0, Math.ceil(props.labels.length / 10) - 1)
+      : Math.max(0, Math.ceil(props.labels.length / 20) - 1)
 
-  // 定义标记区域（预测区间）
-  const markArea = {
-    itemStyle: {
-      color: themeColors.markAreaColor,
-      borderColor: 'transparent',
-      borderWidth: 0,
-    },
-    data: [
-      [
-        {
-          name: '预测区间',
-          xAxis: leftIndex.value,
+    // 定义标记区域（预测区间）
+    const markArea = {
+      itemStyle: {
+        color: themeColors.markAreaColor,
+        borderColor: 'transparent',
+        borderWidth: 0,
+      },
+      data: [
+        [
+          {
+            name: '预测区间',
+            xAxis: leftIndex.value,
+          },
+          {
+            xAxis: rightIndex.value,
+          },
+        ],
+      ],
+      silent: true,
+    }
+
+    // 准备标记线数据 - 优化后的竖直线样式
+    const markLines = [
+      {
+        silent: true,
+        symbol: ['circle', 'none'],
+        symbolSize: [8, 0],
+        lineStyle: {
+          color: themeColors.primaryColor,
+          width: 2,
+          type: 'solid',
+          cap: 'round',
         },
+        emphasis: {
+          lineStyle: {
+            width: 3,
+            shadowBlur: 6,
+            shadowColor: themeColors.primaryColor,
+          },
+        },
+        label: {
+          show: false,
+        },
+        xAxis: leftIndex.value,
+      },
+      {
+        silent: true,
+        symbol: ['circle', 'none'],
+        symbolSize: [8, 0],
+        lineStyle: {
+          color: themeColors.secondaryColor,
+          width: 2,
+          type: 'solid',
+          cap: 'round',
+        },
+        emphasis: {
+          lineStyle: {
+            width: 3,
+            shadowBlur: 6,
+            shadowColor: themeColors.secondaryColor,
+          },
+        },
+        label: {
+          show: false,
+        },
+        xAxis: rightIndex.value,
+      },
+    ]
+
+    const option = {
+      animation: true,
+      animationDuration: 800,
+      animationEasing: 'cubicInOut',
+      backgroundColor: 'transparent',
+      grid: {
+        left: isMobile.value ? '15%' : '3%',
+        right: isMobile.value ? '5%' : '4%',
+        bottom: isMobile.value ? '15%' : '10%',
+        top: '8%',
+        containLabel: true,
+      },
+      tooltip: {
+        trigger: 'axis',
+        confine: true,
+        formatter: (params) => {
+          const dataIndex = params[0].dataIndex
+          return `${props.labels[dataIndex]}: ${props.values[dataIndex]}`
+        },
+        backgroundColor: themeColors.tooltipBackground,
+        borderColor: 'rgba(0, 0, 0, 0.1)',
+        textStyle: {
+          color: themeColors.tooltipTextColor,
+        },
+        extraCssText:
+          'box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12); border-radius: 16px; padding: 12px;',
+      },
+      xAxis: [
         {
-          xAxis: rightIndex.value,
+          type: 'category',
+          data: props.labels,
+          axisLabel: {
+            rotate: labelRotation,
+            interval: labelInterval,
+            formatter: (value) => {
+              if (isMobile.value) {
+                if (value.length > 6) {
+                  return value.substring(0, 6) + '..'
+                }
+              } else if (props.labels.length > 30 && value.length > 8) {
+                return value.substring(0, 8) + '...'
+              }
+              return value
+            },
+            color: themeColors.textColor,
+          },
+          axisLine: {
+            lineStyle: {
+              color: themeColors.axisColor,
+            },
+          },
+          axisTick: {
+            alignWithLabel: true,
+            lineStyle: {
+              color: themeColors.axisColor,
+            },
+          },
         },
       ],
-    ],
-    silent: true,
-  }
-
-  // 准备标记线数据 - 优化后的竖直线样式
-  const markLines = [
-    {
-      silent: true,
-      symbol: ['circle', 'none'],
-      symbolSize: [8, 0],
-      lineStyle: {
-        color: themeColors.primaryColor,
-        width: 2,
-        type: 'solid',
-        cap: 'round',
-      },
-      emphasis: {
-        lineStyle: {
-          width: 3,
-          shadowBlur: 6,
-          shadowColor: themeColors.primaryColor,
+      yAxis: [
+        {
+          type: 'value',
+          axisLine: {
+            show: false,
+          },
+          axisTick: {
+            show: false,
+          },
+          axisLabel: {
+            color: themeColors.textColor,
+          },
+          splitLine: {
+            lineStyle: {
+              type: 'dashed',
+              color: themeColors.splitLineColor,
+            },
+          },
         },
-      },
-      label: {
-        show: false,
-      },
-      xAxis: leftIndex.value,
-    },
-    {
-      silent: true,
-      symbol: ['circle', 'none'],
-      symbolSize: [8, 0],
-      lineStyle: {
-        color: themeColors.secondaryColor,
-        width: 2,
-        type: 'solid',
-        cap: 'round',
-      },
-      emphasis: {
-        lineStyle: {
-          width: 3,
-          shadowBlur: 6,
-          shadowColor: themeColors.secondaryColor,
+      ],
+      dataZoom: [
+        {
+          type: 'inside',
+          start: 0,
+          end: 100,
+          zoomLock: true, // 锁定缩放功能以避免出现 coordSys undefined 错误
+          throttle: 100,
+          zoomOnMouseWheel: false, // 禁用鼠标滚轮缩放
+          moveOnMouseWheel: false,
+          preventDefaultMouseMove: false,
         },
-      },
-      label: {
-        show: false,
-      },
-      xAxis: rightIndex.value,
-    },
-  ]
-
-  const option = {
-    animation: true,
-    animationDuration: 800,
-    animationEasing: 'cubicInOut',
-    backgroundColor: 'transparent',
-    grid: {
-      left: isMobile.value ? '15%' : '3%',
-      right: isMobile.value ? '5%' : '4%',
-      bottom: isMobile.value ? '15%' : '10%',
-      top: '8%',
-      containLabel: true,
-    },
-    tooltip: {
-      trigger: 'axis',
-      confine: true,
-      formatter: (params) => {
-        const dataIndex = params[0].dataIndex
-        return `${props.labels[dataIndex]}: ${props.values[dataIndex]}`
-      },
-      backgroundColor: themeColors.tooltipBackground,
-      borderColor: 'rgba(0, 0, 0, 0.1)',
-      textStyle: {
-        color: themeColors.tooltipTextColor,
-      },
-      extraCssText:
-        'box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12); border-radius: 16px; padding: 12px;',
-    },
-    xAxis: {
-      type: 'category',
-      data: props.labels,
-      axisLabel: {
-        rotate: labelRotation,
-        interval: labelInterval,
-        formatter: (value) => {
-          if (isMobile.value) {
-            if (value.length > 6) {
-              return value.substring(0, 6) + '..'
-            }
-          } else if (props.labels.length > 30 && value.length > 8) {
-            return value.substring(0, 8) + '...'
-          }
-          return value
-        },
-        color: themeColors.textColor,
-      },
-      axisLine: {
-        lineStyle: {
-          color: themeColors.axisColor,
-        },
-      },
-      axisTick: {
-        alignWithLabel: true,
-        lineStyle: {
-          color: themeColors.axisColor,
-        },
-      },
-    },
-    yAxis: {
-      type: 'value',
-      axisLine: {
-        show: false,
-      },
-      axisTick: {
-        show: false,
-      },
-      axisLabel: {
-        color: themeColors.textColor,
-      },
-      splitLine: {
-        lineStyle: {
-          type: 'dashed',
-          color: themeColors.splitLineColor,
-        },
-      },
-    },
-    dataZoom: [
-      {
-        type: 'inside',
-        start: 0,
-        end: 100,
-        zoomLock: false,
-        throttle: 100,
-        zoomOnMouseWheel: true,
-        moveOnMouseWheel: false,
-        preventDefaultMouseMove: false,
-      },
-    ],
-    series: [
-      {
-        data: props.values,
-        type: 'line',
-        smooth: true,
-        symbol: 'circle',
-        symbolSize: isMobile.value ? 10 : 8, // 移动端增大点的大小
-        showSymbol: props.values.length < 100,
-        emphasis: {
-          scale: true,
-          focus: 'series',
+      ],
+      series: [
+        {
+          data: props.values,
+          type: 'line',
+          smooth: true,
+          symbol: 'circle',
+          symbolSize: isMobile.value ? 10 : 8,
+          showSymbol: props.values.length < 100,
+          emphasis: {
+            scale: true,
+            focus: 'series',
+            itemStyle: {
+              shadowBlur: 16,
+              shadowColor: isDarkMode.value
+                ? 'rgba(208, 188, 255, 0.4)'
+                : 'rgba(103, 80, 164, 0.4)',
+            },
+          },
           itemStyle: {
-            shadowBlur: 16,
-            shadowColor: isDarkMode.value ? 'rgba(208, 188, 255, 0.4)' : 'rgba(103, 80, 164, 0.4)',
+            color: themeColors.primaryColor,
+            borderColor: isDarkMode.value ? '#1C1B1F' : '#fff',
+            borderWidth: 2,
+          },
+          lineStyle: {
+            width: isMobile.value ? 4 : 3,
+            cap: 'round',
+            join: 'round',
+            color: {
+              type: 'linear',
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [
+                {
+                  offset: 0,
+                  color: isDarkMode.value ? '#D0BCFF' : '#9A82DB',
+                },
+                {
+                  offset: 1,
+                  color: isDarkMode.value ? '#9A82DB' : '#6750A4',
+                },
+              ],
+            },
+            shadowColor: isDarkMode.value ? 'rgba(208, 188, 255, 0.2)' : 'rgba(103, 80, 164, 0.2)',
+            shadowBlur: 10,
+          },
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: themeColors.areaColor,
+            },
+            opacity: 0.8,
+          },
+          markArea: markArea,
+          markLine: {
+            silent: true,
+            data: markLines,
+            animationDuration: 300,
           },
         },
-        itemStyle: {
-          color: themeColors.primaryColor,
-          borderColor: isDarkMode.value ? '#1C1B1F' : '#fff',
-          borderWidth: 2,
-        },
-        lineStyle: {
-          width: isMobile.value ? 4 : 3, // 移动端增粗线条
-          cap: 'round',
-          join: 'round',
-          color: {
-            type: 'linear',
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [
-              {
-                offset: 0,
-                color: isDarkMode.value ? '#D0BCFF' : '#9A82DB', // 主色调变化
-              },
-              {
-                offset: 1,
-                color: isDarkMode.value ? '#9A82DB' : '#6750A4', // 主色调变化
-              },
-            ],
-          },
-          shadowColor: isDarkMode.value ? 'rgba(208, 188, 255, 0.2)' : 'rgba(103, 80, 164, 0.2)',
-          shadowBlur: 10,
-        },
-        areaStyle: {
-          color: {
-            type: 'linear',
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: themeColors.areaColor,
-          },
-          opacity: 0.8,
-        },
-        markArea: markArea,
-        markLine: {
-          silent: true,
-          data: markLines,
-          animationDuration: 300,
-        },
-      },
-    ],
-  }
+      ],
+    }
 
-  chartInstance.value.setOption(option, true) // 设置true选项强制重绘
+    // 设置图表选项
+    chartInstance.value.setOption(option, true)
+  } catch (error) {
+    console.error('Error updating chart:', error)
+  }
 }
 
 // 监听主题变化
@@ -693,13 +703,12 @@ watch(
 // 组件挂载时
 onMounted(() => {
   initializeIndexPositions()
-
   // 使用nextTick确保DOM已经渲染完成
   nextTick(() => {
     // 给DOM元素一些时间来设置布局
     setTimeout(() => {
       initChart()
-    }, 0)
+    }, 100) // 增加延迟确保DOM完全准备好
   })
 })
 
@@ -730,6 +739,8 @@ onBeforeUnmount(() => {
 
 .chart-container {
   width: 100%;
+  /* display: flex;
+  justify-content: center; */
   position: relative;
   border-radius: 24px;
   overflow: hidden;

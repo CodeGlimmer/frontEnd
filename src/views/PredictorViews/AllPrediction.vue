@@ -37,8 +37,8 @@
         </v-expansion-panel>
         <v-expansion-panel title="ARIMA Forecasting Method">
           <v-expansion-panel-text>
+            <updateArimaPrams @update-arima-params="handleArimaParamsUpdate" />
             <div v-if="arimaLoaded">
-              <updateArimaPrams @update-arima-params="handleArimaParamsUpdate" />
               <DickeyFullerChart
                 :testDataString="testResult.replace(new RegExp('NaN', 'g'), 'null')"
               />
@@ -272,6 +272,13 @@ const changeAlpha = async (alpha) => {
   predictorModel.value.alpha = alpha
   await predictor.changeModel(predictorModel.value)
   refreshExp()
+}
+
+const handleArimaParamsUpdate = async ({ p, d, q }) => {
+  predictorModel.value.p = p
+  predictorModel.value.d = d
+  predictorModel.value.q = q
+  refreshArima()
 }
 
 // 初始化所有对象，并获取所有初始模型对应的数据
