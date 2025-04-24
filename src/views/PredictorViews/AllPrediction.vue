@@ -278,11 +278,29 @@ const handleArimaParamsUpdate = async ({ p, d, q }) => {
   predictorModel.value.p = p
   predictorModel.value.d = d
   predictorModel.value.q = q
+  await predictor.changeModel(predictorModel.value)
   refreshArima()
 }
 
+// 生命周期，同步所有的localStorage
+;(() => {
+  let lastAlpha = localStorage.getItem('exponentialSmoothingAlpha')
+  let arimaParam = localStorage.getItem('arimaParam')
+  if (lastAlpha) {
+    predictorModel.value.alpha = +lastAlpha
+  }
+  if (arimaParam) {
+    Object.assign(predictorModel.value, JSON.parse(arimaParam))
+  }
+})()
+
 // 初始化所有对象，并获取所有初始模型对应的数据
 onMounted(() => {
+  // 获取localStorage暂存数据，调整模型参数
+  let lastAlpha = localStorage.getItem('exponentialSmoothingAlpha')
+  if (lastAlpha) {
+    predictorModel.value.alpha = lastAlpha
+  }
   changeModelStatus()
 })
 </script>

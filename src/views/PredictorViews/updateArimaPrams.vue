@@ -67,30 +67,43 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ArimaParamsMenu',
-  data() {
-    return {
-      menu: false,
-      p: 7, // 默认值
-      d: 1, // 默认值
-      q: 0, // 默认值
-      tickLabels: [...Array(21).keys()].filter((n) => n % 5 === 0).map(String),
-    }
-  },
-  methods: {
-    updateParams() {
-      // 发送事件到父组件，包含更新的参数
-      this.$emit('update-arima-params', {
-        p: this.p,
-        d: this.d,
-        q: this.q,
-      })
-      this.menu = false // 更新后关闭菜单
-    },
-  },
+<script setup>
+import { ref } from 'vue'
+
+const menu = ref(false)
+const p = ref(7)
+const d = ref(1)
+const q = ref(0)
+const tickLabels = [...Array(21).keys()].filter((n) => n % 5 === 0).map(String)
+
+const eimts = defineEmits(['update-arima-params'])
+
+const updateParams = () => {
+  localStorage.setItem(
+    'arimaParam',
+    JSON.stringify({
+      p: p.value,
+      d: d.value,
+      q: q.value,
+    }),
+  )
+  eimts('update-arima-params', {
+    p: p.value,
+    d: d.value,
+    q: q.value,
+  })
+  menu.value = false
 }
+
+;(() => {
+  let arimaParam = localStorage.getItem('arimaParam')
+  if (arimaParam) {
+    arimaParam = JSON.parse(arimaParam)
+    p.value = arimaParam.p
+    q.value = arimaParam.q
+    d.value = arimaParam.d
+  }
+})()
 </script>
 
 <style scoped>
