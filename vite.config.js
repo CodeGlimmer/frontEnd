@@ -24,12 +24,12 @@ export default defineConfig({
     assetsInlineLimit: 1000000,
     target: 'esnext', // Set to the latest
   },
-  esbuild: {
-    target: 'esnext', // Set to the latest
-    supported: {
-      'top-level-await': true, // Explicitly enable top-level await
-    },
-  },
+  // esbuild: {
+  //   target: 'esnext', // Set to the latest
+  //   supported: {
+  //     'top-level-await': true, // Explicitly enable top-level await
+  //   },
+  // },
   server: {
     host: '0.0.0.0',
     port: 5173,
