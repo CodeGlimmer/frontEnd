@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, useTemplateRef } from 'vue'
 import ROSLIB from 'roslib'
 
 // 定义props
@@ -33,7 +33,7 @@ const emit = defineEmits([
   'status-update',
 ])
 
-const videoCanvas = ref(null)
+const videoCanvas = useTemplateRef('videoCanvas')
 const connectionStatus = ref('initializing')
 const isViewing = ref(false)
 let ros = null
