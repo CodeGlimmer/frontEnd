@@ -1,6 +1,12 @@
 import ROSLIB from 'roslib'
 
 export class KeyboardTeleop {
+  /**
+   * 键盘控制器
+   * @param {Object} options 创建键盘控制器的必要参数
+   * @property {ROSLIB.Ros} ros
+   * @property {String} topic 类似与 '/cmd_vel'
+   */
   constructor(options) {
     this.ros = options.ros
     this.topic = options.topic
@@ -20,8 +26,8 @@ export class KeyboardTeleop {
 
     // 按键映射
     this.keyMapping = {
-      w: { linear: 0.5, angular: 0 },
-      s: { linear: -0.5, angular: 0 },
+      w: { linear: 2.0, angular: 0 },
+      s: { linear: -2.0, angular: 0 },
       a: { linear: 0, angular: 0.5 },
       d: { linear: 0, angular: -0.5 },
     }
