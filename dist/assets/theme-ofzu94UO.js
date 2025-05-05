@@ -1,0 +1,1 @@
+import{G as a,i as t,a as o}from"./index-kmKPHIKf.js";const h=a("themeStore",()=>{const e=t("dark"),r=o(()=>e.value==="dark");return{theme:e,changeTheme:()=>{e.value=e.value=="dark"?"light":"dark"},isDarkMode:r}});export{h as u};
