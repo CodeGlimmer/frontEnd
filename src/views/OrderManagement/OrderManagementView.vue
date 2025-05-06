@@ -71,7 +71,7 @@
                 @click="refreshData"
                 :loading="loading"
                 variant="tonal"
-                class="tw-relative tw-top-1 border-md border-info pa-lg-5"
+                class="tw:relative tw:top-1 border-md border-info pa-lg-5"
                 size="large"
                 v-if="$vuetify.display.smAndDown"
               >

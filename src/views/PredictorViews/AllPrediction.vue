@@ -8,7 +8,7 @@
       v-if="allDataLoaded"
     />
     <v-skeleton-loader type="card" v-else></v-skeleton-loader>
-    <div class="tw-mt-4">
+    <div class="tw:mt-4">
       <v-expansion-panels variant="popout">
         <v-expansion-panel title="Naive Prediction">
           <v-expansion-panel-text>

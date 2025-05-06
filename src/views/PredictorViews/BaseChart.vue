@@ -24,9 +24,9 @@
 
     <v-card-text class="px-4 pt-6 pb-4">
       <!-- 图表容器 -->
-      <div class="tw-flex tw-justify-center">
+      <div class="tw:flex tw:justify-center">
         <div ref="chartContainerRef" class="chart-container" :class="{ 'dark-mode': isDarkMode }">
-          <div ref="chartRef" class="chart tw-flex tw-justify-center"></div>
+          <div ref="chartRef" class="chart tw:flex tw:justify-center"></div>
         </div>
       </div>
 

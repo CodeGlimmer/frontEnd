@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <v-app-bar app color="primary" dark class="rounded-lg">
-      <v-icon class="tw-ml-2">mdi-note-edit-outline</v-icon>
+      <v-icon class="tw:ml-2">mdi-note-edit-outline</v-icon>
       <v-app-bar-title>Material Notes</v-app-bar-title>
     </v-app-bar>
 

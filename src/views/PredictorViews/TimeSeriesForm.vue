@@ -1,7 +1,7 @@
 <template>
   <div class="time-series-toolbar">
     <v-card class="toolbar-card pa-3" elevation="1" rounded="lg">
-      <div class="d-flex align-center flex-wrap tw-gap-6">
+      <div class="d-flex align-center flex-wrap tw:gap-6">
         <div class="text-subtitle-3 font-weight-medium mr-2">预测模型参数</div>
 
         <v-text-field

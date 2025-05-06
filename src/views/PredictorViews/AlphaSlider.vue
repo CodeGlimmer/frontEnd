@@ -109,7 +109,7 @@
                   block
                   small
                   elevation="1"
-                  class="apply-btn tw-mt-2"
+                  class="apply-btn tw:mt-2"
                   :disabled="!isValidAlpha"
                   @click="applyAlpha"
                 >
