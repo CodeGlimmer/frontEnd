@@ -52,12 +52,26 @@ import hhh from '@/components/hhh.vue'
 </script>
 
 <style lang="scss" scoped></style> -->
-<template>
+<!-- <template>
   <SendingOperations />
+  <button class="tw:btn-primary">hhhh</button>
 </template>
 
 <script setup>
 import SendingOperations from '@/views/DashBoard/SendingOperations.vue'
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped></style> -->
+<template>
+  <div
+    class="tw:glass tw:flex tw:gap-2 divide-x tw:divide-accent tw:p-1 tw:bg-primary tw:rounded-xl"
+  >
+    <button class="tw:btn tw:btn-square">
+      <span class="tw:loading tw:loading-spinner"></span>
+    </button>
+    <button class="tw:btn">
+      <span class="tw:loading tw:loading-spinner"></span>
+      loading
+    </button>
+  </div>
+</template>
