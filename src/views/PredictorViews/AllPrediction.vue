@@ -1,15 +1,17 @@
 <template>
   <div>
     <TimeSeriesForm :initial-store="1" :initial-item="1" @refresh-data="refreshData" />
-    <BaseChart
-      :labels="dateData"
-      :values="originData"
-      @range-confirmed="handleRangeChange"
-      v-if="allDataLoaded"
-    />
-    <v-skeleton-loader type="card" v-else></v-skeleton-loader>
-    <div class="tw:mt-4">
-      <v-expansion-panels variant="popout">
+    <div>
+      <BaseChart
+        :labels="dateData"
+        :values="originData"
+        @range-confirmed="handleRangeChange"
+        v-if="allDataLoaded"
+      />
+      <v-skeleton-loader type="card" v-else></v-skeleton-loader>
+    </div>
+    <div>
+      <v-expansion-panels variant="popout" class="tw:!mt-2">
         <v-expansion-panel title="Naive Prediction">
           <v-expansion-panel-text>
             <BasePredictionChart

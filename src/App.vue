@@ -1,4 +1,4 @@
-<!-- <template>
+<template>
   <RouterView v-slot="{ Component }">
     <v-scroll-x-transition :duration="{ enter: 500, leave: 100 }">
       <component :is="Component" />
@@ -8,7 +8,7 @@
 
 <script setup lang="ts"></script>
 
-<style lang="scss" scoped></style> -->
+<style lang="scss" scoped></style>
 <!-- <template>
   <div>键盘控制agv小车</div>
 </template>
@@ -52,26 +52,3 @@ import hhh from '@/components/hhh.vue'
 </script>
 
 <style lang="scss" scoped></style> -->
-<!-- <template>
-  <SendingOperations />
-  <button class="tw:btn-primary">hhhh</button>
-</template>
-
-<script setup>
-import SendingOperations from '@/views/DashBoard/SendingOperations.vue'
-</script>
-
-<style lang="scss" scoped></style> -->
-<template>
-  <div
-    class="tw:glass tw:flex tw:gap-2 divide-x tw:divide-accent tw:p-1 tw:bg-primary tw:rounded-xl"
-  >
-    <button class="tw:btn tw:btn-square">
-      <span class="tw:loading tw:loading-spinner"></span>
-    </button>
-    <button class="tw:btn">
-      <span class="tw:loading tw:loading-spinner"></span>
-      loading
-    </button>
-  </div>
-</template>

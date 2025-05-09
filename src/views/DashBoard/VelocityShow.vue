@@ -1,5 +1,5 @@
 <template>
-  <v-card class="agv-monitor" elevation="2">
+  <v-card class="agv-monitor" elevation="12">
     <v-card-title class="d-flex align-center justify-space-between py-2">
       <span class="text-subtitle-1 font-weight-medium">
         {{ titles[currentIndex] }}
@@ -798,7 +798,7 @@ onBeforeUnmount(() => {
   left: 0;
   width: 100%;
   height: 40px;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.8));
+  /* background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.8)); */
   pointer-events: none;
   z-index: 2;
 }

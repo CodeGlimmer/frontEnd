@@ -25,6 +25,13 @@ export default createRouter({
           children: [
             /**关于ordermanagement的路由 */
             {
+              path: '',
+              name: 'dashboard',
+              components: {
+                main: () => import('@/views/DashBoard/DashBoard.vue'),
+              },
+            },
+            {
               path: 'ordermanagement',
               name: 'ordermanagement',
               /**有几个二级路由就有几个child */

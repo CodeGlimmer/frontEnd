@@ -1,6 +1,9 @@
 <template>
   <div class="keyboard-container" :class="{ 'dark-mode': darkMode }">
-    <div class="keyboard">
+    <div
+      class="keyboard tw:hover:-translate-y-1.5 tw:hover:scale-[1.01] elevation-12 tw:hover:!shadow-m-elevation-24"
+      v-ripple.center
+    >
       <div class="key-row">
         <div
           v-for="key in keys.slice(0, 1)"

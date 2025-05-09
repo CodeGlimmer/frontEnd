@@ -1,5 +1,5 @@
 <template>
-  <v-app :theme="theme">
+  <v-app :theme="theme" :class="{ dark: isDarkMode }">
     <v-layout class="layout-wrapper">
       <!-- 响应式App Bar -->
       <v-app-bar class="elevation-12" app fixed>
@@ -9,6 +9,13 @@
 
         <!-- 桌面端显示所有按钮，移动端隐藏并放入菜单中 -->
         <div class="d-none d-sm-flex">
+          <v-btn
+            prepend-icon="mdi-view-dashboard-outline"
+            variant="outlined"
+            class="me-2"
+            to="/index/"
+            >DashBoard</v-btn
+          >
           <v-btn
             prepend-icon="mdi-database-outline"
             variant="outlined"
@@ -281,6 +288,7 @@ import axios from 'axios'
 const themeStore = useThemeStore()
 const { theme } = toRefs(themeStore)
 const { changeTheme } = themeStore
+const { isDarkMode } = toRefs(themeStore)
 const showNavigationDrawer = ref(true)
 const rail = ref(false)
 const router = useRouter()
@@ -403,5 +411,19 @@ onMounted(() => {
   .scrollable-content {
     padding: 8px;
   }
+}
+
+.theme-transition-overlay {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  transform: scale(0);
+  display: none;
+  z-index: 1;
+  pointer-events: none; /* 确保点击可以穿透覆盖层 */
+  opacity: 0.6; /* 透明度 */
+  mix-blend-mode: difference; /* 使用不同的混合模式使效果更明显 */
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 </style>

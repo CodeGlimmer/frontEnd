@@ -3,6 +3,7 @@
     class="status-dashboard rounded-xl ma-3 pa-4 overflow-hidden"
     elevation="12"
     :class="{ 'dark-mode': isDarkMode }"
+    v-ripple
   >
     <v-container fluid class="px-0">
       <v-row class="status-cards">
@@ -19,10 +20,11 @@
             :class="[
               'status-card d-flex align-center justify-space-between',
               `status-card--${item.type}`,
+              { 'dark-card': isDarkMode },
             ]"
             rounded="lg"
             elevation="6"
-            ripple
+            v-ripple
           >
             <div class="status-card__title font-weight-medium">{{ item.title }}</div>
             <div class="status-card__content d-flex align-center">
@@ -42,12 +44,12 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useThemeStore } from './stores'
+import { useThemeStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 
 const themeStore = useThemeStore()
 const { isDarkMode } = storeToRefs(themeStore)
-/**需要显示的状态卡片 */
+
 const statusItems = ref([
   {
     title: 'AGV Status',
@@ -104,18 +106,11 @@ const statusItems = ref([
   overflow: hidden;
   cursor: pointer;
   background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ea 100%);
+  color: rgba(0, 0, 0, 0.85);
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-position: center;
-    background-size: cover;
-    opacity: 0.05;
-    transition: all 0.3s ease;
+  &.dark-card {
+    background: linear-gradient(135deg, #2d2d2d 0%, #252525 100%);
+    color: rgba(255, 255, 255, 0.95);
   }
 
   &:hover {
@@ -123,14 +118,6 @@ const statusItems = ref([
     box-shadow:
       0 14px 28px rgba(0, 0, 0, 0.15),
       0 10px 10px rgba(0, 0, 0, 0.12) !important;
-
-    &::before {
-      opacity: 0.08;
-    }
-
-    .status-card__icon {
-      transform: scale(1.2);
-    }
   }
 
   &--agv {
@@ -171,7 +158,6 @@ const statusItems = ref([
 
   &__title {
     font-size: 15px;
-    color: rgba(0, 0, 0, 0.7);
     letter-spacing: 0.5px;
   }
 
@@ -182,27 +168,10 @@ const statusItems = ref([
 
   &__icon {
     transition: all 0.3s ease;
-    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.2));
   }
 
   &__value {
-    color: rgba(0, 0, 0, 0.85);
     font-size: 16px;
-  }
-}
-
-// 暗色模式样式
-.dark-mode {
-  .status-card {
-    background: linear-gradient(135deg, #2d2d2d 0%, #252525 100%) !important;
-
-    &__title {
-      color: rgba(255, 255, 255, 0.8);
-    }
-
-    &__value {
-      color: rgba(255, 255, 255, 0.95);
-    }
   }
 }
 

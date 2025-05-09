@@ -128,7 +128,10 @@
 
             <!-- 表格行自定义 -->
             <template v-slot:item="{ item }">
-              <tr :class="getRowClass(item)">
+              <tr
+                :class="getRowClass(item)"
+                class="tw:hover:shadow-m-elevation-8 tw:hover:-translate-y-1 tw:ease-in tw:duration-300"
+              >
                 <td>{{ item.order_id }}</td>
                 <td>
                   <v-chip
