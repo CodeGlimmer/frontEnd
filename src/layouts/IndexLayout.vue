@@ -46,6 +46,11 @@
           </template>
           <v-list>
             <v-list-item
+              prepend-icon="mdi-view-dashboard-outline"
+              title="DashBoard"
+              to="/index/"
+            ></v-list-item>
+            <v-list-item
               prepend-icon="mdi-database-outline"
               title="订单管理"
               to="/index/ordermanagement"

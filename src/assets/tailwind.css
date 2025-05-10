@@ -10,7 +10,9 @@
 @plugin "tailwindcss-motion";
 
 /* npm install daisyui@latest */
-/* @plugin "daisyui"; */
+@plugin "daisyui" {
+  themes: false;
+}
 
 /* npm install -D @tailwindcss/typography */
 @plugin "@tailwindcss/typography";

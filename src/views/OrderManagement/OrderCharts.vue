@@ -23,7 +23,9 @@
           <v-divider></v-divider>
 
           <v-card-text>
-            <v-row class="mb-4">
+            <v-row
+              class="mb-4 tw:-motion-translate-x-in-50 tw:-motion-translate-y-in-50 tw:motion-duration-1000 tw:motion-blur-in-lg tw:motion-ease-out"
+            >
               <v-col v-for="(stat, index) in keyStats" :key="index" cols="12" sm="6" md="3">
                 <v-card class="stat-card pa-4 rounded-lg" elevation="1" :color="stat.color">
                   <div class="d-flex align-center">
@@ -38,8 +40,15 @@
             </v-row>
 
             <v-row>
-              <v-col cols="12" md="8">
-                <v-card class="rounded-lg" elevation="1">
+              <v-col
+                cols="12"
+                md="8"
+                class="tw:motion-blur-in-lg tw:-motion-translate-x-in-50 tw:-motion-translate-y-in-50 tw:motion-duration-1000 tw:motion-ease-out tw:motion-delay-100"
+              >
+                <v-card
+                  class="rounded-lg tw:hover:!shadow-m-elevation-8 tw:hover:-translate-y-2 tw:ease-in-out tw:duration-500 tw:!transition-all"
+                  elevation="1"
+                >
                   <v-card-title class="text-subtitle-1 font-weight-bold">
                     订单数量趋势分析
                     <v-spacer></v-spacer>
@@ -60,8 +69,15 @@
                 </v-card>
               </v-col>
 
-              <v-col cols="12" md="4">
-                <v-card class="rounded-lg" elevation="1">
+              <v-col
+                cols="12"
+                md="4"
+                class="tw:motion-blur-in-lg tw:-motion-translate-x-in-50 tw:-motion-translate-y-in-50 tw:motion-duration-1000 tw:motion-ease-out tw:motion-delay-200"
+              >
+                <v-card
+                  class="rounded-lg tw:hover:!shadow-m-elevation-8 tw:hover:-translate-y-2 tw:ease-in-out tw:duration-500 tw:!transition-all"
+                  elevation="1"
+                >
                   <v-card-title class="text-subtitle-1 font-weight-bold">
                     订单类别分布
                   </v-card-title>
@@ -72,9 +88,14 @@
               </v-col>
             </v-row>
 
-            <v-row class="mt-4">
+            <v-row
+              class="mt-4 tw:-motion-translate-x-in-50 tw:-motion-translate-y-in-50 tw:motion-duration-1000 tw:motion-ease-out tw:motion-delay-300 tw:motion-blur-in-lg"
+            >
               <v-col cols="12" md="6">
-                <v-card class="rounded-lg" elevation="1">
+                <v-card
+                  class="rounded-lg tw:hover:!shadow-m-elevation-8 tw:hover:-translate-y-2 tw:ease-in-out tw:duration-500 tw:!transition-all"
+                  elevation="1"
+                >
                   <v-card-title class="text-subtitle-1 font-weight-bold"> 优先级分布 </v-card-title>
                   <v-card-text>
                     <div ref="priorityChart" class="chart-container"></div>
@@ -83,7 +104,10 @@
               </v-col>
 
               <v-col cols="12" md="6">
-                <v-card class="rounded-lg" elevation="1">
+                <v-card
+                  class="rounded-lg tw:hover:!shadow-m-elevation-8 tw:hover:-translate-y-2 tw:ease-in-out tw:duration-500 tw:!transition-all"
+                  elevation="1"
+                >
                   <v-card-title class="text-subtitle-1 font-weight-bold">
                     订单量与优先级关系
                   </v-card-title>
@@ -96,7 +120,10 @@
 
             <v-row class="mt-4">
               <v-col cols="12">
-                <v-card class="rounded-lg" elevation="1">
+                <v-card
+                  class="rounded-lg tw:hover:!shadow-m-elevation-8 tw:hover:-translate-y-2 tw:ease-in-out tw:duration-500 tw:!transition-all"
+                  elevation="1"
+                >
                   <v-card-title class="text-subtitle-1 font-weight-bold">
                     高级分析
                     <v-spacer></v-spacer>
