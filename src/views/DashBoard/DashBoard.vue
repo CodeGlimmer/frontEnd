@@ -29,12 +29,6 @@
     >
       <div>快速指令</div>
     </div>
-    <button
-      class="tw:btn tw:rounded-md tw:ring-1 tw:!w-fit tw:text-nowrap tw:!px-1 tw:!shadow-m-elevation-8 tw:hover:!bg-m-blue-grey-lighten3 tw:dark:hover:!bg-m-grey-darken4"
-      v-ripple.center
-    >
-      Hello World
-    </button>
   </div>
 </template>
 
