@@ -169,6 +169,7 @@
             :search="search"
             class="elevation-1 mt-2"
             item-value="order_id"
+            hide-default-footer
           >
             <template v-slot:item.priority="{ item }">
               <v-chip
@@ -610,13 +611,35 @@ export default defineComponent({
       if (selectedTrendTimeframe.value === 'week') {
         dateFormat = (date) => {
           const d = new Date(date)
-          const weekStart = new Date(d)
-          weekStart.setDate(d.getDate() - d.getDay())
-          return `第${Math.ceil(d.getDate() / 7)}周`
+          // 获取当前日期所在周的周一
+          const mondayOfWeek = new Date(d)
+          const dayOfWeek = d.getDay() || 7 // 将周日(0)转换为7
+          mondayOfWeek.setDate(d.getDate() - dayOfWeek + 1) // 设置为本周的周一
+
+          // 获取当前日期所在周的周日
+          const sundayOfWeek = new Date(mondayOfWeek)
+          sundayOfWeek.setDate(mondayOfWeek.getDate() + 6)
+
+          // 格式化为"周一日期-周日日期"的形式
+          const mondayStr = mondayOfWeek.toISOString().substring(5, 10).replace('-', '/')
+          const sundayStr = sundayOfWeek.toISOString().substring(5, 10).replace('-', '/')
+          return `${mondayStr}-${sundayStr}`
         }
         dateKey = (date) => {
           const d = new Date(date)
-          return Math.ceil(d.getDate() / 7)
+          // 计算当年第一天
+          const firstDayOfYear = new Date(d.getFullYear(), 0, 1)
+          // 计算当年第一天是周几（0-6，0是周日）
+          const firstDayWeekday = firstDayOfYear.getDay()
+          // 计算当前日期是当年的第几天
+          const dayOfYear = Math.floor((d - firstDayOfYear) / (24 * 60 * 60 * 1000)) + 1
+          // 计算当前日期是第几周
+          // 如果第一天是周一，直接用天数/7向上取整
+          // 否则需要考虑第一周不足7天的情况
+          const weekNumber = Math.ceil((dayOfYear + firstDayWeekday - 1) / 7)
+
+          // 返回格式：年份-周数，确保唯一性
+          return `${d.getFullYear()}-${weekNumber}`
         }
       } else if (selectedTrendTimeframe.value === 'month') {
         dateFormat = (date) => date.substring(5, 7) + '月'
@@ -652,7 +675,18 @@ export default defineComponent({
       orders.forEach((order) => allProductTypes.add(order.product_type))
 
       // 准备图表数据
-      const dates = Object.keys(ordersByDate).sort((a, b) => a - b)
+      const dates = Object.keys(ordersByDate).sort((a, b) => {
+        // 根据时间范围选择适当的排序方法
+        if (selectedTrendTimeframe.value === 'week') {
+          // 对于周格式 "年份-周数"，先按年份排序，再按周数排序
+          const [yearA, weekA] = a.split('-').map(Number)
+          const [yearB, weekB] = b.split('-').map(Number)
+          return yearA !== yearB ? yearA - yearB : weekA - weekB
+        } else {
+          // 其他情况直接按数字排序
+          return a - b
+        }
+      })
 
       const seriesData = [
         {
@@ -728,7 +762,18 @@ export default defineComponent({
         xAxis: {
           type: 'category',
           boundaryGap: true,
-          data: dates.map((date) => dateFormat(date)),
+          data: dates.map((date) => {
+            if (selectedTrendTimeframe.value === 'week') {
+              // 对于周数据，提取实际日期值
+              const [year, week] = date.split('-')
+              // 为了显示，获取该周的周一日期
+              const d = new Date(parseInt(year), 0, 1)
+              d.setDate(d.getDate() + (week - 1) * 7 - d.getDay() + 1)
+              return dateFormat(d.toISOString().substring(0, 10))
+            } else {
+              return dateFormat(date)
+            }
+          }),
         },
         yAxis: [
           {

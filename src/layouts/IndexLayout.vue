@@ -199,7 +199,7 @@
           <!-- 展开状态下显示卡片 -->
           <v-card
             v-if="(!rail && $vuetify.display.mdAndUp) || $vuetify.display.smAndDown"
-            class="text-primary elevation-4 mx-2 mb-2"
+            class="text-primary elevation-4 mx-2 mb-2 tw:!shadow-m-elevation-6"
             density="comfortable"
           >
             <v-card-title>General options</v-card-title>

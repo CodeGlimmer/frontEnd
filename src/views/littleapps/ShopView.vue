@@ -5,7 +5,7 @@
       location="bottom"
       temporary
       width="400"
-      class="cart-drawer position-fixed"
+      class="cart-drawer position-fixed tw:!mx-2"
       style="z-index: 1000"
     >
       <v-toolbar color="surface" flat class="cart-header">
@@ -143,7 +143,7 @@
       </div>
     </v-navigation-drawer>
 
-    <v-app-bar app elevation="1" color="surface">
+    <v-app-bar app elevation="4" color="surface" class="tw:!rounded-xl tw:!sticky" v-ripple>
       <v-app-bar-title class="text-primary font-weight-medium">
         <span class="app-title">购物平台</span>
       </v-app-bar-title>
@@ -178,7 +178,11 @@
             lg="3"
             class="product-col"
           >
-            <v-card class="mx-auto product-card" elevation="2" height="100%">
+            <v-card
+              class="mx-auto product-card tw:hover:!shadow-m-elevation-8 tw:!translate-2 tw:!transition-transform tw:!ease-in tw:!duration-300 rounded-lg"
+              elevation="2"
+              height="100%"
+            >
               <div class="card-image-container">
                 <v-img
                   :src="product.image"

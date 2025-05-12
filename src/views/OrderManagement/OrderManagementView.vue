@@ -1,7 +1,7 @@
 <template>
   <v-container fluid class="order-management pa-0">
     <!-- 固定的顶部卡片 -->
-    <div class="header-fixed">
+    <div class="header-fixed tw:!bg-white/0 tw:!rounded-xl">
       <v-card class="mb-4 elevation-2">
         <v-card-title class="text-h4 d-flex align-center py-4">
           <v-icon icon="mdi-clipboard-text-outline" size="x-large" class="mr-2" />
@@ -734,7 +734,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, useTemplateRef, onUpdated } from 'vue'
 import { useOrder } from '@/stores/order'
 import { storeToRefs } from 'pinia'
 import { OrderManagement } from '@/services'
