@@ -146,7 +146,10 @@
           </v-card-text>
         </v-card>
 
-        <v-card class="rounded-lg" elevation="2">
+        <v-card
+          class="rounded-lg tw:hover:!shadow-m-elevation-12 tw:hover:!-translate-y-2 tw:!transition-transform tw:duration-500"
+          elevation="2"
+        >
           <v-card-title class="text-h6 font-weight-bold primary-text">
             订单数据详情
             <v-spacer></v-spacer>

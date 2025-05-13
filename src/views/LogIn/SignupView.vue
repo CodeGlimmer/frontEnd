@@ -1,9 +1,6 @@
 <template>
   <v-container fluid class="register-container d-flex align-center justify-center">
     <div class="animated-background" :class="{ 'dark-theme': isDarkTheme }">
-      <div class="wave wave1"></div>
-      <div class="wave wave2"></div>
-      <div class="wave wave3"></div>
       <div class="floating-circles">
         <div class="circle" v-for="n in 20" :key="n"></div>
       </div>
@@ -250,9 +247,6 @@ export default {
       document.body.classList.add('dark-mode')
     }
 
-    // 初始化波浪动画
-    this.initWaveAnimation()
-
     // 添加键盘事件监听器 - 按Enter键提交
     document.addEventListener('keydown', this.handleKeyDown)
 
@@ -338,14 +332,6 @@ export default {
         this.handleSignup()
       }
     },
-    initWaveAnimation() {
-      // 增强波浪动画，添加随机性
-      const waves = document.querySelectorAll('.wave')
-      waves.forEach((wave) => {
-        const randomSpeed = 10 + Math.random() * 10
-        wave.style.animationDuration = `${randomSpeed}s`
-      })
-    },
   },
 }
 </script>
@@ -380,46 +366,7 @@ export default {
 }
 
 .animated-background.dark-theme {
-  background: linear-gradient(130deg, #1b5e20 0%, #0d47a1 50%, #4a148c 100%);
-}
-
-.wave {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 100px;
-  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="rgba(255, 255, 255, 0.3)" fill-opacity="1" d="M0,64L48,80C96,96,192,128,288,128C384,128,480,96,576,85.3C672,75,768,85,864,112C960,139,1056,181,1152,181.3C1248,181,1344,139,1392,117.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
-  background-size: 100% 100%;
-  transition: opacity 0.8s;
-}
-
-.dark-theme .wave {
-  filter: brightness(0.8) hue-rotate(25deg);
-}
-
-.wave1 {
-  opacity: 0.3;
-  animation: wave 8s linear infinite;
-  z-index: 1;
-  height: 140px;
-  bottom: -10px;
-}
-
-.wave2 {
-  opacity: 0.5;
-  animation: wave-reverse 10s linear infinite;
-  z-index: 2;
-  height: 120px;
-  bottom: -20px;
-}
-
-.wave3 {
-  opacity: 0.2;
-  animation: wave 15s linear infinite;
-  z-index: 3;
-  height: 160px;
-  bottom: -40px;
+  background: linear-gradient(to left top, #212121, #212121);
 }
 
 .floating-circles {
@@ -615,8 +562,8 @@ export default {
   right: 0;
   bottom: 0;
   z-index: -1;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   background: rgba(255, 255, 255, 0.05);
   transition: background-color 0.6s ease;
 }
@@ -634,30 +581,6 @@ export default {
   }
   100% {
     background-position: 0% 50%;
-  }
-}
-
-@keyframes wave {
-  0% {
-    transform: translateX(0);
-  }
-  50% {
-    transform: translateX(-50%);
-  }
-  100% {
-    transform: translateX(0);
-  }
-}
-
-@keyframes wave-reverse {
-  0% {
-    transform: translateX(0);
-  }
-  50% {
-    transform: translateX(50%);
-  }
-  100% {
-    transform: translateX(0);
   }
 }
 
@@ -695,7 +618,7 @@ export default {
 }
 
 .register-card.dark-card {
-  background-color: rgba(30, 30, 30, 0.9) !important;
+  background-color: #282828 !important;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
