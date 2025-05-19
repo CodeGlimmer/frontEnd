@@ -1,1 +1,0 @@
-import{_ as o,c,w as a,r as e,o as s,d as i}from"./index-kmKPHIKf.js";const r={};function _(l,d){const t=e("v-list-item"),n=e("v-list");return s(),c(n,{nav:"",density:"compact"},{default:a(()=>[i(t,{"prepend-icon":"mdi-chart-areaspline",title:"订单预测",value:"prediction",to:"/index/schedulingplanning"})]),_:1})}const m=o(r,[["render",_]]);export{m as default};

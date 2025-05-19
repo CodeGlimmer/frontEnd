@@ -1,7 +1,7 @@
 // check-django-ports.mjs
 import axios from 'axios'
 
-const socketList = ['http://127.0.0.1', 'http://192.168.22.88', 'http://192.168.181.88']
+const socketList = ['http://127.0.0.1', 'http://192.168.73.88']
 const DJANGO_PORT = 8000 // 默认 Django 开发端口
 const TIMEOUT = 1000 // 检测超时时间（毫秒）
 

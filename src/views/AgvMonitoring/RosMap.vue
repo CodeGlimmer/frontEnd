@@ -20,12 +20,12 @@
         <!-- <MapView /> -->
       </div>
       <div
-        class="instruction-panel tw:col-span-12 tw:md:col-span-4 tw:shadow-m-elevation-8 rounded-xl tw:p-4 tw:overflow-hidden"
+        class="instruction-panel tw:col-span-12 tw:md:col-span-4 tw:shadow-m-elevation-8 rounded-xl tw:p-4 tw:overflow-auto"
         v-motion
         :initial="{ opacity: 0, x: 100 }"
         :enter="{ opacity: 1, x: 0, transition: { duration: 500, delay: 200 } }"
       >
-        <div class="tw:!prose" ref="splitTextContainer">
+        <div class="tw:!prose tw:overflow-auto" ref="splitTextContainer">
           <h1 class="split-text">Simple Map Example</h1>
           <p class="split-text">
             Run the following commands in the terminal then refresh this page. This will load a map
@@ -49,7 +49,7 @@
         </div>
       </div>
       <div
-        class="status-container tw:col-span-12 tw:md:col-span-4 tw:flex tw:justify-center tw:items-center rounded-xl tw:shadow-m-elevation-8 tw:overflow-hidden"
+        class="status-container tw:col-span-12 tw:md:col-span-4 tw:flex tw:justify-center tw:items-center rounded-xl tw:shadow-m-elevation-8 tw:overflow-auto"
         v-motion
         :initial="{ opacity: 0, y: 50 }"
         :enter="{ opacity: 1, y: 0, transition: { duration: 500, delay: 400 } }"

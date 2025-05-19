@@ -33,6 +33,7 @@ export default defineConfig({
   // },
   build: {
     target: 'esnext', // 允许顶级 await
+    chunkSizeWarningLimit: 2000,
   },
   server: {
     host: '0.0.0.0',
