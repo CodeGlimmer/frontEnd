@@ -1,5 +1,5 @@
 <template>
-  <v-card class="agv-monitor tw:!h-fit" elevation="12">
+  <v-card class="agv-monitor tw:!h-fit tw:!w-fit" elevation="12">
     <v-card-title class="d-flex align-center justify-space-between py-2">
       <span class="text-subtitle-1 font-weight-medium">
         {{ titles[currentIndex] }}

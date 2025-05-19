@@ -1,14 +1,14 @@
 <template>
   <div class="keyboard-container" :class="{ 'dark-mode': darkMode }">
     <div
-      class="keyboard tw:hover:-translate-y-1.5 tw:hover:scale-[1.01] elevation-12 tw:hover:!shadow-m-elevation-24"
+      class="keyboard tw:hover:-translate-y-1.5 tw:hover:scale-[1.01] elevation-12 tw:hover:!shadow-m-elevation-24 tw:!w-full"
       v-ripple.center
     >
-      <div class="key-row">
+      <div class="key-row tw:!w-full">
         <div
           v-for="key in keys.slice(0, 1)"
           :key="key.id"
-          class="key"
+          class="key tw:!aspect-square tw:!size-1/4"
           :class="{ active: activeKeys.includes(key.id) }"
           @mousedown="handleKeyDown(key.id)"
           @mouseup="handleKeyUp(key.id)"
@@ -18,11 +18,11 @@
           <span>{{ key.label }}</span>
         </div>
       </div>
-      <div class="key-row">
+      <div class="key-row tw:!w-full">
         <div
           v-for="key in keys.slice(1, 4)"
           :key="key.id"
-          class="key"
+          class="key tw:!aspect-square tw:!size-1/4"
           :class="{ active: activeKeys.includes(key.id) }"
           @mousedown="handleKeyDown(key.id)"
           @mouseup="handleKeyUp(key.id)"

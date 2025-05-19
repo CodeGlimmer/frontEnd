@@ -91,6 +91,14 @@ export default createRouter({
                     main: () => import('@/views/AgvMonitoring/ScanView.vue'),
                   },
                 },
+                {
+                  path: 'map',
+                  name: 'map',
+                  components: {
+                    sidebar: () => import('@/views/AgvMonitoring/AgvMonitoringSideBar.vue'),
+                    main: () => import('@/views/AgvMonitoring/RosMap.vue'),
+                  },
+                },
               ],
             },
             {

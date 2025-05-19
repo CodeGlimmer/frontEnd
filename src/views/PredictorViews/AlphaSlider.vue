@@ -123,11 +123,10 @@
               <div v-if="showPreview" class="preview-container pt-1">
                 <v-scale-transition group>
                   <v-alert
-                    color="info"
                     bordered="left"
                     dense
                     text
-                    class="preview-alert mt-2 mb-0"
+                    class="preview-alert mt-2 mb-0 tw:!bg-m-info tw:dark:!bg-m-info-dark"
                     key="preview-alert"
                   >
                     <div class="preview-content">

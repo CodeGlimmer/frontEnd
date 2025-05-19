@@ -243,7 +243,7 @@
 
       <!-- 订单统计卡片 -->
       <v-row class="mt-4">
-        <v-col cols="12" md="4">
+        <v-col cols="12" md="4" @click="$router.push('/index/ordermanagement/charts')" v-ripple>
           <v-card class="elevation-2">
             <v-card-title class="d-flex align-center">
               <v-icon icon="mdi-chart-box" size="large" color="primary" class="mr-2"></v-icon>

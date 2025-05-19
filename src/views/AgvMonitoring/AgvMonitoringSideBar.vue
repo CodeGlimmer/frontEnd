@@ -20,5 +20,12 @@
       value="scan"
       to="/index/agvmonitoring/scan"
     ></v-list-item>
+
+    <v-list-item
+      prepend-icon="mdi-map"
+      title="实时地图"
+      value="scan"
+      to="/index/agvmonitoring/map"
+    ></v-list-item>
   </v-list>
 </template>
