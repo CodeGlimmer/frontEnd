@@ -7,7 +7,6 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount, useTemplateRef } from 'vue'
 import ROSLIB from 'roslib'
-import { BufferGeometryLoader } from 'three'
 
 // 定义props
 const props = defineProps({

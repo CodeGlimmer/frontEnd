@@ -1,111 +1,185 @@
 <template>
-  <div class="tw:w-full tw:h-full">
-    <div
-      class="header-title tw:flex tw:justify-center tw:shadow-m-elevation-8 tw:rounded-full tw:!mb-4 tw:!py-2 tw:bg-m-info tw:dark:bg-m-info-dark tw:!sticky tw:top-0"
-      v-ripple
-      ref="headerTitle"
-    >
-      <v-icon class="tw:mr-2 title-icon">mdi-map</v-icon>
-      <div class="title-text" ref="titleText">AGV地图实时监控</div>
-    </div>
-    <!-- 组件显示： -->
-    <div class="tw:w-full tw:h-full tw:grid tw:grid-cols-12 tw:gap-4 tw:dark:bg-m-grey-darken4">
-      <div
-        class="map-container tw:col-span-12 tw:md:col-span-8 tw:dark:bg-m-grey-darken4 tw:flex tw:justify-center tw:items-center tw:rounded-xl tw:shadow-m-elevation-8"
-        v-motion
-        :initial="{ opacity: 0, y: 100 }"
-        :enter="{ opacity: 1, y: 0, transition: { duration: 500 } }"
-        ref="mapContainer"
-      >
-        <!-- <MapView /> -->
-      </div>
-      <div
-        class="instruction-panel tw:col-span-12 tw:md:col-span-4 tw:shadow-m-elevation-8 rounded-xl tw:p-4 tw:overflow-auto"
-        v-motion
-        :initial="{ opacity: 0, x: 100 }"
-        :enter="{ opacity: 1, x: 0, transition: { duration: 500, delay: 200 } }"
-      >
-        <div class="tw:!prose tw:overflow-auto" ref="splitTextContainer">
-          <h1 class="split-text">Simple Map Example</h1>
-          <p class="split-text">
-            Run the following commands in the terminal then refresh this page. This will load a map
-            from the
-            <tt>ros-groovy-rail-maps</tt>
-            package.
-          </p>
-          <ol>
-            <li class="instruction-item">
-              <tt>roscore</tt>
-            </li>
-            <li class="instruction-item">
-              <tt
-                >rosrun map_server map_server /opt/ros/groovy/share/rail_maps/maps/ilab.pgm 0.05</tt
-              >
-            </li>
-            <li class="instruction-item">
-              <tt>roslaunch rosbridge_server rosbridge_websocket.launch</tt>
-            </li>
-          </ol>
-        </div>
-      </div>
-      <div
-        class="status-container tw:col-span-12 tw:md:col-span-4 tw:flex tw:justify-center tw:items-center rounded-xl tw:shadow-m-elevation-8 tw:overflow-auto"
-        v-motion
-        :initial="{ opacity: 0, y: 50 }"
-        :enter="{ opacity: 1, y: 0, transition: { duration: 500, delay: 400 } }"
-      >
-        <div class="status-wrapper tw:w-11/12" ref="statusWrapper">
-          <WorkingStatus />
-        </div>
-      </div>
-      <div
-        class="operations-container tw:col-span-12 tw:md:col-span-4 tw:flex tw:justify-center tw:items-center tw:shadow-m-elevation-8 tw:rounded-xl tw:overflow-hidden"
-        v-motion
-        :initial="{ opacity: 0, y: 50 }"
-        :enter="{ opacity: 1, y: 0, transition: { duration: 500, delay: 600 } }"
-      >
-        <div class="operations-wrapper tw:w-11/12" ref="operationsWrapper">
-          <SendingOperations />
-        </div>
-      </div>
-      <div
-        class="quick-command tw:col-span-12 tw:md:col-span-4 tw:shadow-m-elevation-8 tw:rounded-xl tw:p-4 tw:overflow-hidden"
-        v-motion
-        :initial="{ opacity: 0, y: 50 }"
-        :enter="{ opacity: 1, y: 0, transition: { duration: 500, delay: 800 } }"
-      >
-        <div class="command-title split-title" ref="commandTitle">快速指令</div>
-      </div>
-    </div>
-  </div>
+  <v-container fluid class="fill-height pa-2">
+    <v-row class="tw:sticky tw:top-0 tw:z-30">
+      <v-col cols="12">
+        <!-- 顶部标题栏 -->
+        <v-card
+          flat
+          :color="primary"
+          class="mb-2 mx-auto"
+          max-width="600"
+          rounded="pill"
+          elevation="3"
+          v-ripple
+          ref="headerTitle"
+        >
+          <v-card-item class="py-2 px-6 tw:glass">
+            <template v-slot:prepend>
+              <v-icon icon="mdi-map" size="small" class="header-icon" />
+            </template>
+            <v-card-title class="text-subtitle-1 font-weight-medium" ref="titleText">
+              AGV地图实时监控
+            </v-card-title>
+          </v-card-item>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <v-row class="fill-height">
+      <!-- 左侧地图区域 -->
+      <v-col cols="12" md="8" class="d-flex">
+        <v-card
+          flat
+          class="flex-grow-1 tw:flex tw:justify-center tw:items-center"
+          v-motion
+          :initial="motionConfig.map.initial"
+          :enter="motionConfig.map.enter"
+          ref="mapContainer"
+        >
+          <MapView class="tw:!rounded-xl border-sm tw:mx-2" />
+        </v-card>
+      </v-col>
+
+      <!-- 右侧控制面板 -->
+      <v-col cols="12" md="4">
+        <v-row dense>
+          <!-- 指令面板 -->
+          <v-col cols="12">
+            <v-card
+              v-motion
+              :initial="motionConfig.instruction.initial"
+              :enter="motionConfig.instruction.enter"
+              class="mb-2"
+            >
+              <v-card-item>
+                <v-card-title class="text-subtitle-1">ROS Map 使用说明</v-card-title>
+                <v-card-subtitle class="text-body-2 split-text">
+                  请在终端中执行以下命令，然后刷新页面以加载地图：
+                </v-card-subtitle>
+              </v-card-item>
+              <v-card-text class="pt-0">
+                <v-list density="compact" class="bg-transparent">
+                  <v-list-item
+                    v-for="(cmd, index) in terminalCommands"
+                    :key="index"
+                    class="instruction-item"
+                  >
+                    <v-chip
+                      variant="outlined"
+                      color="primary"
+                      size="small"
+                      class="text-caption monospace"
+                    >
+                      {{ cmd }}
+                    </v-chip>
+                  </v-list-item>
+                </v-list>
+              </v-card-text>
+            </v-card>
+          </v-col>
+
+          <!-- 状态面板 -->
+          <v-col cols="12">
+            <v-card
+              v-motion
+              :initial="motionConfig.status.initial"
+              :enter="motionConfig.status.enter"
+              class="mb-2"
+              ref="statusWrapper"
+            >
+              <v-card-item>
+                <v-card-title class="text-subtitle-1">工作状态</v-card-title>
+              </v-card-item>
+              <v-card-text class="pt-0">
+                <WorkingStatus />
+              </v-card-text>
+            </v-card>
+          </v-col>
+
+          <!-- 操作面板 -->
+          <v-col cols="12">
+            <v-card
+              v-motion
+              :initial="motionConfig.operations.initial"
+              :enter="motionConfig.operations.enter"
+              class="mb-2"
+              ref="operationsWrapper"
+            >
+              <v-card-item>
+                <v-card-title class="text-subtitle-1">操作控制</v-card-title>
+              </v-card-item>
+              <v-card-text class="pt-0">
+                <SendingOperations />
+              </v-card-text>
+            </v-card>
+          </v-col>
+
+          <!-- 快速指令 -->
+          <v-col cols="12">
+            <QuickCommands />
+          </v-col>
+        </v-row>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script setup>
-// import MapView from '@/components/common/MapViewer.vue'
-import WorkingStatus from '@/views/DashBoard/WorkingStatus.vue'
-import SendingOperations from '@/views/DashBoard/SendingOperations.vue'
 import { onMounted, ref, nextTick } from 'vue'
 import gsap from 'gsap'
 import { SplitText } from 'gsap/SplitText'
+import MapView from '@/components/common/MapViewer.vue'
+import WorkingStatus from '@/views/DashBoard/WorkingStatus.vue'
+import SendingOperations from '@/views/DashBoard/SendingOperations.vue'
+import QuickCommands from '@/views/DashBoard/QuickCommands.vue'
 
-// 注册必要的插件
+// 注册 GSAP 插件
 gsap.registerPlugin(SplitText)
 
-// 使用ref获取DOM元素
-const splitTextContainer = ref(null)
-const commandTitle = ref(null)
-const titleText = ref(null)
-const mapContainer = ref(null)
-const statusWrapper = ref(null)
-const operationsWrapper = ref(null)
+// 终端命令配置
+const terminalCommands = [
+  'roscore',
+  'rosrun map_server map_server /opt/ros/groovy/share/rail_maps/maps/ilab.pgm 0.05',
+  'roslaunch rosbridge_server rosbridge_websocket.launch',
+]
 
-onMounted(async () => {
-  // 确保组件完全挂载后再执行动画
+// 动画配置
+const motionConfig = {
+  map: {
+    initial: { opacity: 0, y: 100 },
+    enter: { opacity: 1, y: 0, transition: { duration: 500 } },
+  },
+  instruction: {
+    initial: { opacity: 0, x: 100 },
+    enter: { opacity: 1, x: 0, transition: { duration: 500, delay: 200 } },
+  },
+  status: {
+    initial: { opacity: 0, y: 50 },
+    enter: { opacity: 1, y: 0, transition: { duration: 500, delay: 400 } },
+  },
+  operations: {
+    initial: { opacity: 0, y: 50 },
+    enter: { opacity: 1, y: 0, transition: { duration: 500, delay: 600 } },
+  },
+}
+
+// DOM 引用
+const refs = {
+  splitTextContainer: ref(null),
+  commandTitle: ref(null),
+  titleText: ref(null),
+  mapContainer: ref(null),
+  statusWrapper: ref(null),
+  operationsWrapper: ref(null),
+}
+
+// 动画处理函数
+const initializeAnimations = async () => {
   await nextTick()
 
-  // 设置标题动画
-  if (titleText.value) {
-    const titleSplit = new SplitText(titleText.value, { type: 'chars' })
+  // 标题动画
+  if (refs.titleText.value) {
+    const titleSplit = new SplitText(refs.titleText.value, { type: 'chars' })
     gsap.from(titleSplit.chars, {
       opacity: 0,
       y: 50,
@@ -115,9 +189,9 @@ onMounted(async () => {
     })
   }
 
-  // 设置说明文本动画
-  if (splitTextContainer.value) {
-    const splitTexts = splitTextContainer.value.querySelectorAll('.split-text')
+  // 文本动画
+  if (refs.splitTextContainer.value) {
+    const splitTexts = refs.splitTextContainer.value.querySelectorAll('.split-text')
     splitTexts.forEach((element) => {
       const split = new SplitText(element, { type: 'chars, words' })
       gsap.from(split.chars, {
@@ -130,151 +204,62 @@ onMounted(async () => {
       })
     })
   }
+}
 
-  // 设置快速指令标题动画
-  if (commandTitle.value) {
-    const commandSplit = new SplitText(commandTitle.value, { type: 'chars' })
-    gsap.from(commandSplit.chars, {
-      opacity: 0,
-      scale: 0,
-      stagger: 0.05,
-      duration: 0.6,
-      ease: 'elastic.out(1, 0.3)',
-      delay: 1,
-    })
-  }
+// 悬停效果
+const setupHoverEffects = () => {
+  const cards = [refs.statusWrapper.value, refs.operationsWrapper.value].filter(Boolean)
 
-  // 设置地图容器动画
-  if (mapContainer.value) {
-    gsap.from(mapContainer.value, {
-      opacity: 0,
-      y: 50,
-      duration: 0.8,
-      ease: 'power3.out',
-    })
-  }
-
-  // 为指令项添加悬停效果
-  document.querySelectorAll('.instruction-item').forEach((el) => {
-    el.addEventListener('mouseenter', () => {
-      gsap.to(el, {
-        x: 8,
+  cards.forEach((card) => {
+    card?.addEventListener('mouseenter', () => {
+      gsap.to(card, {
+        y: -8,
+        boxShadow: 'var(--v-shadow-elevated)',
         duration: 0.3,
       })
     })
 
-    el.addEventListener('mouseleave', () => {
-      gsap.to(el, {
-        x: 0,
+    card?.addEventListener('mouseleave', () => {
+      gsap.to(card, {
+        y: 0,
+        boxShadow: 'var(--v-shadow-default)',
         duration: 0.3,
       })
     })
   })
+}
 
-  // 为状态和操作包装器添加悬停效果
-  const hoverableElements = [statusWrapper.value, operationsWrapper.value].filter(Boolean)
-
-  hoverableElements.forEach((element) => {
-    if (element) {
-      element.addEventListener('mouseenter', () => {
-        gsap.to(element, {
-          y: -8,
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-          duration: 0.3,
-        })
-      })
-
-      element.addEventListener('mouseleave', () => {
-        gsap.to(element, {
-          y: 0,
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-          duration: 0.3,
-        })
-      })
-    }
-  })
-
-  // 配置ROS连接 - 使用try/catch来处理连接错误
-  try {
-    // 这里可以添加ROS连接的配置，如果需要的话
-    console.log('ROS connection setup would go here')
-    // 例如：
-    // const ros = new ROSLIB.Ros({
-    //   url: 'ws://localhost:9090' // 改用localhost或实际IP而不是0.0.0.0
-    // })
-
-    // ros.on('connection', () => {
-    //   console.log('Connected to ROS bridge server')
-    // })
-
-    // ros.on('error', (error) => {
-    //   console.error('Error connecting to ROS bridge server:', error)
-    // })
-
-    // ros.on('close', () => {
-    //   console.log('Connection to ROS bridge server closed')
-    // })
-  } catch (error) {
-    console.error('Failed to initialize ROS connection:', error)
-  }
+onMounted(() => {
+  initializeAnimations()
+  setupHoverEffects()
 })
+
+// 主题变量
+const primary = 'primary'
 </script>
 
-<style scoped>
-.header-title {
-  transition: all 0.3s ease;
-  overflow: hidden;
-  position: relative;
+<style lang="scss" scoped>
+.header-icon {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.header-title::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transform: translateX(-100%);
+.monospace {
+  font-family: 'Roboto Mono', monospace;
 }
 
-.header-title:hover::before {
-  animation: shimmer 2s infinite;
-}
+.v-card {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-.title-icon {
-  transition: transform 0.3s ease;
-}
-
-.header-title:hover .title-icon {
-  transform: rotate(360deg);
-}
-
-.command-title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: var(--v-primary-base);
-  padding: 0.5rem;
-  border-bottom: 2px solid var(--v-secondary-base);
-  margin-bottom: 1rem;
+  &:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .instruction-item {
-  transition: transform 0.3s ease;
-}
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-.status-wrapper,
-.operations-wrapper {
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
-  border-radius: 0.75rem;
-  overflow: hidden;
-}
-
-@keyframes shimmer {
-  100% {
-    transform: translateX(100%);
+  &:hover {
+    transform: translateX(4px);
   }
 }
 </style>

@@ -25,14 +25,17 @@
       <SendingOperations />
     </div>
     <div
-      class="tw:col-span-12 tw:md:col-span-9 tw:md:!ml-2 tw:bg-slate-700 tw:rounded-xl tw:!mr-2.5 tw:motion-translate-x-in-[-85%] tw:motion-translate-y-in-[-65%] tw:motion-blur-in-[30px] tw:motion-ease-spring-bouncier tw:motion-delay-500"
+      class="tw:col-span-12 tw:md:col-span-9 tw:md:!ml-2 tw:rounded-xl tw:!mr-2.5 tw:motion-translate-x-in-[-85%] tw:motion-translate-y-in-[-65%] tw:motion-blur-in-[30px] tw:motion-ease-spring-bouncier tw:motion-delay-500 tw:flex tw:justify-center tw:items-center"
     >
-      <div>快速指令</div>
+      <QuickCommands
+        class="tw:!mx-2 tw:!my-2 tw:!p-2 tw:!md:mx-1 tw:w-full tw:motion-translate-x-in-[-85%] tw:motion-translate-y-in-[-65%] tw:motion-blur-in-[30px] tw:motion-ease-spring-bouncier tw:motion-delay-500"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
+import QuickCommands from './QuickCommands.vue'
 import SendingOperations from './SendingOperations.vue'
 import VelocityShow from './VelocityShow.vue'
 import WorkingStatus from './WorkingStatus.vue'
