@@ -174,7 +174,7 @@
             item-value="order_id"
             hide-default-footer
           >
-            <template v-slot:item.priority="{ item }">
+            <template v-slot:[`item.priority`]="{ item }">
               <v-chip
                 :color="getPriorityColor(item.priority)"
                 :text-color="getPriorityTextColor(item.priority)"
@@ -184,13 +184,13 @@
               </v-chip>
             </template>
 
-            <template v-slot:item.product_type="{ item }">
+            <template v-slot:[`item.product_type`]="{ item }">
               <v-chip :color="getCategoryColor(item.product_type)" size="small" variant="tonal">
                 {{ item.product_type }}
               </v-chip>
             </template>
 
-            <template v-slot:item.order_quantity="{ item }">
+            <template v-slot:[`item.order_quantity`]="{ item }">
               <v-progress-linear
                 :model-value="item.order_quantity"
                 :color="getQuantityColor(item.order_quantity)"

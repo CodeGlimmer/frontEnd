@@ -175,7 +175,7 @@
               prepend-icon="mdi-calendar-clock"
               title="日程"
               value="calendar"
-              to="/index"
+              to="/index/scheduleApp"
               @click="$vuetify.display.smAndDown && (showNavigationDrawer = false)"
             ></v-list-item>
           </v-list-group>

@@ -136,6 +136,13 @@ export default createRouter({
                 main: () => import('@/views/littleapps/ShopView.vue'),
               },
             },
+            {
+              path: 'scheduleApp',
+              name: 'scheduleApp',
+              components: {
+                main: () => import('@/views/littleapps/ScheduleApp.vue'),
+              },
+            },
           ],
         },
       ],
