@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, reactive, watch } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import { useDisplay } from 'vuetify'
 import {
   format,
@@ -68,7 +68,7 @@ const categories = ref([
 ])
 
 // 使用Vuetify响应式布局
-const { mobile, xs, sm, md, lg } = useDisplay()
+const { mobile } = useDisplay()
 
 // 获取主题存储
 const themeStore = useThemeStore()
@@ -78,16 +78,19 @@ const viewTitle = computed(() => {
   let formatStr = ''
 
   switch (currentView.value) {
-    case 'day':
+    case 'day': {
       formatStr = 'yyyy年MM月dd日 EEEE'
       break
-    case 'week':
+    }
+    case 'week': {
       const weekStart = startOfWeek(selectedDate.value, { weekStartsOn: 1 })
       const weekEnd = endOfWeek(selectedDate.value, { weekStartsOn: 1 })
       return `${format(weekStart, 'yyyy年MM月dd日', { locale: zhCN })} - ${format(weekEnd, 'MM月dd日', { locale: zhCN })}`
-    case 'month':
+    }
+    case 'month': {
       formatStr = 'yyyy年MM月'
       break
+    }
   }
 
   return format(selectedDate.value, formatStr, { locale: zhCN })
@@ -148,10 +151,11 @@ const weekDays = computed(() => {
 
 const monthDays = computed(() => {
   const start = startOfMonth(selectedDate.value)
-  const end = endOfMonth(selectedDate.value)
+  // const end = endOfMonth(selectedDate.value)
 
   // 获取当月的所有日期
-  const daysInMonth = eachDayOfInterval({ start, end })
+  // No need for unused daysInMonth variable
+  // We're directly using start and end to calculate the calendar grid
 
   // 获取显示的第一天（可能是上个月的日期）
   const firstDayOfGrid = startOfWeek(start, { weekStartsOn: 1 })

@@ -143,6 +143,16 @@ export default createRouter({
                 main: () => import('@/views/littleapps/ScheduleApp.vue'),
               },
             },
+            {
+              path: 'adv-display',
+              name: 'AdvDisplay',
+              components: {
+                main: () => import('@/views/littleapps/AdvDisplay.vue'),
+              },
+              meta: {
+                title: 'AGV监控系统 - 广告展示',
+              },
+            },
           ],
         },
       ],
