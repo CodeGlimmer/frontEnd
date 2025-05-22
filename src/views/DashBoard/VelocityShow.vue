@@ -1,5 +1,5 @@
 <template>
-  <v-card class="agv-monitor tw:!h-fit tw:!w-fit" elevation="12">
+  <v-card class="agv-monitor tw:!h-fit tw:!w-fit" elevation="12" :loading="isLoading">
     <v-card-title class="d-flex align-center justify-space-between py-2">
       <span class="text-subtitle-1 font-weight-medium">
         {{ titles[currentIndex] }}
@@ -63,23 +63,40 @@
       </div>
     </v-card-text>
 
-    <v-card-text v-if="connectionError" class="error-message text-center pa-0">
-      <v-alert variant="tonal" type="error" density="compact" class="mb-0">
-        <div class="d-flex align-center">
-          <v-icon start icon="mdi-access-point-network-off"></v-icon>
-          <span>ROS连接失败: {{ connectionError }}</span>
+    <!-- 错误和状态提示 -->
+    <v-slide-y-transition>
+      <v-alert v-if="connectionError" border="start" variant="tonal" type="error" class="ma-2">
+        <template v-slot:prepend>
+          <v-icon icon="mdi-alert-circle" />
+        </template>
+        <div class="d-flex flex-column">
+          <strong>连接错误</strong>
+          <span class="text-caption">{{ connectionError }}</span>
+          <v-btn class="mt-2" size="small" color="error" variant="text" @click="retryConnection">
+            重试连接
+            <v-icon end>mdi-refresh</v-icon>
+          </v-btn>
         </div>
       </v-alert>
-    </v-card-text>
+    </v-slide-y-transition>
 
-    <v-card-text v-if="!connectionError && !isConnected" class="text-center pa-0">
-      <v-alert variant="tonal" type="info" density="compact" class="mb-0">
-        <div class="d-flex align-center">
-          <v-icon start icon="mdi-loading mdi-spin"></v-icon>
-          <span>正在连接ROS服务...</span>
+    <v-slide-y-transition>
+      <v-alert
+        v-if="!connectionError && !isConnected"
+        border="start"
+        variant="tonal"
+        type="info"
+        class="ma-2"
+      >
+        <template v-slot:prepend>
+          <v-progress-circular indeterminate size="20" width="2" color="info" />
+        </template>
+        <div class="d-flex flex-column">
+          <strong>正在连接</strong>
+          <span class="text-caption">尝试连接到 {{ props.rosbridgeUrl }}</span>
         </div>
       </v-alert>
-    </v-card-text>
+    </v-slide-y-transition>
 
     <v-card-actions class="pt-0 px-2 pb-2">
       <v-spacer></v-spacer>
@@ -105,12 +122,6 @@
       </v-btn>
       <v-spacer></v-spacer>
     </v-card-actions>
-
-    <div class="connection-status">
-      <v-icon :color="isConnected ? 'success' : 'error'" size="small">
-        {{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
-      </v-icon>
-    </div>
   </v-card>
 </template>
 
@@ -141,6 +152,9 @@ const currentIndex = ref(0)
 const isPaused = ref(!props.autoPlay)
 const isConnected = ref(false)
 const connectionError = ref(null)
+const isLoading = ref(false)
+const connectionAttempts = ref(0)
+const maxRetries = 3
 
 // Charts refs
 const linearVelocityChart = ref(null)
@@ -174,7 +188,8 @@ let poseSub = null
 let carouselInterval = null
 
 // Initialize ROS connection
-const initRos = () => {
+const initRos = async () => {
+  isLoading.value = true
   try {
     ros = new ROSLIB.Ros({
       url: props.rosbridgeUrl,
@@ -184,27 +199,53 @@ const initRos = () => {
       console.log('Connected to ROS bridge server')
       isConnected.value = true
       connectionError.value = null
+      connectionAttempts.value = 0
       initSubscribers()
     })
 
     ros.on('error', (error) => {
-      console.error('Error connecting to ROS bridge server:', error)
-      connectionError.value = '连接错误，请检查URL'
+      console.error('ROS connection error:', error)
+      const errorMessage = error.message || error.toString()
+      connectionError.value = `连接错误: ${errorMessage}`
       isConnected.value = false
+      handleConnectionError()
     })
 
     ros.on('close', () => {
-      console.log('Connection to ROS bridge server closed')
+      console.log('ROS connection closed')
       isConnected.value = false
       if (!connectionError.value) {
-        connectionError.value = '连接已关闭'
+        connectionError.value = '连接已断开'
+        handleConnectionError()
       }
     })
   } catch (error) {
-    console.error('Failed to initialize ROS connection:', error)
-    connectionError.value = '初始化失败'
+    console.error('ROS initialization error:', error)
+    connectionError.value = `初始化失败: ${error.message}`
     isConnected.value = false
+  } finally {
+    isLoading.value = false
   }
+}
+
+// Handle connection error
+const handleConnectionError = () => {
+  if (connectionAttempts.value < maxRetries) {
+    connectionAttempts.value++
+    console.log(`Retrying connection (${connectionAttempts.value}/${maxRetries})...`)
+    setTimeout(() => {
+      retryConnection()
+    }, 3000 * connectionAttempts.value) // Incremental retry delay
+  }
+}
+
+// Retry connection
+const retryConnection = () => {
+  if (ros) {
+    ros.close()
+  }
+  connectionError.value = null
+  initRos()
 }
 
 // Initialize subscribers
@@ -292,7 +333,7 @@ const initSubscribers = () => {
     }
   } catch (error) {
     console.error('Failed to initialize subscribers:', error)
-    connectionError.value = '订阅主题失败'
+    connectionError.value = `订阅失败: ${error.message}`
   }
 }
 
@@ -825,5 +866,27 @@ onBeforeUnmount(() => {
 
 .connection-status .v-icon.mdi-lan-connect {
   animation: none;
+}
+
+/* Material Design elevation transitions */
+.elevation-3 {
+  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Material Design状态指示器样式 */
+.connection-status {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 5;
+  padding: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Material Design动画 */
+.v-alert {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

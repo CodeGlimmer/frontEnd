@@ -701,7 +701,7 @@
                 </v-tooltip>
               </v-card-title>
               <v-card-text class="chart-container">
-                <div id="3dVisualization" class="chart chart-animated"></div>
+                <div :id="id3d" class="chart chart-animated"></div>
               </v-card-text>
             </v-card>
           </v-col>
@@ -725,11 +725,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, watch, useId } from 'vue'
 import * as echarts from 'echarts'
 import ROSLIB from 'roslib'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+
+const id3d = useId()
 
 // ROS连接设置
 const rosUrl = ref('ws://localhost:9090')
@@ -1579,15 +1581,15 @@ const initCharts = () => {
     trajectoryChart && trajectoryChart.resize()
     renderer &&
       renderer.setSize(
-        document.getElementById('3dVisualization').clientWidth,
-        document.getElementById('3dVisualization').clientHeight,
+        document.getElementById(id3d).clientWidth,
+        document.getElementById(id3d).clientHeight,
       )
   })
 }
 
 // 初始化Three.js场景
 const initThreeJS = () => {
-  const container = document.getElementById('3dVisualization')
+  const container = document.getElementById(id3d)
 
   // 创建场景
   scene = new THREE.Scene()
@@ -1913,7 +1915,7 @@ onUnmounted(() => {
 
   // 清理Three.js场景
   if (renderer) {
-    const container = document.getElementById('3dVisualization')
+    const container = document.getElementById(id3d)
     if (container && container.contains(renderer.domElement)) {
       container.removeChild(renderer.domElement)
     }

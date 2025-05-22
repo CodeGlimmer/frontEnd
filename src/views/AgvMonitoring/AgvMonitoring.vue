@@ -328,14 +328,6 @@
                   {{ item.title }}
                 </div>
               </template>
-              <template v-slot:item="{ item, props }">
-                <v-list-item v-bind="props">
-                  <template v-slot:prepend>
-                    <v-icon>{{ getAspectRatioIcon(item.value) }}</v-icon>
-                  </template>
-                  <v-list-item-title>{{ item.title }}</v-list-item-title>
-                </v-list-item>
-              </template>
             </v-select>
           </v-col>
 
