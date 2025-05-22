@@ -221,6 +221,20 @@
         <v-btn variant="text" @click="snackbar.show = false" icon="mdi-close"></v-btn>
       </template>
     </v-snackbar>
+
+    <!-- help 弹窗 -->
+    <v-dialog v-model="helpDialog" max-width="700">
+      <v-card>
+        <v-card-title class="text-h6">命令行系统使用说明</v-card-title>
+        <v-card-text>
+          <pre style="white-space: pre-wrap; font-size: 14px;">{{ helpDoc }}</pre>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="helpDialog = false">关闭</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -240,6 +254,14 @@ const commandHistory = ref([])
 const scrollBody = ref(null)
 const showScrollTop = ref(false)
 
+// help 弹窗相关
+const helpDialog = ref(false)
+const helpDoc = ref('')
+function showHelpDoc(doc) {
+  helpDoc.value = doc
+  helpDialog.value = true
+}
+
 // 主题控制 - 使用自定义ThemeStore
 const isDarkMode = computed(() => themeStore.theme === 'dark')
 const primaryColor = computed(() => (isDarkMode.value ? 'primary' : 'primary'))
@@ -248,15 +270,15 @@ const secondaryColor = computed(() => (isDarkMode.value ? 'secondary' : 'seconda
 // 加载默认数据的函数
 function loadDefaultData() {
   loading.value = true
-  
+
   // 创建一个简单的查询命令来获取所有数据
   const defaultCommand = [['find']] // 使用基本的find命令加载所有数据
-  
+
   // 使用短暂延迟模拟加载过程
   setTimeout(() => {
     handle_command(defaultCommand, showSnackbar)
     loading.value = false
-    
+
     // 如果加载成功显示提示
     if (show_list.value.length > 0) {
       showSnackbar('已加载默认数据', 'info', 'mdi-database')
@@ -289,7 +311,7 @@ onMounted(() => {
       tableHeader.classList.add('animate-in')
     }
   }, 100)
-  
+
   // 加载默认数据
   loadDefaultData()
 })
@@ -416,13 +438,11 @@ function executeCommand() {
   loading.value = true
   const cmdList = parseCommand()
 
-  // 模拟异步操作
   setTimeout(() => {
-    handle_command(cmdList, showSnackbar)
+    // 传递 showHelpDoc 以支持 help 命令
+    handle_command(cmdList, showSnackbar, showHelpDoc)
     loading.value = false
     command.value = ''
-
-    // 滚动到结果表格顶部
     setTimeout(() => {
       if (scrollBody.value) {
         scrollBody.value.scrollTo({
