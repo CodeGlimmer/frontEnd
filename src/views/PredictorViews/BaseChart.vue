@@ -183,6 +183,19 @@ const confirmedRightIndex = ref(0)
 // 范围滑块的值
 const rangeValue = ref([0, 0])
 
+// 添加节流函数用于处理滑块拖动
+const throttle = (fn, delay) => {
+  let lastCall = 0
+  return function (...args) {
+    const now = new Date().getTime()
+    if (now - lastCall < delay) {
+      return
+    }
+    lastCall = now
+    return fn(...args)
+  }
+}
+
 // 计算是否有未确认的变更
 const hasChanges = computed(() => {
   return (
@@ -378,11 +391,14 @@ const confirmSelection = () => {
 }
 
 // 范围滑块变化处理器
-const handleRangeChange = (value) => {
+const handleRangeChange = throttle((value) => {
   leftIndex.value = value[0]
   rightIndex.value = value[1]
-  updateChart()
-}
+  // 使用requestAnimationFrame确保更新在下一帧渲染，提高滑块拖动流畅性
+  requestAnimationFrame(() => {
+    updateChart()
+  })
+}, 50) // 50ms的节流时间提供更好的拖动体验
 
 // 获取基于当前主题的颜色配置
 const getThemeColors = () => {
@@ -507,9 +523,7 @@ const updateChart = () => {
     ]
 
     const option = {
-      animation: true,
-      animationDuration: 800,
-      animationEasing: 'cubicInOut',
+      animation: false, // 拖动时关闭动画提升性能
       backgroundColor: 'transparent',
       grid: {
         left: isMobile.value ? '15%' : '3%',
@@ -864,5 +878,42 @@ onBeforeUnmount(() => {
     margin-top: 12px;
     width: 100%;
   }
+}
+
+/* 优化滑块拖动体验的样式 */
+:deep(.v-slider-thumb) {
+  transition: transform 0.05s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+  touch-action: none; /* 优化触摸设备上的拖动 */
+}
+
+:deep(.v-slider-thumb__surface) {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+  border: 3px solid var(--v-theme-surface) !important;
+  transition: transform 0.1s;
+  will-change: transform, box-shadow;
+}
+
+:deep(.v-slider-thumb__surface:hover),
+:deep(.v-slider-thumb--focused .v-slider-thumb__surface) {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25) !important;
+}
+
+:deep(.v-slider-track__background) {
+  height: 8px !important;
+  border-radius: 4px !important;
+  opacity: 0.2;
+}
+
+:deep(.v-slider-track__fill) {
+  height: 8px !important;
+  border-radius: 4px !important;
+}
+
+:deep(.v-slider) {
+  margin-top: 24px;
+  margin-bottom: 24px;
+  touch-action: none; /* 防止在触摸设备上的滚动干扰 */
 }
 </style>

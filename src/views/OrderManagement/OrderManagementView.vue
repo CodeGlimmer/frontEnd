@@ -106,6 +106,7 @@
             :search="search"
             class="elevation-0"
             item-value="order_id"
+            hide-default-footer
           >
             <!-- 表头自定义 -->
             <template v-slot:headers="{ columns }">
@@ -367,9 +368,9 @@
                   </template>
                   <!-- TODO：v-date-picker有点问题，点击会报错 -->
                   <!-- <v-date-picker
-                      v-model="newOrder.order_date"
-                      @update:model-value="dateMenu = false"
-                    ></v-date-picker> -->
+                        v-model="newOrder.order_date"
+                        @update:model-value="dateMenu = false"
+                      ></v-date-picker> -->
                 </v-menu>
               </v-col>
               <v-col cols="12">
@@ -478,9 +479,9 @@
                   </template>
                   <!-- TODO：v-date-picker点击报错，这里直接禁用 -->
                   <!-- <v-date-picker
-                      v-model="editedOrder.order_date"
-                      @update:model-value="editDateMenu = false"
-                    ></v-date-picker> -->
+                        v-model="editedOrder.order_date"
+                        @update:model-value="editDateMenu = false"
+                      ></v-date-picker> -->
                 </v-menu>
               </v-col>
               <v-col cols="12">
@@ -734,7 +735,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, useTemplateRef, onUpdated } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useOrder } from '@/stores/order'
 import { storeToRefs } from 'pinia'
 import { OrderManagement } from '@/services'

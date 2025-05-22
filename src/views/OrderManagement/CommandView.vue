@@ -245,6 +245,25 @@ const isDarkMode = computed(() => themeStore.theme === 'dark')
 const primaryColor = computed(() => (isDarkMode.value ? 'primary' : 'primary'))
 const secondaryColor = computed(() => (isDarkMode.value ? 'secondary' : 'secondary'))
 
+// 加载默认数据的函数
+function loadDefaultData() {
+  loading.value = true
+  
+  // 创建一个简单的查询命令来获取所有数据
+  const defaultCommand = [['find']] // 使用基本的find命令加载所有数据
+  
+  // 使用短暂延迟模拟加载过程
+  setTimeout(() => {
+    handle_command(defaultCommand, showSnackbar)
+    loading.value = false
+    
+    // 如果加载成功显示提示
+    if (show_list.value.length > 0) {
+      showSnackbar('已加载默认数据', 'info', 'mdi-database')
+    }
+  }, 300)
+}
+
 // 初始化主题
 onMounted(() => {
   //   const savedTheme = localStorage.getItem('theme')
@@ -270,6 +289,9 @@ onMounted(() => {
       tableHeader.classList.add('animate-in')
     }
   }, 100)
+  
+  // 加载默认数据
+  loadDefaultData()
 })
 
 // 处理滚动事件
