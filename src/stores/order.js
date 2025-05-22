@@ -15,7 +15,7 @@ export const useOrder = defineStore('order', () => {
     show_list.value = await OrderManagement.default_order()
   }
 
-  const HELP_DOC = `\n命令行系统使用说明：\n\n【基本命令】\n- help                显示本帮助文档\n- reset               重置为全部数据\n- sort <函数>         按函数排序，如 sort (a,b)=>a.order_id-b.order_id\n- desc <字段>         按字段降序排序，如 desc order_id\n- asc <字段>          按字段升序排序，如 asc order_date\n- find <函数>         过滤数据，如 find a=>a.priority>5\n- fields <字段,字段>  只显示指定字段，如 fields order_id,order_date\n- unique <字段>       按字段去重，如 unique product_type\n- groupby <字段>      按字段分组统计，如 groupby product_type\n- count               显示当前结果数量\n- sum <字段>          统计字段总和，如 sum order_quantity\n- avg <字段>          统计字段平均值，如 avg order_quantity\n- max <字段>          统计字段最大值，如 max order_quantity\n- min <字段>          统计字段最小值，如 min order_quantity\n- limit <N>           只显示前N条，如 limit 10\n- export              导出当前结果为CSV\n\n【链式命令】\n命令可用 | 连接，如：find a=>a.priority>5 | sort (a,b)=>b.order_quantity-a.order_quantity | limit 5\n\n【示例】\nfind a=>a.order_id<100 | sort (a,b)=>a.order_id-b.order_id\ngroupby product_type\nfields order_id,order_date\nunique product_type\ncount\n\n【注意】\n- find/sort 支持 JS 箭头函数表达式。\n- groupby 结果为分组统计对象。\n- export 命令会自动下载当前结果。\n- reset 恢复全部数据。\n- help 查看本说明。\n`;
+  const HELP_DOC = `\n命令行系统使用说明：\n\n【基本命令】\n- help                显示本帮助文档\n- reset               重置为全部数据\n- sort <函数>         按函数排序，如 sort (a,b)=>a.order_id-b.order_id\n- desc <字段>         按字段降序排序，如 desc order_id\n- asc <字段>          按字段升序排序，如 asc order_date\n- find <函数>         过滤数据，如 find a=>a.priority>5\n- fields <字段,字段>  只显示指定字段，如 fields order_id,order_date\n- unique <字段>       按字段去重，如 unique product_type\n- groupby <字段>      按字段分组统计，如 groupby product_type\n- count               显示当前结果数量\n- sum <字段>          统计字段总和，如 sum order_quantity\n- avg <字段>          统计字段平均值，如 avg order_quantity\n- max <字段>          统计字段最大值，如 max order_quantity\n- min <字段>          统计字段最小值，如 min order_quantity\n- limit <N>           只显示前N条，如 limit 10\n- export              导出当前结果为CSV\n\n【链式命令】\n命令可用 | 连接，如：find a=>a.priority>5 | sort (a,b)=>b.order_quantity-a.order_quantity | limit 5\n\n【示例】\nfind a=>a.order_id<100 | sort (a,b)=>a.order_id-b.order_id\ngroupby product_type\nfields order_id,order_date\nunique product_type\ncount\n\n【注意】\n- find/sort 支持 JS 箭头函数表达式。\n- groupby 结果为分组统计对象。\n- export 命令会自动下载当前结果。\n- reset 恢复全部数据。\n- help 查看本说明。\n`
 
   const handle_command = async (command_list, showSnackbar, showHelpDoc) => {
     let temp = [...order_list.value]
@@ -28,13 +28,17 @@ export const useOrder = defineStore('order', () => {
       return
     }
     // 支持 reset 命令
-    if (command_list.length === 1 && (command_list[0][0] === 'reset' || (command_list[0][0] === '' && command_list[0].length === 1))) {
+    if (
+      command_list.length === 1 &&
+      (command_list[0][0] === 'reset' ||
+        (command_list[0][0] === '' && command_list[0].length === 1))
+    ) {
       show_list.value = [...order_list.value]
       showSnackbar('重置成功', 'success', 'mdi-check-circle')
       return
     }
     for (let command of command_list) {
-      const [cmd, ...args] = command.map(x => x.trim())
+      const [cmd, ...args] = command.map((x) => x.trim())
       switch (cmd) {
         case 'sort':
           if (args.length === 1) {
@@ -72,10 +76,10 @@ export const useOrder = defineStore('order', () => {
           break
         case 'fields':
           if (args.length === 1) {
-            const fields = args[0].split(',').map(f => f.trim())
-            lastResult = lastResult.map(row => {
+            const fields = args[0].split(',').map((f) => f.trim())
+            lastResult = lastResult.map((row) => {
               const obj = {}
-              fields.forEach(f => obj[f] = row[f])
+              fields.forEach((f) => (obj[f] = row[f]))
               return obj
             })
           } else showSnackbar('fields 需字段列表', 'error', 'mdi-alert-circle')
@@ -84,7 +88,7 @@ export const useOrder = defineStore('order', () => {
           if (args.length === 1) {
             const key = args[0]
             const seen = new Set()
-            lastResult = lastResult.filter(item => {
+            lastResult = lastResult.filter((item) => {
               if (seen.has(item[key])) return false
               seen.add(item[key])
               return true
@@ -95,12 +99,16 @@ export const useOrder = defineStore('order', () => {
           if (args.length === 1) {
             const key = args[0]
             const group = {}
-            lastResult.forEach(item => {
+            lastResult.forEach((item) => {
               const k = item[key]
               if (!group[k]) group[k] = []
               group[k].push(item)
             })
-            lastResult = Object.entries(group).map(([k, v]) => ({ [key]: k, count: v.length, items: v }))
+            lastResult = Object.entries(group).map(([k, v]) => ({
+              [key]: k,
+              count: v.length,
+              items: v,
+            }))
           } else showSnackbar('groupby 需1个字段', 'error', 'mdi-alert-circle')
           break
         case 'count':
@@ -124,14 +132,14 @@ export const useOrder = defineStore('order', () => {
         case 'max':
           if (args.length === 1) {
             const key = args[0]
-            const max = Math.max(...lastResult.map(x => Number(x[key] || 0)))
+            const max = Math.max(...lastResult.map((x) => Number(x[key] || 0)))
             showSnackbar(`${key} 字段最大值: ${max}`, 'info', 'mdi-arrow-up-bold')
           } else showSnackbar('max 需1个字段', 'error', 'mdi-alert-circle')
           break
         case 'min':
           if (args.length === 1) {
             const key = args[0]
-            const min = Math.min(...lastResult.map(x => Number(x[key] || 0)))
+            const min = Math.min(...lastResult.map((x) => Number(x[key] || 0)))
             showSnackbar(`${key} 字段最小值: ${min}`, 'info', 'mdi-arrow-down-bold')
           } else showSnackbar('min 需1个字段', 'error', 'mdi-alert-circle')
           break
@@ -154,7 +162,10 @@ export const useOrder = defineStore('order', () => {
     if (exported) {
       // 导出CSV
       const headers = Object.keys(lastResult[0] || {})
-      const csvContent = [headers.join(','), ...lastResult.map(item => headers.map(h => item[h]).join(','))].join('\n')
+      const csvContent = [
+        headers.join(','),
+        ...lastResult.map((item) => headers.map((h) => item[h]).join(',')),
+      ].join('\n')
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')

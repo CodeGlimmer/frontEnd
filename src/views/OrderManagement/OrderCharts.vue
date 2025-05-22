@@ -121,7 +121,7 @@
             <v-row class="mt-4">
               <v-col cols="12">
                 <v-card
-                  class="rounded-lg tw:hover:!shadow-m-elevation-8 tw:hover:-translate-y-2 tw:ease-in-out tw:duration-500 tw:!transition-all"
+                  class="rounded-lg tw:hover:!shadow-m-elevation-8 tw:hover:-translate-y-2 tw:ease-in-out tw:duration-500 tw:!transition-all tw:dark:bg-m-grey-darken4"
                   elevation="1"
                 >
                   <v-card-title class="text-subtitle-1 font-weight-bold">

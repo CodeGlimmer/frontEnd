@@ -227,7 +227,7 @@
       <v-card>
         <v-card-title class="text-h6">命令行系统使用说明</v-card-title>
         <v-card-text>
-          <pre style="white-space: pre-wrap; font-size: 14px;">{{ helpDoc }}</pre>
+          <pre style="white-space: pre-wrap; font-size: 14px">{{ helpDoc }}</pre>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
