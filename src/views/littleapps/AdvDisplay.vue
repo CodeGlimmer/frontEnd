@@ -277,7 +277,9 @@ onUnmounted(() => {
           <router-link to="/index/agvmonitoring" class="nav-link">AGV监控</router-link>
           <router-link to="/index/schedulingplanning" class="nav-link">数据分析</router-link>
           <router-link to="/index/setting" class="nav-link">联系我们</router-link>
-          <button class="cta-button" @click="navigateToStart">开始使用</button>
+          <button class="cta-button" @click="navigateToStart">
+            <router-link to="/index">开始使用</router-link>
+          </button>
         </div>
       </div>
     </nav>
@@ -365,7 +367,9 @@ onUnmounted(() => {
                 <p class="feature-subtitle">{{ feature.subtitle }}</p>
               </div>
               <p class="feature-description">{{ feature.description }}</p>
-              <button class="feature-button" @click="navigateToFeature(feature)">了解更多</button>
+              <button class="feature-button" @click="navigateToFeature(feature)">
+                <router-link to="/index/ordermanagement/charts">了解更多</router-link>
+              </button>
             </div>
           </div>
         </div>
