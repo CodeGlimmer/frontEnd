@@ -99,6 +99,14 @@ export default createRouter({
                     main: () => import('@/views/AgvMonitoring/RosMap.vue'),
                   },
                 },
+                {
+                  path: 'foxglove',
+                  name: 'foxglove',
+                  components: {
+                    sidebar: () => import('@/views/AgvMonitoring/AgvMonitoringSideBar.vue'),
+                    main: () => import('@/views/AgvMonitoring/FoxGlove.vue'),
+                  },
+                },
               ],
             },
             {

@@ -24,8 +24,15 @@
     <v-list-item
       prepend-icon="mdi-map"
       title="实时地图"
-      value="scan"
+      value="map"
       to="/index/agvmonitoring/map"
+    ></v-list-item>
+
+    <v-list-item
+      prepend-icon="mdi-map"
+      title="fox glove"
+      value="foxglove"
+      to="/index/agvmonitoring/foxglove"
     ></v-list-item>
   </v-list>
 </template>
