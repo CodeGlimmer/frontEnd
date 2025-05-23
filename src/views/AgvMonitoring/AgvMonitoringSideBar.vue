@@ -29,7 +29,7 @@
     ></v-list-item>
 
     <v-list-item
-      prepend-icon="mdi-map"
+      prepend-icon="mdi-reply-outline"
       title="fox glove"
       value="foxglove"
       to="/index/agvmonitoring/foxglove"
