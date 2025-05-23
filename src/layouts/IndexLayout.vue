@@ -180,8 +180,8 @@
             ></v-list-item>
 
             <v-list-item
-              prepend-icon="mdi-calendar-clock"
-              title="日程"
+              prepend-icon="mdi-advertisements"
+              title="了解我们"
               value="calendar"
               to="/index/adv-display"
               @click="$vuetify.display.smAndDown && (showNavigationDrawer = false)"
