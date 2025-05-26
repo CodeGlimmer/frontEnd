@@ -1,0 +1,125 @@
+/* FoxGlove 组件暗色模式通用样式 */
+
+/* 折叠面板暗色模式 */
+.dark-collapse-item :deep(.arco-collapse-item-header) {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+  border-bottom: 1px solid #374151 !important;
+}
+
+.dark-collapse-item :deep(.arco-collapse-item-header:hover) {
+  background-color: #374151 !important;
+}
+
+.dark-collapse-item :deep(.arco-collapse-item-content) {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+/* 按钮暗色模式 */
+.dark-text-btn {
+  color: #f9fafb !important;
+}
+
+.dark-text-btn:hover {
+  background-color: #374151 !important;
+}
+
+/* 表单暗色模式 */
+.dark-form :deep(.arco-form-item-label) {
+  color: #f9fafb !important;
+}
+
+.dark-form :deep(.arco-select-view-single) {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f9fafb !important;
+}
+
+.dark-form :deep(.arco-select-view-single:hover) {
+  border-color: #6b7280 !important;
+}
+
+.dark-form :deep(.arco-input-wrapper) {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark-form :deep(.arco-input) {
+  background-color: #374151 !important;
+  color: #f9fafb !important;
+  border-color: #4b5563 !important;
+}
+
+.dark-form :deep(.arco-input:hover) {
+  border-color: #6b7280 !important;
+}
+
+.dark-form :deep(.arco-input:focus) {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+.dark-form :deep(.arco-input-number) {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark-form :deep(.arco-input-number .arco-input) {
+  background-color: transparent !important;
+  color: #f9fafb !important;
+}
+
+.dark-form :deep(.arco-input-number:hover) {
+  border-color: #6b7280 !important;
+}
+
+.dark-form :deep(.arco-color-picker-trigger) {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark-form :deep(.arco-switch) {
+  background-color: #4b5563 !important;
+}
+
+.dark-form :deep(.arco-switch-checked) {
+  background-color: #3b82f6 !important;
+}
+
+.dark-form :deep(.arco-slider-track) {
+  background-color: #4b5563 !important;
+}
+
+.dark-form :deep(.arco-slider-bar) {
+  background-color: #3b82f6 !important;
+}
+
+.dark-form :deep(.arco-slider-btn) {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+}
+
+/* 下拉菜单暗色模式 */
+.dark-form :deep(.arco-dropdown-list) {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark-form :deep(.arco-dropdown-option) {
+  color: #f9fafb !important;
+}
+
+.dark-form :deep(.arco-dropdown-option:hover) {
+  background-color: #4b5563 !important;
+}
+
+/* 颜色选择器暗色模式 */
+.dark-form :deep(.arco-color-picker-panel) {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark-form :deep(.arco-color-picker-panel .arco-color-picker-palette) {
+  background-color: #374151 !important;
+}

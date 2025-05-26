@@ -1,11 +1,18 @@
 <template>
-  <div class="main-viewer">
+  <div class="main-viewer" :class="{ 'dark-mode': isDarkMode }">
     <a-layout>
-      <a-layout-sider :width="350">
-        <div class="sider-content tw:dark:bg-m-grey-darken4">
-          <a-collapse :default-active-key="['GlobalOptions', 'ConnectionSettings']">
-            <a-collapse-item header="连接设置" key="ConnectionSettings">
-              <div class="connection-settings">
+      <a-layout-sider :width="350" class="layout-sider" :class="{ 'dark-sider': isDarkMode }">
+        <div class="sider-content" :class="{ 'dark-sider-content': isDarkMode }">
+          <a-collapse
+            :default-active-key="['GlobalOptions', 'ConnectionSettings']"
+            :class="{ 'dark-collapse': isDarkMode }"
+          >
+            <a-collapse-item
+              header="连接设置"
+              key="ConnectionSettings"
+              :class="{ 'dark-collapse-item': isDarkMode }"
+            >
+              <div class="connection-settings" :class="{ 'dark-connection-settings': isDarkMode }">
                 <a-input v-model="wsHost" placeholder="WebSocket主机" :disabled="isConnected">
                   <template #prepend>ws://</template>
                 </a-input>
@@ -63,10 +70,14 @@
             </template>
           </template>
         </Viewer>
-        <div v-else class="connection-placeholder tw:dark:!bg-m-grey-darken4">
+        <div
+          v-else
+          class="connection-placeholder"
+          :class="{ 'dark-connection-placeholder': isDarkMode }"
+        >
           <div>请设置WebSocket连接并点击"连接"按钮</div>
         </div>
-        <div class="controls">
+        <div class="controls" :class="{ 'dark-controls': isDarkMode }">
           <a-button @click="switchCameraType" size="mini" v-if="isConnected">
             {{ cameraType }}
           </a-button>
@@ -98,7 +109,7 @@
   <div class="image" ref="imageRef"></div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useThemeStore } from '@/stores'
 import { ArrowUpRight, Sun, Moon } from 'lucide-vue-next'
 import { OptionComponents } from '@/views/FoxGlove'
@@ -116,8 +127,9 @@ type TFTreeNode = {
 const imageRef = ref<HTMLDivElement>(null)
 const viewerRef = ref<{ startClick: (type: 'pose' | 'point') => void } | undefined>(undefined)
 
-// 黑暗模式状态管理
-const isDarkMode = ref(true)
+// 主题状态管理 - 修复响应性问题
+const themeStore = useThemeStore()
+const isDarkMode = computed(() => themeStore.isDarkMode)
 
 // WebSocket连接设置
 const wsHost = ref(location.hostname)
@@ -145,7 +157,7 @@ const rvizOptions = ref<{
 }>({
   globalOptions: {
     fixedFrame: 'map',
-    background: '#303030',
+    background: isDarkMode.value ? '#212121' : '#303030',
   },
   items: [
     {
@@ -346,6 +358,15 @@ const getDefaultOptions = (type: string) => {
     }
   }
 }
+
+// 监听主题变化，自动调整背景色 - 修复响应性
+watch(
+  isDarkMode,
+  (newValue) => {
+    rvizOptions.value.globalOptions.background = newValue ? '#212121' : '#303030'
+  },
+  { immediate: true },
+)
 </script>
 
 <style lang="less" scoped>
@@ -359,16 +380,269 @@ const getDefaultOptions = (type: string) => {
   height: 100%;
 }
 
+/* 侧边栏样式 */
+.layout-sider {
+  background-color: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.dark-sider {
+  background-color: #1f2937;
+  border-right: 1px solid #374151;
+}
+
 .sider-content {
   height: 100%;
   overflow-y: auto;
   user-select: none;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
+}
+
+.dark-sider-content {
+  background-color: #1f2937;
+  color: #f9fafb;
 }
 
 .sider-content :deep(.arco-collapse-item-header-title) {
   word-wrap: break-word;
   flex-wrap: wrap;
   width: 260px;
+}
+
+/* 折叠面板样式 - 亮色模式 */
+:deep(.arco-collapse-item) {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+:deep(.arco-collapse-item-header) {
+  background-color: #ffffff;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+:deep(.arco-collapse-item-header:hover) {
+  background-color: #f9fafb;
+}
+
+:deep(.arco-collapse-item-content) {
+  background-color: #ffffff;
+  color: #374151;
+  transition: all 0.3s ease;
+}
+
+/* 表单样式 - 亮色模式 */
+:deep(.arco-form-item-label) {
+  color: #374151;
+  transition: color 0.3s ease;
+}
+
+:deep(.arco-input-wrapper) {
+  background-color: #ffffff;
+  border-color: #d1d5db;
+  transition: all 0.3s ease;
+}
+
+:deep(.arco-input) {
+  background-color: #ffffff;
+  color: #374151;
+  border-color: #d1d5db;
+  transition: all 0.3s ease;
+}
+
+:deep(.arco-input:hover) {
+  border-color: #9ca3af;
+}
+
+:deep(.arco-input:focus) {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+:deep(.arco-input-number) {
+  background-color: #ffffff;
+  border-color: #d1d5db;
+  transition: all 0.3s ease;
+}
+
+:deep(.arco-input-number .arco-input) {
+  background-color: transparent;
+}
+
+:deep(.arco-select-view-single) {
+  background-color: #ffffff;
+  border-color: #d1d5db;
+  color: #374151;
+  transition: all 0.3s ease;
+}
+
+:deep(.arco-select-view-single:hover) {
+  border-color: #9ca3af;
+}
+
+:deep(.arco-select-view-single:focus) {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+:deep(.arco-btn-text) {
+  color: #374151;
+  transition: all 0.3s ease;
+}
+
+:deep(.arco-btn-text:hover) {
+  background-color: #f3f4f6;
+}
+
+/* 折叠面板暗色模式 */
+.dark-collapse :deep(.arco-collapse-item) {
+  background-color: #1f2937;
+  border-bottom: 1px solid #374151;
+}
+
+.dark-collapse :deep(.arco-collapse-item-header) {
+  background-color: #1f2937;
+  color: #f9fafb;
+  border-bottom: 1px solid #374151;
+}
+
+.dark-collapse :deep(.arco-collapse-item-header:hover) {
+  background-color: #374151;
+}
+
+.dark-collapse :deep(.arco-collapse-item-content) {
+  background-color: #1f2937;
+  color: #f9fafb;
+}
+
+/* 表单暗色模式 */
+.dark-collapse :deep(.arco-form-item-label) {
+  color: #f9fafb;
+}
+
+.dark-collapse :deep(.arco-input-wrapper) {
+  background-color: #374151;
+  border-color: #4b5563;
+}
+
+.dark-collapse :deep(.arco-input) {
+  background-color: #374151;
+  color: #f9fafb;
+  border-color: #4b5563;
+}
+
+.dark-collapse :deep(.arco-input:hover) {
+  border-color: #6b7280;
+}
+
+.dark-collapse :deep(.arco-input:focus) {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.dark-collapse :deep(.arco-input-number) {
+  background-color: #374151;
+  border-color: #4b5563;
+}
+
+.dark-collapse :deep(.arco-input-number .arco-input) {
+  background-color: transparent;
+}
+
+.dark-collapse :deep(.arco-select-view-single) {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.dark-collapse :deep(.arco-select-view-single:hover) {
+  border-color: #6b7280;
+}
+
+.dark-collapse :deep(.arco-select-view-single:focus) {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.dark-collapse :deep(.arco-switch) {
+  background-color: #4b5563;
+}
+
+.dark-collapse :deep(.arco-switch-checked) {
+  background-color: #3b82f6;
+}
+
+.dark-collapse :deep(.arco-btn-text) {
+  color: #f9fafb;
+}
+
+.dark-collapse :deep(.arco-btn-text:hover) {
+  background-color: #374151;
+}
+
+/* 连接设置样式 */
+.connection-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .arco-input-wrapper {
+    width: 100%;
+  }
+
+  .arco-input-number {
+    width: 100%;
+  }
+}
+
+/* 连接设置亮色模式 */
+.connection-settings :deep(.arco-input-group-prepend) {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+  color: #374151;
+  transition: all 0.3s ease;
+}
+
+.connection-settings :deep(.arco-btn-primary) {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+  transition: all 0.3s ease;
+}
+
+.connection-settings :deep(.arco-btn-primary:hover) {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.connection-settings :deep(.arco-btn-status-success) {
+  background-color: #10b981;
+  border-color: #10b981;
+}
+
+/* 连接设置暗色模式 */
+.dark-connection-settings :deep(.arco-input-group-prepend) {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.dark-connection-settings :deep(.arco-btn-primary) {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.dark-connection-settings :deep(.arco-btn-primary:hover) {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.dark-connection-settings :deep(.arco-btn-status-success) {
+  background-color: #10b981;
+  border-color: #10b981;
 }
 
 .theme-toggle {
@@ -378,6 +652,7 @@ const getDefaultOptions = (type: string) => {
   z-index: 100;
 }
 
+/* 控制按钮样式 */
 .controls {
   position: absolute;
   top: 10px;
@@ -386,8 +661,57 @@ const getDefaultOptions = (type: string) => {
   flex-direction: column;
 }
 
+/* 控制按钮亮色模式 */
+.controls :deep(.arco-btn-mini) {
+  background-color: #ffffff;
+  border-color: #d1d5db;
+  color: #374151;
+  transition: all 0.3s ease;
+}
+
+.controls :deep(.arco-btn-mini:hover) {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.controls :deep(.arco-dropdown-button) {
+  background-color: #ffffff;
+  border-color: #d1d5db;
+  color: #374151;
+  transition: all 0.3s ease;
+}
+
+.controls :deep(.arco-dropdown-button:hover) {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}
+
+/* 控制按钮暗色模式 */
+.dark-controls :deep(.arco-btn-mini) {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.dark-controls :deep(.arco-btn-mini:hover) {
+  background-color: #4b5563;
+  border-color: #6b7280;
+}
+
+.dark-controls :deep(.arco-dropdown-button) {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.dark-controls :deep(.arco-dropdown-button:hover) {
+  background-color: #4b5563;
+  border-color: #6b7280;
+}
+
 .click-topic.active {
-  background: aqua;
+  background: #3b82f6;
+  color: #ffffff;
 }
 
 .image {
@@ -410,20 +734,6 @@ const getDefaultOptions = (type: string) => {
   }
 }
 
-.connection-settings {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-
-  .arco-input-wrapper {
-    width: 100%;
-  }
-
-  .arco-input-number {
-    width: 100%;
-  }
-}
-
 .connection-placeholder {
   display: flex;
   justify-content: center;
@@ -436,5 +746,109 @@ const getDefaultOptions = (type: string) => {
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
+}
+
+.dark-connection-placeholder {
+  background-color: #1f2937;
+  color: #d1d5db;
+}
+
+/* 下拉菜单样式 - 亮色模式 */
+:deep(.arco-dropdown-list) {
+  background-color: #ffffff;
+  border-color: #d1d5db;
+  transition: all 0.3s ease;
+}
+
+:deep(.arco-dropdown-option) {
+  color: #374151;
+  transition: all 0.3s ease;
+}
+
+:deep(.arco-dropdown-option:hover) {
+  background-color: #f3f4f6;
+}
+
+/* 颜色选择器样式 - 亮色模式 */
+:deep(.arco-color-picker-trigger) {
+  background-color: #ffffff;
+  border-color: #d1d5db;
+  transition: all 0.3s ease;
+}
+
+:deep(.arco-color-picker-panel) {
+  background-color: #ffffff;
+  border-color: #d1d5db;
+  transition: all 0.3s ease;
+}
+
+:deep(.arco-color-picker-panel .arco-color-picker-palette) {
+  background-color: #ffffff;
+}
+
+/* 下拉菜单暗色模式 */
+.dark-mode :deep(.arco-dropdown-list) {
+  background-color: #374151;
+  border-color: #4b5563;
+}
+
+.dark-mode :deep(.arco-dropdown-option) {
+  color: #f9fafb;
+}
+
+.dark-mode :deep(.arco-dropdown-option:hover) {
+  background-color: #4b5563;
+}
+
+/* 颜色选择器暗色模式 */
+.dark-collapse :deep(.arco-color-picker-trigger) {
+  background-color: #374151;
+  border-color: #4b5563;
+}
+
+.dark-mode :deep(.arco-color-picker-panel) {
+  background-color: #374151;
+  border-color: #4b5563;
+}
+
+.dark-mode :deep(.arco-color-picker-panel .arco-color-picker-palette) {
+  background-color: #374151;
+}
+
+/* Scrollbar 样式 - 亮色模式 */
+.sider-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sider-content::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+.sider-content::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+  transition: background 0.3s ease;
+}
+
+.sider-content::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Scrollbar 暗色模式 */
+.dark-sider-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dark-sider-content::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+.dark-sider-content::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 3px;
+}
+
+.dark-sider-content::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }
 </style>

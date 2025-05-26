@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Eye, EyeOff } from 'lucide-vue-next'
+import { useThemeStore } from '@/stores'
 
 interface Props {
   name: string
@@ -19,6 +20,10 @@ defineEmits<{
   (event: 'update:modelValue', value: any): void
   (event: 'update:show', value: boolean): void
 }>()
+
+// 主题状态管理
+const themeStore = useThemeStore()
+const { isDarkMode } = themeStore
 </script>
 
 <template>

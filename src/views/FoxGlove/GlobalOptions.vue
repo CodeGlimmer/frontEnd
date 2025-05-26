@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useThemeStore } from '@/stores'
+
 interface Props {
   modelValue: {
     fixedFrame: string
@@ -12,6 +14,10 @@ const props = defineProps<Props>()
 defineEmits<{
   (event: 'update:modelValue', value: any): void
 }>()
+
+// 主题状态管理
+const themeStore = useThemeStore()
+const { isDarkMode } = themeStore
 </script>
 
 <template>
