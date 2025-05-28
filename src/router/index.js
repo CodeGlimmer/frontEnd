@@ -161,6 +161,16 @@ export default createRouter({
                 title: 'AGV监控系统 - 广告展示',
               },
             },
+            {
+              path: 'chatai',
+              name: 'chatai',
+              components: {
+                main: () => import('@/views/ChatAI/EnhancedChatAI.vue'),
+              },
+              meta: {
+                title: 'AGV监控系统 - AI助手',
+              },
+            },
           ],
         },
       ],

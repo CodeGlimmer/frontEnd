@@ -186,6 +186,14 @@
               to="/index/adv-display"
               @click="$vuetify.display.smAndDown && (showNavigationDrawer = false)"
             ></v-list-item>
+
+            <v-list-item
+              prepend-icon="mdi-chat"
+              title="chatai"
+              value="calendar"
+              to="/index/chatai"
+              @click="$vuetify.display.smAndDown && (showNavigationDrawer = false)"
+            ></v-list-item>
           </v-list-group>
         </v-list>
 
