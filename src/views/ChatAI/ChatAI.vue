@@ -257,7 +257,7 @@ const saveConfig = () => {
   try {
     localStorage.setItem('deepseek-config', JSON.stringify(config.value))
     showMessage('配置已保存', 'success')
-  } catch (err) {
+  } catch {
     showMessage('保存配置失败', 'error')
   }
 }
