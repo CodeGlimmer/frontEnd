@@ -1,12 +1,22 @@
 <template>
-  <v-container fluid class="chat-container">
+  <v-container fluid class="chat-container" :class="{ 'dark-theme': isDark }">
     <v-row no-gutters class="fill-height">
       <!-- API 配置侧边栏 -->
       <v-col cols="12" md="3" class="sidebar">
-        <v-card class="sidebar-card" elevation="1" rounded="lg">
+        <v-card class="sidebar-card" elevation="1" rounded="lg" :color="cardColor">
           <v-card-title class="config-title">
             <v-icon left>mdi-cog</v-icon>
             API 配置
+            <v-spacer />
+            <!-- 主题切换按钮 -->
+            <v-btn
+              @click="toggleTheme"
+              :icon="isDark ? 'mdi-weather-sunny' : 'mdi-weather-night'"
+              variant="text"
+              size="small"
+              :title="isDark ? '切换到亮色模式' : '切换到暗色模式'"
+              class="theme-toggle"
+            />
           </v-card-title>
 
           <v-card-text class="config-content">
@@ -20,6 +30,7 @@
                 :rules="[rules.required]"
                 hide-details="auto"
                 class="config-field"
+                :bg-color="inputBgColor"
               />
 
               <v-text-field
@@ -30,6 +41,7 @@
                 :rules="[rules.required]"
                 hide-details="auto"
                 class="config-field"
+                :bg-color="inputBgColor"
               />
 
               <v-select
@@ -40,6 +52,7 @@
                 density="comfortable"
                 hide-details="auto"
                 class="config-field"
+                :bg-color="inputBgColor"
               />
 
               <div class="slider-section">
@@ -100,7 +113,7 @@
 
       <!-- 聊天主区域 -->
       <v-col cols="12" md="9" class="chat-main">
-        <v-card class="chat-card" elevation="1" rounded="lg">
+        <v-card class="chat-card" elevation="1" rounded="lg" :color="cardColor">
           <v-card-title class="chat-header">
             <v-icon left>mdi-chat</v-icon>
             DeepSeek 聊天
@@ -127,7 +140,10 @@
               >
                 <div
                   class="message-bubble"
-                  :class="{ 'message-bubble--user': message.role === 'user' }"
+                  :class="[
+                    { 'message-bubble--user': message.role === 'user' },
+                    { 'message-bubble--dark': isDark },
+                  ]"
                 >
                   <div class="message-header">
                     <v-avatar
@@ -155,7 +171,10 @@
 
               <!-- 加载指示器 -->
               <div v-if="loading" class="message-wrapper">
-                <div class="message-bubble message-bubble--loading">
+                <div
+                  class="message-bubble message-bubble--loading"
+                  :class="{ 'message-bubble--dark': isDark }"
+                >
                   <div class="message-header">
                     <v-avatar size="32" color="secondary" class="message-avatar">
                       <v-icon color="white">mdi-robot</v-icon>
@@ -175,7 +194,31 @@
 
           <!-- 消息输入区域 -->
           <v-divider />
-          <v-card-actions class="input-section">
+          <v-card-actions class="input-section" :class="{ 'input-section--dark': isDark }">
+            <!-- 调试信息 -->
+            <div v-if="showDebugInfo" class="debug-info" :class="{ 'debug-info--dark': isDark }">
+              <small
+                >语音支持: {{ speechSupported ? '是' : '否' }} | 正在监听:
+                {{ isListening ? '是' : '否' }}</small
+              >
+            </div>
+
+            <!-- 语音不支持提示 -->
+            <v-alert
+              v-if="showSpeechWarning"
+              type="warning"
+              variant="tonal"
+              density="compact"
+              class="speech-warning"
+              closable
+              @click:close="dismissSpeechWarning"
+            >
+              <template v-slot:prepend>
+                <v-icon>mdi-microphone-off</v-icon>
+              </template>
+              您的浏览器不支持语音输入功能。建议使用 Chrome、Edge 或 Safari 浏览器。
+            </v-alert>
+
             <div class="input-wrapper">
               <v-textarea
                 v-model="newMessage"
@@ -188,9 +231,28 @@
                 hide-details
                 rounded="lg"
                 class="message-input"
+                :bg-color="inputBgColor"
                 @keydown.ctrl.enter="sendMessage"
                 @keydown.meta.enter="sendMessage"
               />
+
+              <!-- 语音输入按钮 - 强制显示 -->
+              <v-btn
+                @click="handleSpeechClick"
+                :color="getSpeechButtonColor()"
+                size="large"
+                rounded="lg"
+                class="speech-button"
+                :class="getSpeechButtonClass()"
+                :disabled="loading"
+                :title="getSpeechButtonTooltip()"
+                variant="elevated"
+              >
+                <v-icon :class="{ pulse: isListening }" size="24">
+                  {{ getSpeechButtonIcon() }}
+                </v-icon>
+              </v-btn>
+
               <v-btn
                 @click="sendMessage"
                 color="primary"
@@ -201,7 +263,40 @@
                 :disabled="!newMessage.trim() || !isConfigured || loading"
               />
             </div>
-            <div class="input-hint">按 Ctrl+Enter 发送消息</div>
+
+            <!-- 语音识别状态指示器 -->
+            <div
+              v-if="isListening || speechRecognition.interimTranscript"
+              class="speech-status"
+              :class="{ 'speech-status--dark': isDark }"
+            >
+              <div class="speech-indicator">
+                <v-icon color="error" class="pulse">mdi-microphone</v-icon>
+                <span class="speech-text">正在监听...</span>
+                <v-btn
+                  @click="stopSpeechRecognition"
+                  color="error"
+                  variant="text"
+                  size="small"
+                  class="stop-button"
+                >
+                  停止
+                </v-btn>
+              </div>
+
+              <!-- 实时转录文本 -->
+              <div v-if="speechRecognition.interimTranscript" class="interim-transcript">
+                <v-chip size="small" variant="outlined" class="transcript-chip">
+                  {{ speechRecognition.interimTranscript }}
+                </v-chip>
+              </div>
+            </div>
+
+            <div class="input-hint" :class="{ 'input-hint--dark': isDark }">
+              按 Ctrl+Enter 发送消息 | 点击麦克风图标进行语音输入
+              <br />
+              <small>语音功能状态: {{ speechSupported ? '已启用' : '不支持' }}</small>
+            </div>
           </v-card-actions>
         </v-card>
       </v-col>
@@ -218,7 +313,11 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
+import { useTheme } from 'vuetify'
+
+// Vuetify 主题
+const theme = useTheme()
 
 // 响应式数据
 const config = ref({
@@ -242,6 +341,20 @@ const error = ref({
   type: 'error',
 })
 
+// 语音识别相关状态
+const speechSupported = ref(false)
+const isListening = ref(false)
+const showSpeechWarning = ref(false)
+const showDebugInfo = ref(true) // 添加调试信息显示
+const speechRecognition = ref({
+  instance: null,
+  interimTranscript: '',
+  finalTranscript: '',
+})
+
+// 主题相关状态
+const isDark = ref(false)
+
 // 表单验证规则
 const rules = {
   required: (value) => !!value || '此字段为必填项',
@@ -250,6 +363,15 @@ const rules = {
 // 计算属性
 const isConfigured = computed(() => {
   return config.value.apiKey && config.value.apiUrl
+})
+
+// 主题相关计算属性
+const cardColor = computed(() => {
+  return isDark.value ? 'grey-darken-4' : 'white'
+})
+
+const inputBgColor = computed(() => {
+  return isDark.value ? 'grey-darken-3' : 'white'
 })
 
 // 方法
@@ -392,10 +514,224 @@ const showMessage = (message, type = 'info') => {
   }
 }
 
+// 主题相关方法
+const toggleTheme = () => {
+  isDark.value = !isDark.value
+  theme.global.name.value = isDark.value ? 'dark' : 'light'
+
+  // 保存主题设置到本地存储
+  try {
+    localStorage.setItem('chat-theme', isDark.value ? 'dark' : 'light')
+  } catch (err) {
+    console.error('保存主题设置失败:', err)
+  }
+
+  showMessage(`已切换到${isDark.value ? '暗色' : '亮色'}模式`, 'success')
+}
+
+const loadTheme = () => {
+  try {
+    const savedTheme = localStorage.getItem('chat-theme')
+    if (savedTheme) {
+      isDark.value = savedTheme === 'dark'
+      theme.global.name.value = isDark.value ? 'dark' : 'light'
+    }
+  } catch (err) {
+    console.error('加载主题设置失败:', err)
+  }
+}
+
+// 语音识别相关方法
+const initSpeechRecognition = () => {
+  console.log('开始初始化语音识别...')
+
+  // 检测浏览器支持
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+
+  if (!SpeechRecognition) {
+    speechSupported.value = false
+    showSpeechWarning.value = true
+    console.log('❌ 浏览器不支持语音识别')
+    showMessage('浏览器不支持语音识别功能', 'warning')
+    return
+  }
+
+  speechSupported.value = true
+  console.log('✅ 浏览器支持语音识别，支持状态:', speechSupported.value)
+  showMessage('语音识别功能已启用', 'success')
+
+  const recognition = new SpeechRecognition()
+
+  // 配置语音识别
+  recognition.continuous = true
+  recognition.interimResults = true
+  recognition.lang = 'zh-CN'
+  recognition.maxAlternatives = 1
+
+  // 开始识别事件
+  recognition.onstart = () => {
+    isListening.value = true
+    speechRecognition.value.interimTranscript = ''
+    speechRecognition.value.finalTranscript = ''
+    console.log('🎤 语音识别开始')
+    showMessage('开始语音识别', 'info')
+  }
+
+  // 识别结果事件
+  recognition.onresult = (event) => {
+    let interimTranscript = ''
+    let finalTranscript = ''
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript
+
+      if (event.results[i].isFinal) {
+        finalTranscript += transcript
+      } else {
+        interimTranscript += transcript
+      }
+    }
+
+    speechRecognition.value.interimTranscript = interimTranscript
+
+    if (finalTranscript) {
+      speechRecognition.value.finalTranscript += finalTranscript
+      // 将最终识别结果添加到输入框
+      newMessage.value += (newMessage.value ? ' ' : '') + finalTranscript.trim()
+      console.log('📝 识别到文字:', finalTranscript)
+    }
+  }
+
+  // 识别结束事件
+  recognition.onend = () => {
+    isListening.value = false
+    speechRecognition.value.interimTranscript = ''
+    console.log('🔇 语音识别结束')
+
+    // 如果有最终转录结果，清空临时状态
+    if (speechRecognition.value.finalTranscript) {
+      speechRecognition.value.finalTranscript = ''
+    }
+  }
+
+  // 错误处理
+  recognition.onerror = (event) => {
+    console.error('❌ 语音识别错误:', event.error)
+    isListening.value = false
+    speechRecognition.value.interimTranscript = ''
+
+    let errorMessage = '语音识别失败'
+
+    switch (event.error) {
+      case 'no-speech':
+        errorMessage = '未检测到语音，请重试'
+        break
+      case 'audio-capture':
+        errorMessage = '无法访问麦克风，请检查权限设置'
+        break
+      case 'not-allowed':
+        errorMessage = '麦克风访问被拒绝，请允许麦克风权限'
+        break
+      case 'network':
+        errorMessage = '网络错误，请检查网络连接'
+        break
+      case 'aborted':
+        errorMessage = '语音识别被中断'
+        break
+      default:
+        errorMessage = `语音识别错误: ${event.error}`
+    }
+
+    showMessage(errorMessage, 'error')
+  }
+
+  speechRecognition.value.instance = recognition
+  console.log('🎯 语音识别实例创建完成')
+}
+
+const handleSpeechClick = () => {
+  console.log('🖱️ 点击语音按钮, 支持状态:', speechSupported.value)
+
+  if (!speechSupported.value) {
+    showMessage('您的浏览器不支持语音输入功能，建议使用 Chrome、Edge 或 Safari 浏览器', 'warning')
+    return
+  }
+  toggleSpeechRecognition()
+}
+
+const toggleSpeechRecognition = () => {
+  console.log('🔄 切换语音识别状态, 当前监听:', isListening.value)
+
+  if (!speechSupported.value || !speechRecognition.value.instance) {
+    showMessage('语音识别不可用', 'error')
+    return
+  }
+
+  if (isListening.value) {
+    // 停止语音识别
+    console.log('⏹️ 停止语音识别')
+    speechRecognition.value.instance.stop()
+  } else {
+    // 开始语音识别
+    console.log('▶️ 开始语音识别')
+    try {
+      speechRecognition.value.instance.start()
+    } catch (error) {
+      console.error('启动语音识别失败:', error)
+      showMessage('启动语音识别失败，请重试', 'error')
+    }
+  }
+}
+
+const stopSpeechRecognition = () => {
+  if (isListening.value && speechRecognition.value.instance) {
+    speechRecognition.value.instance.stop()
+  }
+}
+
+const dismissSpeechWarning = () => {
+  showSpeechWarning.value = false
+}
+
+// 语音按钮样式和状态方法
+const getSpeechButtonColor = () => {
+  if (!speechSupported.value) return 'grey-darken-1'
+  return isListening.value ? 'error' : 'secondary'
+}
+
+const getSpeechButtonIcon = () => {
+  if (!speechSupported.value) return 'mdi-microphone-off'
+  return isListening.value ? 'mdi-microphone' : 'mdi-microphone-outline'
+}
+
+const getSpeechButtonClass = () => {
+  const classes = ['speech-btn-base']
+  if (isListening.value) classes.push('speech-button--listening')
+  if (!speechSupported.value) classes.push('speech-button--disabled')
+  return classes.join(' ')
+}
+
+const getSpeechButtonTooltip = () => {
+  if (!speechSupported.value) return '语音输入不支持'
+  return isListening.value ? '停止语音输入' : '开始语音输入'
+}
+
 // 生命周期
 onMounted(() => {
+  console.log('🚀 组件挂载，开始初始化...')
+  loadTheme() // 加载主题设置
   loadConfig()
   loadMessages()
+
+  // 延迟初始化语音识别，确保DOM完全加载
+  nextTick(() => {
+    initSpeechRecognition()
+  })
+})
+
+onUnmounted(() => {
+  // 清理语音识别实例
+  stopSpeechRecognition()
 })
 </script>
 
@@ -405,6 +741,21 @@ onMounted(() => {
   height: 100vh;
   padding: 24px;
   background-color: #fafafa;
+  transition: all 0.3s ease;
+}
+
+.chat-container.dark-theme {
+  background-color: #121212;
+}
+
+/* 主题切换按钮 */
+.theme-toggle {
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.theme-toggle:hover {
+  opacity: 1;
 }
 
 /* 侧边栏 */
@@ -422,6 +773,8 @@ onMounted(() => {
   padding: 20px 24px 12px 24px;
   font-size: 1.25rem;
   font-weight: 500;
+  display: flex;
+  align-items: center;
 }
 
 .config-content {
@@ -540,6 +893,20 @@ onMounted(() => {
   background-color: #f5f5f5;
 }
 
+.message-bubble--dark {
+  background-color: #2d2d2d !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff;
+}
+
+.message-bubble--user.message-bubble--dark {
+  background-color: #1565c0 !important;
+}
+
+.message-bubble--loading.message-bubble--dark {
+  background-color: #424242 !important;
+}
+
 .message-header {
   display: flex;
   align-items: center;
@@ -608,10 +975,14 @@ onMounted(() => {
   background-color: #fafafa;
 }
 
+.input-section--dark {
+  background-color: #1e1e1e !important;
+}
+
 .input-wrapper {
   display: flex;
   align-items: flex-end;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
 }
 
@@ -629,9 +1000,103 @@ onMounted(() => {
   color: rgba(0, 0, 0, 0.6);
   margin-top: 8px;
   text-align: center;
+  line-height: 1.4;
 }
 
-/* 响应式设计 */
+/* 调试信息 */
+.debug-info {
+  width: 100%;
+  padding: 8px;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-family: monospace;
+}
+
+.debug-info--dark {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff;
+}
+
+/* 语音相关样式 */
+.speech-warning {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.speech-button {
+  margin-right: 8px !important;
+  position: relative;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  min-width: 56px !important;
+  width: 56px !important;
+  height: 56px !important;
+}
+
+.speech-btn-base {
+  border: 2px solid transparent;
+}
+
+.speech-button--listening {
+  animation: pulse-ring 1.5s infinite;
+  border-color: #f44336 !important;
+}
+
+.speech-button--disabled {
+  opacity: 0.6;
+}
+
+/* 确保按钮可见性 */
+.input-wrapper {
+  display: flex !important;
+  align-items: flex-end !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+.message-input {
+  flex-grow: 1 !important;
+}
+
+.send-button {
+  flex-shrink: 0 !important;
+  margin-bottom: 4px !important;
+}
+
+/* 脉冲动画 */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+  }
+}
+
+.pulse {
+  animation: pulse 1.5s infinite;
+}
+
+/* 响应式设计更新 */
 @media (max-width: 960px) {
   .chat-container {
     padding: 16px;
@@ -676,6 +1141,12 @@ onMounted(() => {
   .message-wrapper {
     margin-bottom: 16px;
   }
+
+  .speech-button {
+    min-width: 48px !important;
+    width: 48px !important;
+    height: 48px !important;
+  }
 }
 
 /* 滚动条样式 */
@@ -692,7 +1163,22 @@ onMounted(() => {
   border-radius: 3px;
 }
 
+.dark-theme .messages-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 .messages-container::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.3);
+}
+
+.dark-theme .messages-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* 强制显示语音按钮 */
+.speech-button {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 </style>

@@ -293,6 +293,15 @@
 
       <!-- 主题切换动画层 -->
       <div class="theme-transition-overlay" ref="themeOverlay"></div>
+
+      <!-- 在原有布局的最后添加悬浮球 -->
+      <teleport to="body">
+        <FloatingOrb
+          v-if="shouldShowFloatingOrb"
+          class="layout-floating-orb"
+          :style="floatingOrbStyles"
+        />
+      </teleport>
     </v-layout>
   </v-app>
 </template>
@@ -305,6 +314,9 @@ import { useThemeTransition } from '@/utils'
 import { useDisplay } from 'vuetify'
 import { availableHost } from '@/utils'
 import axios from 'axios'
+import { computed, onUnmounted } from 'vue'
+import { useFloatingOrb } from '@/composables/useFloatingOrb'
+import FloatingOrb from '@/views/FloatingActionButton/FloatingOrb.vue'
 
 const themeStore = useThemeStore()
 const { theme } = toRefs(themeStore)
@@ -363,6 +375,125 @@ const handleUserClick = (event) => {
     // 在移动端不做额外处理
   }
 }
+
+// 悬浮球相关逻辑
+const {
+  orbState,
+  orbConfig,
+  adjustPositionForDevice,
+  getFinalPosition,
+  adjustForKeyboard,
+  setMenuItems,
+} = useFloatingOrb()
+
+// 计算是否显示悬浮球
+const shouldShowFloatingOrb = computed(() => {
+  return orbState.isVisible && orbState.isEnabled
+})
+
+// 计算悬浮球的最终样式
+const floatingOrbStyles = computed(() => {
+  const position = getFinalPosition()
+  return {
+    position: 'fixed',
+    bottom: `${position.bottom}px`,
+    right: `${position.right}px`,
+    zIndex: orbConfig.responsive.zIndex,
+    pointerEvents: 'auto',
+  }
+})
+
+// 设置默认菜单项（根据您的应用调整）
+const initializeFloatingOrb = () => {
+  const defaultMenuItems = [
+    {
+      id: 'chat',
+      label: 'AI聊天',
+      icon: 'mdi-chat',
+      color: 'primary',
+      route: '/chat',
+    },
+    {
+      id: 'dashboard',
+      label: '仪表板',
+      icon: 'mdi-view-dashboard',
+      color: 'success',
+      route: '/dashboard',
+    },
+    {
+      id: 'analytics',
+      label: '分析',
+      icon: 'mdi-chart-line',
+      color: 'info',
+      route: '/analytics',
+    },
+    {
+      id: 'settings',
+      label: '设置',
+      icon: 'mdi-cog',
+      color: 'warning',
+      route: '/settings',
+    },
+  ]
+
+  setMenuItems(defaultMenuItems)
+
+  // 初始位置调整
+  adjustPositionForDevice()
+}
+
+// 响应式处理函数
+const handleResize = () => {
+  adjustPositionForDevice()
+}
+
+const handleOrientationChange = () => {
+  // 延迟处理，等待方向变化完成
+  setTimeout(() => {
+    adjustPositionForDevice()
+  }, 300)
+}
+
+const handleVisualViewportChange = () => {
+  adjustForKeyboard()
+}
+
+onMounted(() => {
+  // 初始化悬浮球
+  initializeFloatingOrb()
+
+  // 添加事件监听器
+  window.addEventListener('resize', handleResize)
+  window.addEventListener('orientationchange', handleOrientationChange)
+
+  // 监听虚拟键盘
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', handleVisualViewportChange)
+  }
+
+  // 设置CSS变量支持安全区域
+  const setCSSSupport = () => {
+    if (CSS.supports('padding: env(safe-area-inset-bottom)')) {
+      document.documentElement.style.setProperty(
+        '--sat-inset-bottom',
+        'env(safe-area-inset-bottom)',
+      )
+      document.documentElement.style.setProperty('--sat-inset-right', 'env(safe-area-inset-right)')
+    }
+  }
+
+  setCSSSupport()
+})
+
+onUnmounted(() => {
+  // 清理事件监听器
+  window.removeEventListener('resize', handleResize)
+  window.removeEventListener('orientationchange', handleOrientationChange)
+
+  if (window.visualViewport) {
+    window.visualViewport.removeEventListener('resize', handleVisualViewportChange)
+  }
+})
 
 onMounted(() => {
   const usrname = localStorage.getItem('username')
@@ -446,5 +577,78 @@ onMounted(() => {
   opacity: 0.6; /* 透明度 */
   mix-blend-mode: difference; /* 使用不同的混合模式使效果更明显 */
   transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* 悬浮球样式 - 不影响原有布局 */
+.layout-floating-orb {
+  /* 确保悬浮球在最顶层但不影响布局流 */
+  position: fixed !important;
+  pointer-events: auto;
+
+  /* 针对不同设备的优化 */
+  @media (max-width: 768px) {
+    /* 移动设备：增加触控友好性 */
+    &::before {
+      content: '';
+      position: absolute;
+      top: -8px;
+      left: -8px;
+      right: -8px;
+      bottom: -8px;
+      pointer-events: auto;
+      border-radius: 50%;
+    }
+  }
+
+  @media (min-width: 769px) and (max-width: 1024px) {
+    /* 平板设备：适中的交互区域 */
+    &::before {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      right: -4px;
+      bottom: -4px;
+      pointer-events: auto;
+      border-radius: 50%;
+    }
+  }
+
+  /* 确保在各种主题下都可见 */
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15));
+}
+
+/* 避免悬浮球影响页面内容的滚动 */
+:deep(.v-main) {
+  /* 保持原有样式，不添加额外的padding */
+}
+
+/* 响应式适配 */
+@media (max-width: 480px) {
+  .layout-floating-orb {
+    /* 小屏设备：更贴近边缘 */
+    transform: translateY(-4px) translateX(-4px);
+  }
+}
+
+/* 横屏模式特殊处理 */
+@media (orientation: landscape) and (max-height: 600px) {
+  .layout-floating-orb {
+    /* 横屏时降低位置，避免与顶部内容冲突 */
+    transform: translateY(-8px);
+  }
+}
+
+/* 安全区域适配 - 使用CSS变量 */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .layout-floating-orb {
+    /* 使用CSS变量来处理安全区域 */
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+
+    /* 通过margin来处理安全区域偏移 */
+    margin-bottom: var(--safe-area-bottom);
+    margin-right: var(--safe-area-right);
+  }
 }
 </style>
