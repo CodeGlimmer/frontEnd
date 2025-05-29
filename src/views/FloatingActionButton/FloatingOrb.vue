@@ -48,7 +48,7 @@
     <!-- 长按菜单 -->
     <transition name="menu-fade">
       <div v-if="showMenu" class="floating-menu" ref="menuRef">
-        <div class="menu-items">
+        <div class="menu-`items`">
           <div
             v-for="(item, index) in menuItems"
             :key="item.id"
@@ -184,17 +184,17 @@ const notification = ref({
 
 // 菜单项配置
 const menuItems = ref([
-  { id: 'chat', label: 'AI聊天', icon: 'mdi-chat', color: 'primary', route: '/chat-ai' },
+  { id: 'chat', label: 'AI聊天', icon: 'mdi-chat', color: 'primary', route: '/index/chatai' },
   {
     id: 'dashboard',
     label: '仪表板',
     icon: 'mdi-view-dashboard',
     color: 'success',
-    route: '/dashboard',
+    route: '/index',
   },
-  { id: 'settings', label: '设置', icon: 'mdi-cog', color: 'warning', route: '/settings' },
-  { id: 'profile', label: '个人', icon: 'mdi-account', color: 'info', route: '/profile' },
-  { id: 'help', label: '帮助', icon: 'mdi-help-circle', color: 'secondary', route: '/help' },
+  { id: 'settings', label: '设置', icon: 'mdi-cog', color: 'warning', route: '/index/setting' },
+  { id: 'profile', label: '监控', icon: 'mdi-eye', color: 'info', route: '/index/agvmonitoring' },
+  { id: 'help', label: 'fox glove', icon: 'mdi-help-circle', color: 'secondary', route: '/index/agvmonitoring/foxglove' },
 ])
 
 const { orbConfig } = useFloatingOrb()
