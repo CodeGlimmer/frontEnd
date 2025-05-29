@@ -8,9 +8,11 @@
         recording: isRecording,
         thinking: isThinking,
         answering: isAnswering,
+        swiping: isSwipeInProgress,
       }"
       @click="handleClick"
       @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
       @touchend="handleTouchEnd"
       @mousedown="handleMouseDown"
       @mouseup="handleMouseUp"
@@ -43,6 +45,18 @@
       <div v-if="isThinking" class="thinking-particles">
         <div v-for="i in 8" :key="i" class="particle" ref="particleRefs"></div>
       </div>
+
+      <!-- 滑动提示 -->
+      <div v-if="showSwipeHint && isMobile" class="swipe-hint">
+        <v-icon size="16" color="white">mdi-gesture-swipe-left</v-icon>
+        <span>左滑录音</span>
+      </div>
+    </div>
+
+    <!-- 移动端滑动指示器 -->
+    <div v-if="isMobile && isSwipeInProgress" class="swipe-indicator">
+      <div class="swipe-progress" :style="{ width: swipeProgress + '%' }"></div>
+      <span class="swipe-text">{{ swipeProgress >= 100 ? '松开录音' : '继续左滑' }}</span>
     </div>
 
     <!-- 长按菜单 -->
@@ -250,6 +264,12 @@ const handleClick = () => {
     return
   }
 
+  if (isMobile.value) {
+    // 手机端：提示使用滑动手势
+    showNotification('请使用左滑手势录音，长按显示菜单', 'info')
+    return
+  }
+
   if (!speechSupported.value) {
     showNotification('您的浏览器不支持语音识别', 'warning')
     return
@@ -264,83 +284,113 @@ const handleClick = () => {
 
 const handleTouchStart = (e) => {
   e.preventDefault()
-  startLongPressDetection()
+
+  const touch = e.touches[0]
+  swipeStartX.value = touch.clientX
+  swipeStartY.value = touch.clientY
+  swipeCurrentX.value = touch.clientX
+  swipeCurrentY.value = touch.clientY
+  swipeProgress.value = 0
+
+  if (isMobile.value) {
+    // 手机端：启动滑动检测，同时启动长按检测（用于菜单）
+    isSwipeInProgress.value = true
+    startLongPressDetection()
+  } else {
+    // 平板设备：只启动长按检测
+    startLongPressDetection()
+  }
+}
+
+const handleTouchMove = (e) => {
+  e.preventDefault()
+
+  const touch = e.touches[0]
+  swipeCurrentX.value = touch.clientX
+  swipeCurrentY.value = touch.clientY
+
+  if (isMobile.value) {
+    const deltaX = swipeStartX.value - swipeCurrentX.value // 左滑为正值
+    const deltaY = Math.abs(swipeStartY.value - swipeCurrentY.value)
+
+    // 如果有明显的滑动，取消长按检测
+    if (Math.abs(deltaX) > 10 || deltaY > 10) {
+      if (longPressTimer.value) {
+        clearTimeout(longPressTimer.value)
+        longPressTimer.value = null
+      }
+    }
+
+    // 检查是否为有效的左滑手势
+    if (deltaY > VERTICAL_TOLERANCE) {
+      // 垂直移动过多，取消滑动
+      resetSwipe()
+      return
+    }
+
+    if (deltaX > 0) {
+      // 左滑进度
+      swipeProgress.value = Math.min((deltaX / SWIPE_THRESHOLD) * 100, 100)
+
+      // 视觉反馈
+      const scale = 1 + (swipeProgress.value / 100) * 0.2
+      gsap.to(orbRef.value, {
+        duration: 0.1,
+        scale: scale,
+        ease: 'power2.out',
+      })
+
+      // 达到阈值时的触觉反馈
+      if (swipeProgress.value >= 100 && !isRecording.value) {
+        playHapticFeedback()
+      }
+    } else {
+      // 右滑或无滑动
+      swipeProgress.value = 0
+    }
+  }
 }
 
 const handleTouchEnd = (e) => {
   e.preventDefault()
-  endLongPressDetection()
-}
 
-const handleMouseDown = () => {
-  startLongPressDetection()
-}
-
-const handleMouseUp = () => {
-  endLongPressDetection()
-}
-
-const handleMouseLeave = () => {
-  endLongPressDetection()
-}
-
-const startLongPressDetection = () => {
-  longPressTimer.value = setTimeout(() => {
-    isLongPress.value = true
-    showLongPressMenu()
-  }, LONG_PRESS_DURATION)
-
-  // 开始长按动画
-  gsap.to(orbRef.value, {
-    duration: LONG_PRESS_DURATION / 1000,
-    scale: 1.1,
-    ease: 'power2.out',
-  })
-}
-
-const endLongPressDetection = () => {
-  if (longPressTimer.value) {
-    clearTimeout(longPressTimer.value)
-    longPressTimer.value = null
-  }
-
-  if (!isLongPress.value) {
-    // 恢复正常大小
-    gsap.to(orbRef.value, {
-      duration: 0.3,
-      scale: 1,
-      ease: 'back.out(1.7)',
-    })
-  }
-}
-
-const showLongPressMenu = () => {
-  showMenu.value = true
-  playMenuAnimation()
-  playHapticFeedback()
-}
-
-const hideMenu = () => {
-  if (showMenu.value) {
-    gsap.to(menuRef.value, {
-      duration: 0.3,
-      scale: 0,
-      opacity: 0,
-      ease: 'back.in(1.7)',
-      onComplete: () => {
-        showMenu.value = false
-      },
-    })
-  }
-}
-
-const handleMenuClick = (item) => {
-  hideMenu()
-  setTimeout(() => {
-    if (item.route) {
-      router.push(item.route)
+  if (isMobile.value) {
+    // 手机端：检查是否完成滑动录音
+    if (swipeProgress.value >= 100 && !isLongPress.value) {
+      toggleRecordingMobile()
     }
-  }, 300)
+    resetSwipe()
+    endLongPressDetection()
+  } else {
+    // 平板设备：保持原有逻辑
+    endLongPressDetection()
+  }
+}
+
+// 移动端录音切换
+const toggleRecordingMobile = () => {
+  if (!speechSupported.value) {
+    showNotification('您的设备不支持语音识别', 'warning')
+    return
+  }
+
+  if (isRecording.value) {
+    stopRecording()
+  } else {
+    startRecording()
+  }
+}
+
+// 重置滑动状态
+const resetSwipe = () => {
+  isSwipeInProgress.value = false
+  swipeProgress.value = 0
+
+  gsap.to(orbRef.value, {
+    duration: 0.3,
+    scale: 1,
+    ease: 'back.out(1.7)',
+  })
 }
 
 // 录音相关
@@ -555,8 +605,128 @@ const showNotification = (message, type = 'info') => {
   }
 }
 
+// 设备检测
+const isMobile = ref(false)
+const isTablet = ref(false)
+
+// 滑动相关
+const isSwipeInProgress = ref(false)
+const swipeStartX = ref(0)
+const swipeStartY = ref(0)
+const swipeCurrentX = ref(0)
+const swipeCurrentY = ref(0)
+const swipeProgress = ref(0)
+const showSwipeHint = ref(false)
+const SWIPE_THRESHOLD = 80 // 滑动阈值
+const VERTICAL_TOLERANCE = 30 // 垂直容差
+
+// 设备检测函数
+const detectDevice = () => {
+  const userAgent = navigator.userAgent
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+
+  // 更精确的移动设备检测 - 只有真正的手机才使用滑动交互
+  isMobile.value = isTouchDevice && /Android.*Mobile|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
+  isTablet.value = isTouchDevice && (/iPad/i.test(userAgent) || (/Android/i.test(userAgent) && !/Mobile/i.test(userAgent)))
+
+  // 首次加载时显示滑动提示（仅手机）
+  if (isMobile.value) {
+    showSwipeHint.value = true
+    setTimeout(() => {
+      showSwipeHint.value = false
+    }, 3000)
+  }
+}
+
+// 长按检测相关函数
+const startLongPressDetection = () => {
+  longPressTimer.value = setTimeout(() => {
+    isLongPress.value = true
+    showLongPressMenu()
+  }, LONG_PRESS_DURATION)
+
+  // 开始长按动画
+  gsap.to(orbRef.value, {
+    duration: LONG_PRESS_DURATION / 1000,
+    scale: 1.1,
+    ease: 'power2.out',
+  })
+}
+
+const endLongPressDetection = () => {
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
+  }
+
+  if (!isLongPress.value) {
+    // 恢复正常大小
+    gsap.to(orbRef.value, {
+      duration: 0.3,
+      scale: 1,
+      ease: 'back.out(1.7)',
+    })
+  }
+}
+
+const showLongPressMenu = () => {
+  showMenu.value = true
+  playMenuAnimation()
+  playHapticFeedback()
+}
+
+const hideMenu = () => {
+  if (showMenu.value) {
+    gsap.to(menuRef.value, {
+      duration: 0.3,
+      scale: 0,
+      opacity: 0,
+      ease: 'back.in(1.7)',
+      onComplete: () => {
+        showMenu.value = false
+        // 重置长按状态
+        isLongPress.value = false
+        gsap.to(orbRef.value, {
+          duration: 0.3,
+          scale: 1,
+          ease: 'back.out(1.7)',
+        })
+      },
+    })
+  }
+}
+
+const handleMenuClick = (item) => {
+  hideMenu()
+  setTimeout(() => {
+    if (item.route) {
+      router.push(item.route)
+    }
+  }, 300)
+}
+
+// 鼠标事件处理（桌面端）
+const handleMouseDown = () => {
+  if (!isMobile.value && !isTablet.value) {
+    startLongPressDetection()
+  }
+}
+
+const handleMouseUp = () => {
+  if (!isMobile.value && !isTablet.value) {
+    endLongPressDetection()
+  }
+}
+
+const handleMouseLeave = () => {
+  if (!isMobile.value && !isTablet.value) {
+    endLongPressDetection()
+  }
+}
+
 // 生命周期
 onMounted(() => {
+  detectDevice()
   initSpeechRecognition()
 
   // 入场动画
@@ -994,6 +1164,120 @@ onUnmounted(() => {
   .answer-actions {
     background: rgba(0, 0, 0, 0.3);
     border-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.floating-orb.swiping {
+  transition: transform 0.1s ease-out;
+}
+
+.swipe-hint {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 16px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0.9;
+  animation: hint-bounce 2s ease-in-out infinite;
+}
+
+@keyframes hint-bounce {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-5px);
+  }
+}
+
+.swipe-indicator {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.swipe-progress {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  transition: width 0.1s ease-out;
+  border-radius: 12px;
+}
+
+.swipe-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  font-weight: 600;
+  color: #333;
+  z-index: 1;
+}
+
+/* 移动端特殊样式 */
+@media (max-width: 768px) {
+  .floating-orb-container {
+    bottom: 100px;
+    right: 20px;
+  }
+
+  .floating-orb {
+    width: 56px;
+    height: 56px;
+    /* 移动端禁用用户选择 */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  .floating-orb.large {
+    width: 72px;
+    height: 72px;
+  }
+
+  /* 移动端触摸反馈 */
+  .floating-orb:active {
+    transform: scale(0.95);
+  }
+
+  .swipe-hint {
+    top: -35px;
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+
+  .swipe-indicator {
+    top: -50px;
+    width: 100px;
+    height: 20px;
+  }
+
+  .swipe-text {
+    font-size: 10px;
+  }
+}
+
+/* 平板设备保持原有交互 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .floating-orb-container {
+    bottom: 90px;
+    right: 25px;
   }
 }
 </style>
