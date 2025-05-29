@@ -1,5 +1,5 @@
 <template>
-  <div class="floating-orb-container">
+  <div class="floating-orb-container" :class="{ 'hidden-mode': isHidden }">
     <!-- 主悬浮球 -->
     <div
       ref="orbRef"
@@ -9,6 +9,7 @@
         thinking: isThinking,
         answering: isAnswering,
         swiping: isSwipeInProgress,
+        hidden: isHidden,
       }"
       @click="handleClick"
       @touchstart="handleTouchStart"
@@ -51,6 +52,11 @@
         <v-icon size="16" color="white">mdi-gesture-swipe-left</v-icon>
         <span>左滑录音</span>
       </div>
+
+      <!-- 隐藏状态提示 -->
+      <div v-if="isHidden" class="hidden-hint">
+        <v-icon size="12" color="white">mdi-eye-off</v-icon>
+      </div>
     </div>
 
     <!-- 移动端滑动指示器 -->
@@ -59,10 +65,16 @@
       <span class="swipe-text">{{ swipeProgress >= 100 ? '松开录音' : '继续左滑' }}</span>
     </div>
 
+    <!-- 移动端上滑指示器 -->
+    <div v-if="isMobile && isUpSwipeInProgress" class="upswipe-indicator">
+      <div class="upswipe-progress" :style="{ height: upSwipeProgress + '%' }"></div>
+      <span class="upswipe-text">{{ upSwipeProgress >= 100 ? '松开隐藏' : '继续上滑' }}</span>
+    </div>
+
     <!-- 长按菜单 -->
     <transition name="menu-fade">
       <div v-if="showMenu" class="floating-menu" ref="menuRef">
-        <div class="menu-`items`">
+        <div class="menu-items">
           <div
             v-for="(item, index) in menuItems"
             :key="item.id"
@@ -148,6 +160,12 @@
     >
       {{ notification.message }}
     </v-snackbar>
+
+    <!-- 快捷键提示（仅桌面端） -->
+    <div v-if="!isMobile && !isTablet" class="keyboard-hint" :class="{ show: showKeyboardHint }">
+      <v-icon size="16" color="white">mdi-keyboard</v-icon>
+      <span>Ctrl + Shift + H 隐藏/显示悬浮球</span>
+    </div>
   </div>
 </template>
 
@@ -213,6 +231,32 @@ const menuItems = ref([
 
 const { orbConfig } = useFloatingOrb()
 
+// 设备检测
+const isMobile = ref(false)
+const isTablet = ref(false)
+
+// 滑动相关
+const isSwipeInProgress = ref(false)
+const swipeStartX = ref(0)
+const swipeStartY = ref(0)
+const swipeCurrentX = ref(0)
+const swipeCurrentY = ref(0)
+const swipeProgress = ref(0)
+const showSwipeHint = ref(false)
+const SWIPE_THRESHOLD = 80 // 滑动阈值
+const VERTICAL_TOLERANCE = 30 // 垂直容差
+
+// 上滑相关（移动端隐藏功能）
+const isUpSwipeInProgress = ref(false)
+const upSwipeStartY = ref(0)
+const upSwipeCurrentY = ref(0)
+const upSwipeProgress = ref(0)
+const UP_SWIPE_THRESHOLD = 60 // 上滑阈值
+
+// 隐藏功能相关
+const isHidden = ref(false)
+const showKeyboardHint = ref(false)
+
 // 计算属性
 const currentIcon = computed(() => {
   if (isRecording.value) return 'mdi-microphone'
@@ -220,6 +264,34 @@ const currentIcon = computed(() => {
   if (isAnswering.value) return 'mdi-robot'
   return 'mdi-microphone-outline'
 })
+
+// 设备检测函数
+const detectDevice = () => {
+  const userAgent = navigator.userAgent
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+
+  // 更精确的移动设备检测 - 只有真正的手机才使用滑动交互
+  isMobile.value = isTouchDevice && /Android.*Mobile|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
+  isTablet.value = isTouchDevice && (/iPad/i.test(userAgent) || (/Android/i.test(userAgent) && !/Mobile/i.test(userAgent)))
+
+  // 首次加载时显示滑动提示（仅手机）
+  if (isMobile.value) {
+    showSwipeHint.value = true
+    setTimeout(() => {
+      showSwipeHint.value = false
+    }, 3000)
+  }
+
+  // 桌面端显示快捷键提示
+  if (!isMobile.value && !isTablet.value) {
+    setTimeout(() => {
+      showKeyboardHint.value = true
+      setTimeout(() => {
+        showKeyboardHint.value = false
+      }, 5000)
+    }, 2000)
+  }
+}
 
 // 语音识别初始化
 const initSpeechRecognition = () => {
@@ -257,8 +329,187 @@ const initSpeechRecognition = () => {
   }
 }
 
+// 录音相关
+const startRecording = () => {
+  if (!speechRecognition.value) return
+
+  try {
+    isRecording.value = true
+    speechRecognition.value.start()
+    showNotification('开始录音...', 'info')
+  } catch (error) {
+    isRecording.value = false
+    showNotification('录音启动失败', 'error')
+  }
+}
+
+const stopRecording = () => {
+  if (speechRecognition.value && isRecording.value) {
+    speechRecognition.value.stop()
+    isRecording.value = false
+  }
+}
+
+// 移动端录音切换
+const toggleRecordingMobile = () => {
+  if (!speechSupported.value) {
+    showNotification('您的设备不支持语音识别', 'warning')
+    return
+  }
+
+  if (isRecording.value) {
+    stopRecording()
+  } else {
+    startRecording()
+  }
+}
+
+// 长按检测相关函数
+const startLongPressDetection = () => {
+  longPressTimer.value = setTimeout(() => {
+    isLongPress.value = true
+    showLongPressMenu()
+  }, LONG_PRESS_DURATION)
+
+  // 开始长按动画
+  gsap.to(orbRef.value, {
+    duration: LONG_PRESS_DURATION / 1000,
+    scale: 1.1,
+    ease: 'power2.out',
+  })
+}
+
+const endLongPressDetection = () => {
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
+  }
+
+  if (!isLongPress.value) {
+    // 恢复正常大小
+    gsap.to(orbRef.value, {
+      duration: 0.3,
+      scale: 1,
+      ease: 'back.out(1.7)',
+    })
+  }
+}
+
+const showLongPressMenu = () => {
+  showMenu.value = true
+  playMenuAnimation()
+  playHapticFeedback()
+}
+
+const hideMenu = () => {
+  if (showMenu.value) {
+    gsap.to(menuRef.value, {
+      duration: 0.3,
+      scale: 0,
+      opacity: 0,
+      ease: 'back.in(1.7)',
+      onComplete: () => {
+        showMenu.value = false
+        // 重置长按状态
+        isLongPress.value = false
+        gsap.to(orbRef.value, {
+          duration: 0.3,
+          scale: 1,
+          ease: 'back.out(1.7)',
+        })
+      },
+    })
+  }
+}
+
+const handleMenuClick = (item) => {
+  hideMenu()
+  setTimeout(() => {
+    if (item.route) {
+      router.push(item.route)
+    }
+  }, 300)
+}
+
+// 重置滑动状态
+const resetSwipe = () => {
+  isSwipeInProgress.value = false
+  swipeProgress.value = 0
+
+  gsap.to(orbRef.value, {
+    duration: 0.3,
+    scale: 1,
+    ease: 'back.out(1.7)',
+  })
+}
+
+// 重置上滑状态
+const resetUpSwipe = () => {
+  isUpSwipeInProgress.value = false
+  upSwipeProgress.value = 0
+
+  gsap.to(glowRef.value, {
+    duration: 0.3,
+    opacity: 0.3,
+    ease: 'power2.out',
+  })
+}
+
+// 隐藏/显示切换
+const toggleHiddenMode = () => {
+  isHidden.value = !isHidden.value
+
+  if (isHidden.value) {
+    hideOrb()
+  } else {
+    showOrb()
+  }
+}
+
+// 隐藏悬浮球
+const hideOrb = () => {
+  // 关闭所有弹出窗口
+  if (showMenu.value) hideMenu()
+  if (showAnswerWindow.value) closeAnswerWindow()
+
+  playHapticFeedback()
+
+  gsap.to(orbRef.value, {
+    duration: 0.6,
+    x: 40,
+    y: 40,
+    scale: 0.3,
+    opacity: 0.6,
+    ease: 'power2.inOut',
+  })
+
+  showNotification('悬浮球已隐藏，点击恢复', 'info')
+}
+
+// 显示悬浮球
+const showOrb = () => {
+  playHapticFeedback()
+
+  gsap.to(orbRef.value, {
+    duration: 0.6,
+    x: 0,
+    y: 0,
+    scale: 1,
+    opacity: 1,
+    ease: 'back.out(1.7)',
+  })
+
+  showNotification('悬浮球已恢复', 'success')
+}
+
 // 事件处理
 const handleClick = () => {
+  if (isHidden.value) {
+    // 隐藏状态下点击恢复
+    toggleHiddenMode()
+    return
+  }
+
   if (isLongPress.value) {
     isLongPress.value = false
     return
@@ -266,7 +517,7 @@ const handleClick = () => {
 
   if (isMobile.value) {
     // 手机端：提示使用滑动手势
-    showNotification('请使用左滑手势录音，长按显示菜单', 'info')
+    showNotification('左滑录音，长按菜单，上滑隐藏', 'info')
     return
   }
 
@@ -292,9 +543,15 @@ const handleTouchStart = (e) => {
   swipeCurrentY.value = touch.clientY
   swipeProgress.value = 0
 
+  // 上滑检测初始化
+  upSwipeStartY.value = touch.clientY
+  upSwipeCurrentY.value = touch.clientY
+  upSwipeProgress.value = 0
+
   if (isMobile.value) {
     // 手机端：启动滑动检测，同时启动长按检测（用于菜单）
     isSwipeInProgress.value = true
+    isUpSwipeInProgress.value = true
     startLongPressDetection()
   } else {
     // 平板设备：只启动长按检测
@@ -308,10 +565,12 @@ const handleTouchMove = (e) => {
   const touch = e.touches[0]
   swipeCurrentX.value = touch.clientX
   swipeCurrentY.value = touch.clientY
+  upSwipeCurrentY.value = touch.clientY
 
   if (isMobile.value) {
     const deltaX = swipeStartX.value - swipeCurrentX.value // 左滑为正值
     const deltaY = Math.abs(swipeStartY.value - swipeCurrentY.value)
+    const upDeltaY = upSwipeStartY.value - upSwipeCurrentY.value // 上滑为正值
 
     // 如果有明显的滑动，取消长按检测
     if (Math.abs(deltaX) > 10 || deltaY > 10) {
@@ -321,32 +580,65 @@ const handleTouchMove = (e) => {
       }
     }
 
-    // 检查是否为有效的左滑手势
-    if (deltaY > VERTICAL_TOLERANCE) {
-      // 垂直移动过多，取消滑动
-      resetSwipe()
-      return
-    }
+    // 判断主要滑动方向
+    if (Math.abs(upDeltaY) > Math.abs(deltaX)) {
+      // 垂直滑动为主
+      if (upDeltaY > 0) {
+        // 上滑检测
+        upSwipeProgress.value = Math.min((upDeltaY / UP_SWIPE_THRESHOLD) * 100, 100)
 
-    if (deltaX > 0) {
-      // 左滑进度
-      swipeProgress.value = Math.min((deltaX / SWIPE_THRESHOLD) * 100, 100)
+        // 重置左滑进度
+        swipeProgress.value = 0
+        resetSwipe()
 
-      // 视觉反馈
-      const scale = 1 + (swipeProgress.value / 100) * 0.2
-      gsap.to(orbRef.value, {
-        duration: 0.1,
-        scale: scale,
-        ease: 'power2.out',
-      })
+        // 上滑视觉反馈
+        const glowIntensity = 0.3 + (upSwipeProgress.value / 100) * 0.5
+        gsap.to(glowRef.value, {
+          duration: 0.1,
+          opacity: glowIntensity,
+          ease: 'power2.out',
+        })
 
-      // 达到阈值时的触觉反馈
-      if (swipeProgress.value >= 100 && !isRecording.value) {
-        playHapticFeedback()
+        // 达到阈值时的触觉反馈
+        if (upSwipeProgress.value >= 100) {
+          playHapticFeedback()
+        }
+      } else {
+        // 下滑，重置所有
+        upSwipeProgress.value = 0
+        swipeProgress.value = 0
       }
     } else {
-      // 右滑或无滑动
-      swipeProgress.value = 0
+      // 水平滑动为主 - 原有左滑逻辑
+      upSwipeProgress.value = 0
+
+      // 检查是否为有效的左滑手势
+      if (deltaY > VERTICAL_TOLERANCE) {
+        // 垂直移动过多，取消滑动
+        resetSwipe()
+        return
+      }
+
+      if (deltaX > 0) {
+        // 左滑进度
+        swipeProgress.value = Math.min((deltaX / SWIPE_THRESHOLD) * 100, 100)
+
+        // 视觉反馈
+        const scale = 1 + (swipeProgress.value / 100) * 0.2
+        gsap.to(orbRef.value, {
+          duration: 0.1,
+          scale: scale,
+          ease: 'power2.out',
+        })
+
+        // 达到阈值时的触觉反馈
+        if (swipeProgress.value >= 100 && !isRecording.value) {
+          playHapticFeedback()
+        }
+      } else {
+        // 右滑或无滑动
+        swipeProgress.value = 0
+      }
     }
   }
 }
@@ -355,11 +647,17 @@ const handleTouchEnd = (e) => {
   e.preventDefault()
 
   if (isMobile.value) {
-    // 手机端：检查是否完成滑动录音
-    if (swipeProgress.value >= 100 && !isLongPress.value) {
+    // 检查上滑隐藏
+    if (upSwipeProgress.value >= 100) {
+      toggleHiddenMode()
+    }
+    // 检查左滑录音
+    else if (swipeProgress.value >= 100 && !isLongPress.value) {
       toggleRecordingMobile()
     }
+
     resetSwipe()
+    resetUpSwipe()
     endLongPressDetection()
   } else {
     // 平板设备：保持原有逻辑
@@ -367,50 +665,31 @@ const handleTouchEnd = (e) => {
   }
 }
 
-// 移动端录音切换
-const toggleRecordingMobile = () => {
-  if (!speechSupported.value) {
-    showNotification('您的设备不支持语音识别', 'warning')
-    return
-  }
-
-  if (isRecording.value) {
-    stopRecording()
-  } else {
-    startRecording()
+// 鼠标事件处理（桌面端）
+const handleMouseDown = () => {
+  if (!isMobile.value && !isTablet.value) {
+    startLongPressDetection()
   }
 }
 
-// 重置滑动状态
-const resetSwipe = () => {
-  isSwipeInProgress.value = false
-  swipeProgress.value = 0
-
-  gsap.to(orbRef.value, {
-    duration: 0.3,
-    scale: 1,
-    ease: 'back.out(1.7)',
-  })
-}
-
-// 录音相关
-const startRecording = () => {
-  if (!speechRecognition.value) return
-
-  try {
-    isRecording.value = true
-    speechRecognition.value.start()
-    showNotification('开始录音...', 'info')
-  } catch (error) {
-    isRecording.value = false
-    showNotification('录音启动失败', 'error')
+const handleMouseUp = () => {
+  if (!isMobile.value && !isTablet.value) {
+    endLongPressDetection()
   }
 }
 
-const stopRecording = () => {
-  if (speechRecognition.value && isRecording.value) {
-    speechRecognition.value.stop()
-    isRecording.value = false
+const handleMouseLeave = () => {
+  if (!isMobile.value && !isTablet.value) {
+    endLongPressDetection()
+  }
+}
+
+// 键盘快捷键处理
+const handleKeydown = (e) => {
+  // Ctrl+Shift+H 切换隐藏状态（桌面端）
+  if (e.ctrlKey && e.shiftKey && e.key === 'H' && !isMobile.value && !isTablet.value) {
+    e.preventDefault()
+    toggleHiddenMode()
   }
 }
 
@@ -605,129 +884,13 @@ const showNotification = (message, type = 'info') => {
   }
 }
 
-// 设备检测
-const isMobile = ref(false)
-const isTablet = ref(false)
-
-// 滑动相关
-const isSwipeInProgress = ref(false)
-const swipeStartX = ref(0)
-const swipeStartY = ref(0)
-const swipeCurrentX = ref(0)
-const swipeCurrentY = ref(0)
-const swipeProgress = ref(0)
-const showSwipeHint = ref(false)
-const SWIPE_THRESHOLD = 80 // 滑动阈值
-const VERTICAL_TOLERANCE = 30 // 垂直容差
-
-// 设备检测函数
-const detectDevice = () => {
-  const userAgent = navigator.userAgent
-  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-
-  // 更精确的移动设备检测 - 只有真正的手机才使用滑动交互
-  isMobile.value = isTouchDevice && /Android.*Mobile|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
-  isTablet.value = isTouchDevice && (/iPad/i.test(userAgent) || (/Android/i.test(userAgent) && !/Mobile/i.test(userAgent)))
-
-  // 首次加载时显示滑动提示（仅手机）
-  if (isMobile.value) {
-    showSwipeHint.value = true
-    setTimeout(() => {
-      showSwipeHint.value = false
-    }, 3000)
-  }
-}
-
-// 长按检测相关函数
-const startLongPressDetection = () => {
-  longPressTimer.value = setTimeout(() => {
-    isLongPress.value = true
-    showLongPressMenu()
-  }, LONG_PRESS_DURATION)
-
-  // 开始长按动画
-  gsap.to(orbRef.value, {
-    duration: LONG_PRESS_DURATION / 1000,
-    scale: 1.1,
-    ease: 'power2.out',
-  })
-}
-
-const endLongPressDetection = () => {
-  if (longPressTimer.value) {
-    clearTimeout(longPressTimer.value)
-    longPressTimer.value = null
-  }
-
-  if (!isLongPress.value) {
-    // 恢复正常大小
-    gsap.to(orbRef.value, {
-      duration: 0.3,
-      scale: 1,
-      ease: 'back.out(1.7)',
-    })
-  }
-}
-
-const showLongPressMenu = () => {
-  showMenu.value = true
-  playMenuAnimation()
-  playHapticFeedback()
-}
-
-const hideMenu = () => {
-  if (showMenu.value) {
-    gsap.to(menuRef.value, {
-      duration: 0.3,
-      scale: 0,
-      opacity: 0,
-      ease: 'back.in(1.7)',
-      onComplete: () => {
-        showMenu.value = false
-        // 重置长按状态
-        isLongPress.value = false
-        gsap.to(orbRef.value, {
-          duration: 0.3,
-          scale: 1,
-          ease: 'back.out(1.7)',
-        })
-      },
-    })
-  }
-}
-
-const handleMenuClick = (item) => {
-  hideMenu()
-  setTimeout(() => {
-    if (item.route) {
-      router.push(item.route)
-    }
-  }, 300)
-}
-
-// 鼠标事件处理（桌面端）
-const handleMouseDown = () => {
-  if (!isMobile.value && !isTablet.value) {
-    startLongPressDetection()
-  }
-}
-
-const handleMouseUp = () => {
-  if (!isMobile.value && !isTablet.value) {
-    endLongPressDetection()
-  }
-}
-
-const handleMouseLeave = () => {
-  if (!isMobile.value && !isTablet.value) {
-    endLongPressDetection()
-  }
-}
-
 // 生命周期
 onMounted(() => {
   detectDevice()
   initSpeechRecognition()
+
+  // 添加键盘事件监听
+  document.addEventListener('keydown', handleKeydown)
 
   // 入场动画
   gsap.fromTo(
@@ -748,6 +911,10 @@ onUnmounted(() => {
   if (speechRecognition.value) {
     speechRecognition.value.stop()
   }
+
+  // 移除键盘事件监听
+  document.removeEventListener('keydown', handleKeydown)
+
   gsap.killTweensOf('*')
 })
 </script>
@@ -1279,5 +1446,130 @@ onUnmounted(() => {
     bottom: 90px;
     right: 25px;
   }
+}
+
+.floating-orb.hidden {
+  cursor: pointer;
+  /* 隐藏状态下确保可点击 */
+  pointer-events: auto;
+  z-index: 10000;
+}
+
+.floating-orb-container.hidden-mode {
+  /* 隐藏状态下容器样式 */
+  z-index: 10000;
+}
+
+.hidden-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  opacity: 0.8;
+}
+
+.upswipe-indicator {
+  position: absolute;
+  bottom: -70px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.upswipe-progress {
+  width: 100%;
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  transition: height 0.1s ease-out;
+  border-radius: 12px;
+  margin-top: auto;
+}
+
+.upswipe-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-90deg);
+  font-size: 9px;
+  font-weight: 600;
+  color: #333;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+/* 移动端隐藏功能样式调整 */
+@media (max-width: 768px) {
+  .floating-orb-container.hidden-mode {
+    bottom: 20px;
+    right: -20px;
+  }
+
+  .upswipe-indicator {
+    bottom: -60px;
+    width: 20px;
+    height: 60px;
+  }
+
+  .upswipe-text {
+    font-size: 8px;
+  }
+
+  .hidden-hint {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+/* 桌面端隐藏功能样式 */
+@media (min-width: 769px) {
+  .floating-orb-container.hidden-mode {
+    bottom: 40px;
+    right: -10px;
+  }
+}
+
+/* 隐藏状态过渡动画 */
+.floating-orb-container {
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 添加快捷键提示样式 */
+.keyboard-hint {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  z-index: 9998;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.keyboard-hint.show {
+  opacity: 1;
+  transform: translateY(0);
 }
 </style>
