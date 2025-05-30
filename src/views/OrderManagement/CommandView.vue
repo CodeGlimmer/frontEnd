@@ -482,17 +482,8 @@ watch(
         void tableHeader.offsetWidth
         tableHeader.classList.add('animate-in')
       }
-
-      // 刷新整个表格容器
-      if (scrollBody.value) {
-        scrollBody.value.style.display = 'none'
-        // 触发重排
-        void scrollBody.value.offsetWidth
-        scrollBody.value.style.display = ''
-      }
     })
   },
-  { immediate: true },
 )
 
 function getPriorityLabel(priority) {

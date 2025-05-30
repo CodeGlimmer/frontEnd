@@ -131,7 +131,7 @@
             <template v-slot:item="{ item }">
               <tr
                 :class="getRowClass(item)"
-                class="tw:hover:shadow-m-elevation-8 tw:hover:scale-[1.025] tw:ease-in tw:duration-300"
+                class="tw:hover:shadow-m-elevation-8 tw:hover:scale-[1.015] tw:ease-in tw:duration-300"
               >
                 <td>{{ item.order_id }}</td>
                 <td>
