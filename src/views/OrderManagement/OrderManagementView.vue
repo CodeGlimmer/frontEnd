@@ -95,7 +95,7 @@
 
     <!-- 可滚动的表格数据 -->
     <div class="scroll-body">
-      <v-card class="elevation-2">
+      <v-card class="elevation-2 tw:hover:!shadow-m-elevation-8">
         <v-card-text class="pa-0">
           <v-data-table-server
             v-model:items-per-page="itemsPerPage"
@@ -131,7 +131,7 @@
             <template v-slot:item="{ item }">
               <tr
                 :class="getRowClass(item)"
-                class="tw:hover:shadow-m-elevation-8 tw:hover:scale-[1.01] tw:ease-in tw:duration-300"
+                class="tw:hover:shadow-m-elevation-8 tw:hover:scale-[1.025] tw:ease-in tw:duration-300"
               >
                 <td>{{ item.order_id }}</td>
                 <td>
@@ -245,7 +245,7 @@
       <!-- 订单统计卡片 -->
       <v-row class="mt-4">
         <v-col cols="12" md="4" @click="$router.push('/index/ordermanagement/charts')" v-ripple>
-          <v-card class="elevation-2">
+          <v-card class="elevation-2 tw:hover:!shadow-m-elevation-8">
             <v-card-title class="d-flex align-center">
               <v-icon icon="mdi-chart-box" size="large" color="primary" class="mr-2"></v-icon>
               订单统计
@@ -278,7 +278,7 @@
         </v-col>
 
         <v-col cols="12" md="8">
-          <v-card class="elevation-2">
+          <v-card class="elevation-2 tw:hover:!shadow-m-elevation-8">
             <v-card-title class="d-flex align-center">
               <v-icon icon="mdi-chart-pie" size="large" color="primary" class="mr-2"></v-icon>
               产品类型分布

@@ -226,7 +226,13 @@ const menuItems = ref([
   },
   { id: 'settings', label: '设置', icon: 'mdi-cog', color: 'warning', route: '/index/setting' },
   { id: 'profile', label: '监控', icon: 'mdi-eye', color: 'info', route: '/index/agvmonitoring' },
-  { id: 'help', label: 'fox glove', icon: 'mdi-help-circle', color: 'secondary', route: '/index/agvmonitoring/foxglove' },
+  {
+    id: 'help',
+    label: 'fox glove',
+    icon: 'mdi-help-circle',
+    color: 'secondary',
+    route: '/index/agvmonitoring/foxglove',
+  },
 ])
 
 const { orbConfig } = useFloatingOrb()
@@ -271,8 +277,11 @@ const detectDevice = () => {
   const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
 
   // 更精确的移动设备检测 - 只有真正的手机才使用滑动交互
-  isMobile.value = isTouchDevice && /Android.*Mobile|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
-  isTablet.value = isTouchDevice && (/iPad/i.test(userAgent) || (/Android/i.test(userAgent) && !/Mobile/i.test(userAgent)))
+  isMobile.value =
+    isTouchDevice && /Android.*Mobile|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
+  isTablet.value =
+    isTouchDevice &&
+    (/iPad/i.test(userAgent) || (/Android/i.test(userAgent) && !/Mobile/i.test(userAgent)))
 
   // 首次加载时显示滑动提示（仅手机）
   if (isMobile.value) {
@@ -956,7 +965,7 @@ onUnmounted(() => {
   bottom: 0;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 50%;
-  z-index: 1;
+  z-index: 0;
 }
 
 .floating-orb.recording .orb-background {
@@ -1357,7 +1366,8 @@ onUnmounted(() => {
 }
 
 @keyframes hint-bounce {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateX(-50%) translateY(0);
   }
   50% {

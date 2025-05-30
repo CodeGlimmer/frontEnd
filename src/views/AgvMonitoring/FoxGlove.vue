@@ -1,8 +1,12 @@
 <template>
   <div class="main-viewer" :class="{ 'dark-mode': isDarkMode }">
-    <a-layout>
-      <a-layout-sider :width="350" class="layout-sider" :class="{ 'dark-sider': isDarkMode }">
-        <div class="sider-content" :class="{ 'dark-sider-content': isDarkMode }">
+    <a-layout class="tw:gap-2">
+      <a-layout-sider
+        :width="350"
+        class="layout-sider tw:rounded-xl tw:!shadow-m-elevation-8 tw:hover:!shadow-m-elevation-12"
+        :class="{ 'dark-sider': isDarkMode }"
+      >
+        <div class="sider-content tw:rounded-xl" :class="{ 'dark-sider-content': isDarkMode }">
           <a-collapse
             :default-active-key="['GlobalOptions', 'ConnectionSettings']"
             :class="{ 'dark-collapse': isDarkMode }"
@@ -49,7 +53,9 @@
           </a-collapse>
         </div>
       </a-layout-sider>
-      <a-layout-content>
+      <a-layout-content
+        class="tw:rounded-xl tw:!shadow-m-elevation-8 tw:hover:!shadow-m-elevation-12"
+      >
         <Viewer
           v-if="isConnected"
           :debug="true"
