@@ -171,6 +171,7 @@ const isDarkMode = computed(() => currentTheme.value === 'dark')
 const chartContainerRef = ref(null)
 const chartRef = ref(null)
 const chartInstance = ref(null)
+let resizeObserver = null
 
 // 反应式存储左右索引位置
 const leftIndex = ref(0)
@@ -183,16 +184,36 @@ const confirmedRightIndex = ref(0)
 // 范围滑块的值
 const rangeValue = ref([0, 0])
 
-// 添加节流函数用于处理滑块拖动
-const throttle = (fn, delay) => {
-  let lastCall = 0
+// 优化的节流函数，用于滑块拖动
+const throttleChart = (fn, delay) => {
+  let timer = null
+  let lastExecTime = 0
+
   return function (...args) {
-    const now = new Date().getTime()
-    if (now - lastCall < delay) {
-      return
+    const currentTime = Date.now()
+
+    if (currentTime - lastExecTime > delay) {
+      lastExecTime = currentTime
+      fn.apply(this, args)
+    } else {
+      clearTimeout(timer)
+      timer = setTimeout(
+        () => {
+          lastExecTime = Date.now()
+          fn.apply(this, args)
+        },
+        delay - (currentTime - lastExecTime),
+      )
     }
-    lastCall = now
-    return fn(...args)
+  }
+}
+
+// 防抖函数用于resize
+const debounce = (fn, delay) => {
+  let timer = null
+  return function (...args) {
+    clearTimeout(timer)
+    timer = setTimeout(() => fn.apply(this, args), delay)
   }
 }
 
@@ -209,7 +230,6 @@ const isMobile = ref(false)
 // 滑动条thumb label格式化函数
 const formatThumbLabel = (label) => {
   if (!label) return ''
-  // 如果标签太长，截断它
   if (label.length > 8) {
     return label.substring(0, 8) + '...'
   }
@@ -231,9 +251,7 @@ const generateTicks = () => {
     }
   }
 
-  // 确保最后一个刻度存在
   ticks[props.labels.length - 1] = ''
-
   return ticks
 }
 
@@ -245,25 +263,19 @@ const initializeIndexPositions = () => {
     leftIndex.value = 0
     rightIndex.value = dataLen > 0 ? 0 : 0
   } else {
-    // 使用props中提供的初始索引，或者使用默认计算值
     if (props.initialLeftIndex !== null && props.initialRightIndex !== null) {
-      // 确保提供的索引在有效范围内
       leftIndex.value = Math.max(0, Math.min(props.initialLeftIndex, dataLen - 2))
       rightIndex.value = Math.max(
         leftIndex.value + 1,
         Math.min(props.initialRightIndex, dataLen - 1),
       )
     } else {
-      // 使用默认计算值
       leftIndex.value = Math.max(0, Math.floor(dataLen * 0.25))
       rightIndex.value = Math.min(dataLen - 1, Math.floor(dataLen * 0.75))
     }
   }
 
-  // 同步范围滑块的值
   rangeValue.value = [leftIndex.value, rightIndex.value]
-
-  // 保存确认的索引值
   confirmedLeftIndex.value = leftIndex.value
   confirmedRightIndex.value = rightIndex.value
 }
@@ -273,132 +285,81 @@ const checkMobileDevice = () => {
   isMobile.value = window.innerWidth < 768
 }
 
-// 初始化图表
-const initChart = () => {
-  if (!chartRef.value) return
-
-  checkMobileDevice()
-
-  // 如果图表已存在，销毁它
-  if (chartInstance.value) {
-    chartInstance.value.dispose()
-    chartInstance.value = null
-  }
-
-  // 在创建新图表实例前先确保容器尺寸已设置正确
-  updateChartSize()
-
-  try {
-    // 创建新的图表实例
-    chartInstance.value = echarts.init(chartRef.value, null, {
-      renderer: 'canvas',
-      useDirtyRect: true,
-    })
-
-    // 更新图表数据和配置
-    updateChart()
-
-    // 添加窗口大小变化的监听器
-    // window.addEventListener('resize', handleResize)
-
-    // 添加ResizeObserver来监听容器大小的变化
-    if (window.ResizeObserver) {
-      const resizeObserver = new ResizeObserver(
-        debounce(() => {
-          if (chartContainerRef.value && chartInstance.value) {
-            updateChart()
-          }
-        }, 100),
-      )
-
-      if (chartContainerRef.value) {
-        resizeObserver.observe(chartContainerRef.value)
-      }
-
-      // 在组件销毁时清理
-      // onBeforeUnmount(() => {
-      //   resizeObserver.disconnect()
-      // })
-    }
-  } catch (error) {
-    console.error('Chart initialization error:', error)
-  }
-}
-
-// 防抖函数
-const debounce = (fn, delay) => {
-  let timer = null
-  return function () {
-    const context = this
-    const args = arguments
-    clearTimeout(timer)
-    timer = setTimeout(() => {
-      fn.apply(context, args)
-    }, delay)
-  }
-}
-
 // 更新图表大小
 const updateChartSize = () => {
   if (!chartContainerRef.value) return
 
-  // 检查设备类型
   checkMobileDevice()
 
   const containerWidth = chartContainerRef.value.clientWidth
-  // 移动端调整高度，确保视图更舒适
   const containerHeight = isMobile.value
     ? Math.min(containerWidth * 0.8, 280)
     : Math.min(containerWidth * 0.6, 320)
 
-  // 设置图表容器的明确高度
   chartContainerRef.value.style.height = containerHeight + 'px'
 
-  // 设置图表的尺寸
   if (chartRef.value) {
     chartRef.value.style.width = '100%'
     chartRef.value.style.height = '100%'
   }
 }
 
-// 节流处理的resize函数
-let resizeTimeout
-const handleResize = () => {
-  if (resizeTimeout) {
-    clearTimeout(resizeTimeout)
+// 初始化图表
+const initChart = () => {
+  if (!chartRef.value) return
+
+  updateChartSize()
+
+  if (chartInstance.value) {
+    chartInstance.value.dispose()
+    chartInstance.value = null
   }
 
-  resizeTimeout = setTimeout(() => {
-    updateChartSize()
-    if (chartInstance.value) {
-      chartInstance.value.resize()
-      updateChart()
+  try {
+    chartInstance.value = echarts.init(chartRef.value, null, {
+      renderer: 'canvas',
+      useDirtyRect: true,
+    })
+
+    updateChart()
+
+    if (window.ResizeObserver) {
+      const debouncedResizeCallback = debounce(() => {
+        if (chartContainerRef.value && chartInstance.value) {
+          updateChartSize()
+          chartInstance.value.resize()
+          updateChart()
+        }
+      }, 150)
+
+      resizeObserver = new ResizeObserver(debouncedResizeCallback)
+
+      if (chartContainerRef.value) {
+        resizeObserver.observe(chartContainerRef.value)
+      }
     }
-  }, 100)
+  } catch (error) {
+    console.error('Chart initialization error:', error)
+  }
 }
 
 // 确认选择
 const confirmSelection = () => {
-  // 更新已确认的索引
   confirmedLeftIndex.value = leftIndex.value
   confirmedRightIndex.value = rightIndex.value
 
-  // 发送确认事件
   emit('range-confirmed', {
     leftIndex: leftIndex.value,
     rightIndex: rightIndex.value,
   })
 }
 
-// 范围滑块变化处理器
-const handleRangeChange = throttle((value) => {
+// 优化的范围滑块变化处理器
+const handleRangeChange = throttleChart((value) => {
   leftIndex.value = value[0]
   rightIndex.value = value[1]
-  // 使用requestAnimationFrame确保更新在下一帧渲染，提高滑块拖动流畅性
-  requestAnimationFrame(() => {
-    updateChart()
-  })
-}, 50) // 50ms的节流时间提供更好的拖动体验
+  updateChart()
+}, 100) // 提高节流时间到100ms，减少更新频率
 
 // 获取基于当前主题的颜色配置
 const getThemeColors = () => {
@@ -413,11 +374,6 @@ const getThemeColors = () => {
       primaryColor: '#D0BCFF',
       secondaryColor: '#CCC2DC',
       markAreaColor: 'rgba(208, 188, 255, 0.15)',
-      areaColor: [
-        { offset: 0, color: 'rgba(208, 188, 255, 0.4)' },
-        { offset: 0.8, color: 'rgba(208, 188, 255, 0.1)' },
-        { offset: 1, color: 'rgba(208, 188, 255, 0.02)' },
-      ],
     }
   } else {
     return {
@@ -430,100 +386,23 @@ const getThemeColors = () => {
       primaryColor: '#6750A4',
       secondaryColor: '#B93E94',
       markAreaColor: 'rgba(103, 80, 164, 0.15)',
-      areaColor: [
-        { offset: 0, color: 'rgba(103, 80, 164, 0.4)' },
-        { offset: 0.8, color: 'rgba(103, 80, 164, 0.1)' },
-        { offset: 1, color: 'rgba(103, 80, 164, 0.02)' },
-      ],
     }
   }
 }
 
-// 更新图表数据和配置
+// 优化的更新图表函数
 const updateChart = () => {
   if (!chartInstance.value) return
 
   try {
-    // 获取当前主题颜色
     const themeColors = getThemeColors()
-
-    // 根据设备类型调整配置
     const labelRotation = isMobile.value ? 75 : props.labels.length > 12 ? 45 : 0
     const labelInterval = isMobile.value
       ? Math.max(0, Math.ceil(props.labels.length / 10) - 1)
       : Math.max(0, Math.ceil(props.labels.length / 20) - 1)
 
-    // 定义标记区域（预测区间）
-    const markArea = {
-      itemStyle: {
-        color: themeColors.markAreaColor,
-        borderColor: 'transparent',
-        borderWidth: 0,
-      },
-      data: [
-        [
-          {
-            name: '预测区间',
-            xAxis: leftIndex.value,
-          },
-          {
-            xAxis: rightIndex.value,
-          },
-        ],
-      ],
-      silent: true,
-    }
-
-    // 准备标记线数据 - 优化后的竖直线样式
-    const markLines = [
-      {
-        silent: true,
-        symbol: ['circle', 'none'],
-        symbolSize: [8, 0],
-        lineStyle: {
-          color: themeColors.primaryColor,
-          width: 2,
-          type: 'solid',
-          cap: 'round',
-        },
-        emphasis: {
-          lineStyle: {
-            width: 3,
-            shadowBlur: 6,
-            shadowColor: themeColors.primaryColor,
-          },
-        },
-        label: {
-          show: false,
-        },
-        xAxis: leftIndex.value,
-      },
-      {
-        silent: true,
-        symbol: ['circle', 'none'],
-        symbolSize: [8, 0],
-        lineStyle: {
-          color: themeColors.secondaryColor,
-          width: 2,
-          type: 'solid',
-          cap: 'round',
-        },
-        emphasis: {
-          lineStyle: {
-            width: 3,
-            shadowBlur: 6,
-            shadowColor: themeColors.secondaryColor,
-          },
-        },
-        label: {
-          show: false,
-        },
-        xAxis: rightIndex.value,
-      },
-    ]
-
     const option = {
-      animation: false, // 拖动时关闭动画提升性能
+      animation: false, // 关闭动画提升性能
       backgroundColor: 'transparent',
       grid: {
         left: isMobile.value ? '15%' : '3%',
@@ -555,10 +434,8 @@ const updateChart = () => {
             rotate: labelRotation,
             interval: labelInterval,
             formatter: (value) => {
-              if (isMobile.value) {
-                if (value.length > 6) {
-                  return value.substring(0, 6) + '..'
-                }
+              if (isMobile.value && value.length > 6) {
+                return value.substring(0, 6) + '..'
               } else if (props.labels.length > 30 && value.length > 8) {
                 return value.substring(0, 8) + '...'
               }
@@ -582,15 +459,9 @@ const updateChart = () => {
       yAxis: [
         {
           type: 'value',
-          axisLine: {
-            show: false,
-          },
-          axisTick: {
-            show: false,
-          },
-          axisLabel: {
-            color: themeColors.textColor,
-          },
+          axisLine: { show: false },
+          axisTick: { show: false },
+          axisLabel: { color: themeColors.textColor },
           splitLine: {
             lineStyle: {
               type: 'dashed',
@@ -604,9 +475,9 @@ const updateChart = () => {
           type: 'inside',
           start: 0,
           end: 100,
-          zoomLock: true, // 锁定缩放功能以避免出现 coordSys undefined 错误
-          throttle: 100,
-          zoomOnMouseWheel: false, // 禁用鼠标滚轮缩放
+          zoomLock: true,
+          throttle: 200, // 增加节流时间
+          zoomOnMouseWheel: false,
           moveOnMouseWheel: false,
           preventDefaultMouseMove: false,
         },
@@ -619,16 +490,6 @@ const updateChart = () => {
           symbol: 'circle',
           symbolSize: isMobile.value ? 10 : 8,
           showSymbol: props.values.length < 100,
-          emphasis: {
-            scale: true,
-            focus: 'series',
-            itemStyle: {
-              shadowBlur: 16,
-              shadowColor: isDarkMode.value
-                ? 'rgba(208, 188, 255, 0.4)'
-                : 'rgba(103, 80, 164, 0.4)',
-            },
-          },
           itemStyle: {
             color: themeColors.primaryColor,
             borderColor: isDarkMode.value ? '#1C1B1F' : '#fff',
@@ -638,48 +499,53 @@ const updateChart = () => {
             width: isMobile.value ? 4 : 3,
             cap: 'round',
             join: 'round',
-            color: {
-              type: 'linear',
-              x: 0,
-              y: 0,
-              x2: 0,
-              y2: 1,
-              colorStops: [
-                {
-                  offset: 0,
-                  color: isDarkMode.value ? '#D0BCFF' : '#9A82DB',
-                },
-                {
-                  offset: 1,
-                  color: isDarkMode.value ? '#9A82DB' : '#6750A4',
-                },
-              ],
-            },
-            shadowColor: isDarkMode.value ? 'rgba(208, 188, 255, 0.2)' : 'rgba(103, 80, 164, 0.2)',
-            shadowBlur: 10,
+            color: themeColors.primaryColor,
           },
-          areaStyle: {
-            color: {
-              type: 'linear',
-              x: 0,
-              y: 0,
-              x2: 0,
-              y2: 1,
-              colorStops: themeColors.areaColor,
+          markArea: {
+            itemStyle: {
+              color: themeColors.markAreaColor,
+              borderColor: 'transparent',
+              borderWidth: 0,
             },
-            opacity: 0.8,
+            data: [[{ name: '预测区间', xAxis: leftIndex.value }, { xAxis: rightIndex.value }]],
+            silent: true,
           },
-          markArea: markArea,
           markLine: {
             silent: true,
-            data: markLines,
-            animationDuration: 300,
+            animation: false, // 关闭标记线动画
+            data: [
+              {
+                silent: true,
+                symbol: ['circle', 'none'],
+                symbolSize: [8, 0],
+                lineStyle: {
+                  color: themeColors.primaryColor,
+                  width: 2,
+                  type: 'solid',
+                  cap: 'round',
+                },
+                label: { show: false },
+                xAxis: leftIndex.value,
+              },
+              {
+                silent: true,
+                symbol: ['circle', 'none'],
+                symbolSize: [8, 0],
+                lineStyle: {
+                  color: themeColors.secondaryColor,
+                  width: 2,
+                  type: 'solid',
+                  cap: 'round',
+                },
+                label: { show: false },
+                xAxis: rightIndex.value,
+              },
+            ],
           },
         },
       ],
     }
 
-    // 设置图表选项
     chartInstance.value.setOption(option, true)
   } catch (error) {
     console.error('Error updating chart:', error)
@@ -690,7 +556,6 @@ const updateChart = () => {
 watch(
   () => isDarkMode.value,
   () => {
-    // 主题变化时更新图表
     nextTick(() => {
       updateChart()
     })
@@ -701,7 +566,6 @@ watch(
 watch(
   () => [props.labels, props.values],
   () => {
-    // 当数据发生变化时重新初始化图表
     nextTick(() => {
       initializeIndexPositions()
       if (chartInstance.value) {
@@ -717,19 +581,19 @@ watch(
 // 组件挂载时
 onMounted(() => {
   initializeIndexPositions()
-  // 使用nextTick确保DOM已经渲染完成
   nextTick(() => {
-    // 给DOM元素一些时间来设置布局
     setTimeout(() => {
       initChart()
-    }, 100) // 增加延迟确保DOM完全准备好
+    }, 100)
   })
 })
 
 // 组件卸载前清理
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', handleResize)
-  clearTimeout(resizeTimeout)
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
 
   if (chartInstance.value) {
     chartInstance.value.dispose()
@@ -742,37 +606,27 @@ onBeforeUnmount(() => {
 .timeline-selector-card {
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
-  will-change: transform, box-shadow;
   border-radius: 28px !important;
-}
-
-.timeline-selector-card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14) !important;
-  transform: translateY(-2px);
 }
 
 .chart-container {
   width: 100%;
-  /* display: flex;
-  justify-content: center; */
   position: relative;
   border-radius: 24px;
   overflow: hidden;
-  background-color: #f7f2fa; /* 浅色模式背景 */
-  transition:
-    background-color 0.3s ease,
-    height 0.3s ease;
+  background-color: #f7f2fa;
+  transition: background-color 0.3s ease;
+  contain: layout paint;
 }
 
 .chart-container.dark-mode {
-  background-color: #2d2c33; /* 深色模式背景 */
+  background-color: #2d2c33;
 }
 
 .chart {
   width: 100%;
   height: 100%;
   position: relative;
-  transition: all 0.3s ease;
 }
 
 @media (max-width: 767px) {
@@ -783,7 +637,6 @@ onBeforeUnmount(() => {
 
 .range-display {
   position: relative;
-  transition: all 0.3s ease;
 }
 
 .range-slider-container {
@@ -796,15 +649,8 @@ onBeforeUnmount(() => {
 }
 
 .v-chip {
-  transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
   font-weight: 500;
   letter-spacing: 0.1px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-}
-
-.v-chip:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .range-separator {
@@ -819,20 +665,20 @@ onBeforeUnmount(() => {
 }
 
 .confirm-btn {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   letter-spacing: 0.25px;
   font-weight: 500;
 }
 
-.confirm-btn:not(:disabled):hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+/* 优化滑块性能的样式 */
+:deep(.v-slider-thumb) {
+  will-change: transform;
+  touch-action: none;
 }
 
-/* Material Design 3 样式优化 */
 :deep(.v-slider-thumb__surface) {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
   border: 3px solid var(--v-theme-surface) !important;
+  transition: none; /* 移除过渡动画提升性能 */
 }
 
 :deep(.v-slider-track__background) {
@@ -849,6 +695,7 @@ onBeforeUnmount(() => {
 :deep(.v-slider) {
   margin-top: 24px;
   margin-bottom: 24px;
+  touch-action: none;
 }
 
 .slider-label {
@@ -858,62 +705,10 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
-:deep(.v-card-title) {
-  letter-spacing: 0.15px;
-  font-weight: 500;
-}
-
-:deep(.v-tooltip .v-overlay__content) {
-  background: transparent;
-  box-shadow: none;
-}
-
 @media (max-width: 600px) {
-  .v-btn-group {
-    flex-direction: column;
-    width: 100%;
-  }
-
   .confirm-btn {
     margin-top: 12px;
     width: 100%;
   }
-}
-
-/* 优化滑块拖动体验的样式 */
-:deep(.v-slider-thumb) {
-  transition: transform 0.05s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform;
-  touch-action: none; /* 优化触摸设备上的拖动 */
-}
-
-:deep(.v-slider-thumb__surface) {
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
-  border: 3px solid var(--v-theme-surface) !important;
-  transition: transform 0.1s;
-  will-change: transform, box-shadow;
-}
-
-:deep(.v-slider-thumb__surface:hover),
-:deep(.v-slider-thumb--focused .v-slider-thumb__surface) {
-  transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25) !important;
-}
-
-:deep(.v-slider-track__background) {
-  height: 8px !important;
-  border-radius: 4px !important;
-  opacity: 0.2;
-}
-
-:deep(.v-slider-track__fill) {
-  height: 8px !important;
-  border-radius: 4px !important;
-}
-
-:deep(.v-slider) {
-  margin-top: 24px;
-  margin-bottom: 24px;
-  touch-action: none; /* 防止在触摸设备上的滚动干扰 */
 }
 </style>

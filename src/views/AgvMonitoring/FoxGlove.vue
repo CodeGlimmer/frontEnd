@@ -661,8 +661,8 @@ watch(
 /* 控制按钮样式 */
 .controls {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 100px;
+  right: 35px;
   display: flex;
   flex-direction: column;
 }

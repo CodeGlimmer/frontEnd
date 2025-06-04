@@ -668,30 +668,45 @@ export default {
       }
     }
 
-    // GSAP animations
+    // GSAP animations with better error handling
     const beforeEnter = (el) => {
+      if (!el) return
       el.style.opacity = 0
       el.style.transform = 'scale(0.8)'
     }
 
     const enter = (el, done) => {
+      if (!el) {
+        done()
+        return
+      }
+
+      const delay = (el.dataset?.index || 0) * 0.05
+
       gsap.to(el, {
         opacity: 1,
         scale: 1,
         duration: 0.3,
-        delay: el.dataset.index * 0.05,
+        delay: delay,
         ease: 'power2.out',
         onComplete: done,
+        onCompleteParams: [el],
       })
     }
 
     const leave = (el, done) => {
+      if (!el) {
+        done()
+        return
+      }
+
       gsap.to(el, {
         opacity: 0,
         scale: 0.8,
         duration: 0.3,
         ease: 'power2.in',
         onComplete: done,
+        onCompleteParams: [el],
       })
     }
 
@@ -743,7 +758,7 @@ export default {
       showSnackbar,
       handleSnackbarAction,
 
-      // Animation methods
+      // Animation methods with error handling
       beforeEnter,
       enter,
       leave,
@@ -766,6 +781,7 @@ export default {
   height: 100%;
   display: flex;
   flex-direction: column;
+  will-change: transform; /* 优化动画性能 */
 }
 
 .note-card:hover {
@@ -777,6 +793,13 @@ export default {
   bottom: 100px;
   right: 38px;
   z-index: 10;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* 添加平滑过渡 */
+  will-change: transform;
+}
+
+.floating-btn:hover {
+  transform: scale(1.1); /* 添加悬停效果 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Responsive adjustments */
@@ -785,5 +808,10 @@ export default {
     bottom: 16px;
     right: 16px;
   }
+}
+
+/* 优化动画相关样式 */
+.note-container .v-col {
+  will-change: transform, opacity;
 }
 </style>
