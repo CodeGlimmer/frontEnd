@@ -568,17 +568,36 @@ const updateMetrics = () => {
 
   // 简单度量计算
   const sum = actual.reduce((acc, val) => acc + val, 0)
-  metrics.averageSales = sum / actual.length
-  metrics.peakSales = Math.max(...actual)
+  metrics.averageSales = actual.length > 0 ? sum / actual.length : 0
+  metrics.peakSales = actual.length > 0 ? Math.max(...actual) : 0
 
   // 增长率
-  const firstWeekAvg =
-    actual.slice(0, Math.min(7, actual.length)).reduce((acc, val) => acc + val, 0) /
-    Math.min(7, actual.length)
-  const lastWeekAvg =
-    actual.slice(-Math.min(7, actual.length)).reduce((acc, val) => acc + val, 0) /
-    Math.min(7, actual.length)
-  metrics.growthRate = lastWeekAvg / firstWeekAvg - 1
+  if (actual.length > 0) {
+    const lookback = Math.min(7, actual.length)
+    const firstPeriodValues = actual.slice(0, lookback)
+    const lastPeriodValues = actual.slice(-lookback)
+
+    const firstPeriodSum = firstPeriodValues.reduce((acc, val) => acc + val, 0)
+    const firstWeekAvg = lookback > 0 ? firstPeriodSum / lookback : 0
+
+    const lastPeriodSum = lastPeriodValues.reduce((acc, val) => acc + val, 0)
+    const lastWeekAvg = lookback > 0 ? lastPeriodSum / lookback : 0
+
+    if (firstWeekAvg !== 0) {
+      metrics.growthRate = lastWeekAvg / firstWeekAvg - 1
+    } else {
+      // 处理 firstWeekAvg 为 0 的情况
+      if (lastWeekAvg > 0) {
+        metrics.growthRate = 1 // 从0增长到正数，视为100%增长
+      } else if (lastWeekAvg < 0) {
+        metrics.growthRate = -1 // 从0降至负数（销售额通常不为负），视为-100%
+      } else {
+        metrics.growthRate = 0 // 两者都为0，无增长
+      }
+    }
+  } else {
+    metrics.growthRate = 0 // 没有实际数据，增长率为0
+  }
 
   // 计算预测指标
   let sumSquaredError = 0
@@ -595,13 +614,14 @@ const updateMetrics = () => {
   }
 
   // 平均绝对误差
-  metrics.mae = sumAbsError / actual.length
+  metrics.mae = actual.length > 0 ? sumAbsError / actual.length : 0
 
   // 均方根误差
-  metrics.rmse = Math.sqrt(sumSquaredError / actual.length)
+  metrics.rmse = actual.length > 0 ? Math.sqrt(sumSquaredError / actual.length) : 0
 
   // 确定系数 (R²)
-  metrics.r2 = sumSquaredTotal === 0 ? 0 : 1 - sumSquaredError / sumSquaredTotal
+  metrics.r2 =
+    sumSquaredTotal === 0 ? (sumSquaredError === 0 ? 1 : 0) : 1 - sumSquaredError / sumSquaredTotal
 
   // 计算趋势指标
   if (actual.length >= 3) {
@@ -784,59 +804,96 @@ const initChart = () => {
           },
           padding: [8, 12],
           formatter: function (params) {
-            let date = params[0].axisValue
-            let actualValue = params.find((p) => p.seriesName === '真实销售')?.value || '无数据'
-            let predictedValue = params.find((p) => p.seriesName === '预测销售')?.value || '无数据'
-            let diffValue = '无数据'
-            let diffPercent = '无数据'
+            // Ensure params exist and have at least one item
+            if (!params || params.length === 0) {
+              return ''
+            }
+            const firstParam = params[0]
+            const date = firstParam.axisValueLabel || firstParam.name || '' // Prefer axisValueLabel if available
 
-            // 计算差异和百分比
+            const actualSeries = params.find((p) => p.seriesName === '真实销售')
+            const predictedSeries = params.find((p) => p.seriesName === '预测销售')
+
+            const actualValue =
+              actualSeries && actualSeries.value !== undefined && actualSeries.value !== null
+                ? Number(actualSeries.value)
+                : '无数据'
+            const predictedValue =
+              predictedSeries &&
+              predictedSeries.value !== undefined &&
+              predictedSeries.value !== null
+                ? Number(predictedSeries.value)
+                : '无数据'
+
+            const formattedActualValue =
+              typeof actualValue === 'number' ? actualValue.toFixed(2) : actualValue
+            const formattedPredictedValue =
+              typeof predictedValue === 'number' ? predictedValue.toFixed(2) : predictedValue
+
+            let diffValueStr = '无数据'
+            let diffPercentStr = '无数据'
+            // Use a distinct color for the values in the difference section
+            let valueDiffColor = textColor // Default to standard text color
+
             if (
               typeof actualValue === 'number' &&
               typeof predictedValue === 'number' &&
               !isNaN(actualValue) &&
-              !isNaN(predictedValue) &&
-              actualValue !== 0
+              !isNaN(predictedValue)
             ) {
               const diff = predictedValue - actualValue
-              diffValue = diff.toFixed(2)
-              diffPercent = ((diff / actualValue) * 100).toFixed(2) + '%'
+              diffValueStr = diff.toFixed(2)
+
+              if (actualValue !== 0) {
+                diffPercentStr = ((diff / actualValue) * 100).toFixed(2) + '%'
+              } else if (predictedValue !== 0) {
+                // Actual is 0, predicted is not
+                diffPercentStr = predictedValue > 0 ? '∞%' : '-∞%' // Indicate infinite percentage change
+              } else {
+                // Both actual and predicted are 0
+                diffPercentStr = '0.00%'
+              }
+
+              // Determine color for the difference values
+              if (diff > 0) {
+                valueDiffColor = isDarkMode.value ? '#81C784' : '#4CAF50' // Positive trend color
+              } else if (diff < 0) {
+                valueDiffColor = isDarkMode.value ? '#E57373' : '#F44336' // Negative trend color
+              }
+              // If diff is 0, valueDiffColor remains textColor (neutral)
             }
 
-            // 自定义格式
-            let html = `<div style="font-weight:bold;margin-bottom:5px;">${date}</div>`
-            html += `<div style="display:flex;justify-content:space-between;margin:3px 0;">
-                      <span style="color:${actualColor};">真实销售:</span>
-                      <span style="color:${textColor};font-weight:bold;">${
-                        typeof actualValue === 'number' ? actualValue.toFixed(2) : actualValue
-                      }</span>
-                    </div>`
-            html += `<div style="display:flex;justify-content:space-between;margin:3px 0;">
-                      <span style="color:${predictedColor};">预测销售:</span>
-                      <span style="color:${textColor};font-weight:bold;">${
-                        typeof predictedValue === 'number'
-                          ? predictedValue.toFixed(2)
-                          : predictedValue
-                      }</span>
-                    </div>`
+            const topBorderStyle = isDarkMode.value ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'
 
-            if (diffValue !== '无数据') {
-              const diffColor = parseFloat(diffValue) >= 0 ? '#4CAF50' : '#F44336'
-              html += `<div style="margin-top:5px;border-top:1px dashed ${
-                isDarkMode.value ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'
-              };padding-top:5px;">
-                        <div style="display:flex;justify-content:space-between;margin:3px 0;">
-                          <span>绝对误差:</span>
-                          <span style="color:${diffColor};font-weight:bold;">${diffValue}</span>
-                        </div>
-                        <div style="display:flex;justify-content:space-between;margin:3px 0;">
-                          <span>相对误差:</span>
-                          <span style="color:${diffColor};font-weight:bold;">${diffPercent}</span>
-                        </div>
-                      </div>`
-            }
-
-            return html
+            // Using a single template literal for the HTML structure
+            // Labels for "绝对误差" and "相对误差" use `textColor`
+            // Their values use `valueDiffColor`
+            return `
+              <div style="font-weight:bold; margin-bottom:5px;">${date}</div>
+              <div style="display:flex; justify-content:space-between; margin:3px 0;">
+                <span style="color:${actualColor};">真实销售:</span>
+                <span style="color:${textColor}; font-weight:bold;">${formattedActualValue}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; margin:3px 0;">
+                <span style="color:${predictedColor};">预测销售:</span>
+                <span style="color:${textColor}; font-weight:bold;">${formattedPredictedValue}</span>
+              </div>
+              ${
+                diffValueStr !== '无数据'
+                  ? `
+              <div style="margin-top:5px; border-top:1px dashed ${topBorderStyle}; padding-top:5px;">
+                <div style="display:flex; justify-content:space-between; margin:3px 0;">
+                  <span style="color:${textColor};">绝对误差:</span>
+                  <span style="color:${valueDiffColor}; font-weight:bold;">${diffValueStr}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin:3px 0;">
+                  <span style="color:${textColor};">相对误差:</span>
+                  <span style="color:${valueDiffColor}; font-weight:bold;">${diffPercentStr}</span>
+                </div>
+              </div>`
+                  : ''
+              }
+            `
           },
           axisPointer: {
             type: 'cross',
