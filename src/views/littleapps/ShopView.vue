@@ -215,9 +215,20 @@
 
               <v-card-title class="product-title">{{ product.name }}</v-card-title>
 
+              <v-card-subtitle class="text-body-2">
+                {{ product.description }}
+              </v-card-subtitle>
+
               <v-card-text>
-                <div class="text-primary text-h5 font-weight-bold mb-4 price-tag">
-                  ¥{{ product.price.toFixed(2) }}
+                <div class="d-flex align-center justify-space-between mb-3">
+                  <span class="text-h6 text-primary font-weight-bold"> ¥{{ product.price }} </span>
+                  <v-rating
+                    :model-value="product.rating"
+                    readonly
+                    density="compact"
+                    size="small"
+                    color="amber"
+                  ></v-rating>
                 </div>
 
                 <div class="d-flex align-center quantity-control">
@@ -317,77 +328,88 @@ const isDarkMode = computed(() => {
   return theme.value == 'dark' ? true : false
 })
 
-// 商品数据
+// 商品数据 - 使用精美的商品图片
 const products = ref([
   {
     id: 1,
-    name: '商品 A',
-    price: 15.99,
-    image:
-      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjxwYXRoIGQ9Ik04MCAxMDBoNDBsLTIwIDM1LTIwLTM1eiIgZmlsbD0iIzNiODJmNiIvPjxwYXRoIGQ9Ik04MCA5MGg0MGwtMjAtMzVMODAgOTB6IiBmaWxsPSIjMzdiMmZmIi8+PHRleHQgeD0iMTAwIiB5PSIxMDAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjMDAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5BPC90ZXh0Pjwvc3ZnPg==',
+    name: 'iPhone 15 Pro',
+    description: '全新A17 Pro芯片，钛金属设计',
+    price: 8999.0,
+    rating: 4.8,
+    image: 'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=500&h=400&fit=crop',
   },
   {
     id: 2,
-    name: '商品 B',
-    price: 29.99,
-    image:
-      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjxyZWN0IHg9IjYwIiB5PSI2MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjZWM0ODk5Ii8+PHRleHQgeD0iMTAwIiB5PSIxMTAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5CPC90ZXh0Pjwvc3ZnPg==',
+    name: 'MacBook Air M3',
+    description: '超薄便携，强悍性能',
+    price: 9999.0,
+    rating: 4.9,
+    image: 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=500&h=400&fit=crop',
   },
   {
     id: 3,
-    name: '商品 C',
-    price: 49.99,
-    image:
-      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9IjEwMCIgcj0iNDAiIGZpbGw9IiMxMGIxODEiLz48dGV4dCB4PSIxMDAiIHk9IjExMCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiNmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkM8L3RleHQ+PC9zdmc+',
+    name: 'AirPods Pro 2',
+    description: '主动降噪，空间音频',
+    price: 1899.0,
+    rating: 4.7,
+    image: 'https://images.unsplash.com/photo-1606841837239-c5a1a4a07af7?w=500&h=400&fit=crop',
   },
   {
     id: 4,
-    name: '商品 D',
-    price: 99.99,
+    name: 'Apple Watch Ultra 2',
+    description: '专业运动，极限探险',
+    price: 6299.0,
+    rating: 4.8,
     image:
-      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjxwYXRoIGQ9Ik0xMDAgNjBsNDAgNjkuMjgyLTEwNS4yNzYtMzIuMzYxaDEzMC41NTJMMTY2IDEyOS4yODJMMTAwIDYweiIgZmlsbD0iI2YzOWMxMiIvPjx0ZXh0IHg9IjEwMCIgeT0iMTEwIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+RDwvdGV4dD48L3N2Zz4=',
+      'data:image/jpeg;base64,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',
   },
   {
     id: 5,
-    name: '商品 E',
-    price: 39.99,
-    image:
-      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjxwYXRoIGQ9Ik02MCAxNDBoODBMNjAgNjB2ODB6IiBmaWxsPSIjOGIwMGZmIi8+PHBhdGggZD0iTTE0MCA2MEg2MGw4MCA4MFY2MHoiIGZpbGw9IiNhODU1ZmYiLz48dGV4dCB4PSIxMDAiIHk9IjEwMCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiNmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkU8L3RleHQ+PC9zdmc+',
+    name: 'iPad Pro 12.9"',
+    description: 'M2芯片，专业创作',
+    price: 8799.0,
+    rating: 4.9,
+    image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500&h=400&fit=crop',
   },
   {
     id: 6,
-    name: '商品 F',
-    price: 24.99,
-    image:
-      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjxlbGxpcHNlIGN4PSIxMDAiIGN5PSIxMDAiIHJ4PSI0MCIgcnk9IjMwIiBmaWxsPSIjZmM2ZDI2Ii8+PHRleHQgeD0iMTAwIiB5PSIxMTAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5GPC90ZXh0Pjwvc3ZnPg==',
+    name: 'Sony WH-1000XM5',
+    description: '行业领先降噪耳机',
+    price: 2399.0,
+    rating: 4.6,
+    image: 'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=500&h=400&fit=crop',
   },
   {
     id: 7,
-    name: '商品 G',
-    price: 19.99,
-    image:
-      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjxyZWN0IHg9IjYwIiB5PSI2MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjMDQ3ODU3Ii8+PHJlY3QgeD0iNjAiIHk9IjEwMCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjMDY5NjY5Ii8+PHRleHQgeD0iMTAwIiB5PSIxMTAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5HPC90ZXh0Pjwvc3ZnPg==',
+    name: 'Nintendo Switch OLED',
+    description: '便携游戏机，OLED屏幕',
+    price: 2599.0,
+    rating: 4.7,
+    image: 'https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=500&h=400&fit=crop',
   },
   {
     id: 8,
-    name: '商品 H',
-    price: 59.99,
-    image:
-      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjxwYXRoIGQ9Ik02MCA2MGg4MHY4MGgtODBWNjB6IiBzdHJva2U9IiMyNTYzZWIiIHN0cm9rZS13aWR0aD0iOCIgZmlsbD0ibm9uZSIvPjx0ZXh0IHg9IjEwMCIgeT0iMTEwIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzI1NjNlYiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+SDwvdGV4dD48L3N2Zz4=',
+    name: 'Canon EOS R6',
+    description: '全画幅微单相机',
+    price: 15999.0,
+    rating: 4.8,
+    image: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=500&h=400&fit=crop',
   },
   {
     id: 9,
-    name: '商品 I',
-    price: 12.99,
-    image:
-      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjxsaW5lIHgxPSI2MCIgeTE9IjEwMCIgeDI9IjE0MCIgeTI9IjEwMCIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjQiLz48bGluZSB4MT0iMTAwIiB5MT0iNjAiIHgyPSIxMDAiIHkyPSIxNDAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSI0Ii8+PHRleHQgeD0iMTAwIiB5PSIxMDAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmaWxsPSIjMDAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5JPC90ZXh0Pjwvc3ZnPg==',
+    name: 'LG OLED C3 65"',
+    description: '4K OLED智能电视',
+    price: 12999.0,
+    rating: 4.8,
+    image: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=500&h=400&fit=crop',
   },
   {
     id: 10,
-    name: '商品 J',
-    price: 79.99,
-    image:
-      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjxjaXJjbGUgY3g9IjgwIiBjeT0iODAiIHI9IjIwIiBmaWxsPSIjZGM0ODVjIi8+PGNpcmNsZSBjeD0iMTIwIiBjeT0iODAiIHI9IjIwIiBmaWxsPSIjODhlMGQ5Ii8+PGNpcmNsZSBjeD0iODAiIGN5PSIxMjAiIHI9IjIwIiBmaWxsPSIjZmZkZGIxIi8+PGNpcmNsZSBjeD0iMTIwIiBjeT0iMTIwIiByPSIyMCIgZmlsbD0iI2M3Y2VlYSIvPjx0ZXh0IHg9IjEwMCIgeT0iMTYwIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzAwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+SjwvdGV4dD48L3N2Zz4=',
+    name: 'Tesla Model Y',
+    description: '纯电动SUV，智能驾驶',
+    price: 299900.0,
+    rating: 4.9,
+    image: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=500&h=400&fit=crop',
   },
 ])
 

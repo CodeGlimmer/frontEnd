@@ -346,7 +346,7 @@ const startRecording = () => {
     isRecording.value = true
     speechRecognition.value.start()
     showNotification('开始录音...', 'info')
-  } catch (error) {
+  } catch {
     isRecording.value = false
     showNotification('录音启动失败', 'error')
   }
@@ -746,7 +746,7 @@ const copyAnswer = async () => {
   try {
     await navigator.clipboard.writeText(currentAnswer.value)
     showNotification('回答已复制到剪贴板', 'success')
-  } catch (error) {
+  } catch {
     showNotification('复制失败', 'error')
   }
 }

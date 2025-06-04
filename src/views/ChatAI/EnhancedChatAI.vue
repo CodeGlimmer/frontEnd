@@ -109,13 +109,13 @@
       </v-col>
 
       <!-- 聊天主区域 -->
-      <v-col cols="12" md="9" class="pl-3">
+      <v-col cols="12" md="9" class="pl-3 chat-main-col">
         <v-card
-          class="h-100 d-flex flex-column tw:!shadow-m-elevation-8 tw:hover:!shadow-m-elevation-12"
+          class="chat-main-card d-flex flex-column tw:!shadow-m-elevation-8 tw:hover:!shadow-m-elevation-12"
           elevation="1"
           rounded="lg"
         >
-          <v-card-title class="chat-header">
+          <v-card-title class="chat-header flex-shrink-0">
             <v-icon left>mdi-robot</v-icon>
             DeepSeek 智能助手
             <v-spacer />
@@ -133,7 +133,7 @@
           </v-card-title>
 
           <!-- 聊天消息区域 -->
-          <v-card-text class="flex-grow-1 overflow-y-auto pa-0">
+          <div class="chat-messages-wrapper flex-grow-1">
             <div ref="messagesContainer" class="messages-container">
               <div v-if="messages.length === 0" class="empty-state">
                 <v-icon size="80" color="outline">mdi-chat-question-outline</v-icon>
@@ -233,11 +233,11 @@
                 </v-card>
               </div>
             </div>
-          </v-card-text>
+          </div>
 
           <!-- 消息输入区域 -->
           <v-divider />
-          <v-card-actions class="input-area">
+          <v-card-actions class="input-area flex-shrink-0">
             <v-row no-gutters align="center">
               <v-col>
                 <v-textarea
@@ -900,6 +900,20 @@ onUnmounted(() => {
   background-color: rgb(var(--v-theme-surface));
 }
 
+/* 聊天主列 */
+.chat-main-col {
+  height: 100%;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 聊天主卡片 */
+.chat-main-card {
+  height: 100%;
+  max-height: 100%;
+}
+
 /* 聊天区域样式 */
 .chat-header {
   padding: 20px 24px 16px;
@@ -909,12 +923,20 @@ onUnmounted(() => {
   border-bottom: 1px solid rgb(var(--v-theme-outline-variant));
 }
 
+/* 聊天消息区域包装器 */
+.chat-messages-wrapper {
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
 .messages-container {
   height: 100%;
   overflow-y: auto;
   padding: 24px;
   scroll-behavior: smooth;
   background-color: rgb(var(--v-theme-surface));
+  min-height: 0; /* 重要：确保flex子元素可以收缩 */
 }
 
 /* 空状态 */

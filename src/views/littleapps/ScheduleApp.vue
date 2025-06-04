@@ -1159,8 +1159,8 @@ onMounted(() => {
 /* 浮动按钮 */
 .fab-button {
   position: fixed;
-  bottom: 30px;
-  right: 30px;
+  bottom: 110px;
+  right: 38px;
   z-index: 100;
 }
 

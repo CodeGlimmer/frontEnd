@@ -774,8 +774,8 @@ export default {
 
 .floating-btn {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  bottom: 100px;
+  right: 38px;
   z-index: 10;
 }
 

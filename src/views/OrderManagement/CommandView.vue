@@ -749,8 +749,8 @@ function getPriorityLabel(priority) {
 
 .scroll-top-btn {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  bottom: 120px;
+  right: 46px;
   z-index: 6;
 }
 
