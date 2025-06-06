@@ -121,6 +121,14 @@ export default createRouter({
                     sidebar: () => import('@/views/SchedulePlan/PlanSideBar.vue'),
                   },
                 },
+                {
+                  path: 'agv-dispatch',
+                  name: 'agv-dispatch',
+                  components: {
+                    main: () => import('@/views/SchedulePlan/agvDispatch/index.vue'),
+                    sidebar: () => import('@/views/SchedulePlan/PlanSideBar.vue'),
+                  },
+                },
               ],
             },
             {

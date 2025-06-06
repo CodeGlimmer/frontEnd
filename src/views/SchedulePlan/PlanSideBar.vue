@@ -6,5 +6,11 @@
       value="prediction"
       to="/index/schedulingplanning"
     ></v-list-item>
+    <v-list-item
+      prepend-icon="mdi-robot-industrial"
+      title="AGV调度"
+      value="agv-dispatch"
+      to="/index/schedulingplanning/agv-dispatch"
+    ></v-list-item>
   </v-list>
 </template>
