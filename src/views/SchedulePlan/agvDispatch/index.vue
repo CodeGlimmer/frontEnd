@@ -1,1283 +1,1249 @@
+<!-- filepath: /home/codeglimmer/Desktop/frontEnd/src/views/SchedulePlan/agvDispatch/index.vue -->
 <template>
-  <v-container fluid class="agv-dispatch-container">
-    <!-- 参数设置对话框 -->
-    <v-dialog
-      v-model="dialogVisible"
-      max-width="500px"
-      transition="dialog-transition"
-      overlay-opacity="0.6"
-    >
-      <v-card class="dialog-card" elevation="24">
-        <v-card-title class="dialog-title">
-          <v-icon class="mr-3 title-icon" color="primary">mdi-cog</v-icon>
-          <span class="text-h5 font-weight-medium">参数设置</span>
-        </v-card-title>
+  <v-container fluid class="pa-4">
+    <v-row>
+      <!-- 参数输入区域 -->
+      <v-col cols="12" md="4">
+        <v-card elevation="2" class="mb-4">
+          <v-card-title class="primary white--text">
+            <v-icon left color="white">mdi-robot</v-icon>
+            AGV调度参数配置
+          </v-card-title>
 
-        <v-divider class="divider-animated"></v-divider>
+          <v-card-text class="pt-4">
+            <v-form ref="form" v-model="formValid">
+              <!-- AGV数量 -->
+              <v-text-field
+                v-model.number="params.num_agvs"
+                label="AGV数量"
+                type="number"
+                :rules="[(v) => v > 0 || 'AGV数量必须大于0']"
+                prepend-icon="mdi-numeric"
+                outlined
+                dense
+              />
 
-        <v-card-text class="dialog-content">
-          <v-container>
-            <v-row>
-              <v-col cols="12">
-                <v-text-field
-                  v-model="AGVInput"
-                  label="AGV数量"
-                  type="number"
-                  variant="outlined"
-                  prepend-inner-icon="mdi-robot-industrial"
-                  class="animated-input"
-                  :rules="[(v) => v > 0 || 'AGV数量必须大于0']"
-                  @focus="onInputFocus"
-                  @blur="onInputBlur"
-                ></v-text-field>
+              <!-- 地图大小 -->
+              <v-row>
+                <v-col cols="6">
+                  <v-text-field
+                    v-model.number="params.grid_size[0]"
+                    label="地图宽度"
+                    type="number"
+                    :rules="[(v) => v > 0 || '必须大于0']"
+                    outlined
+                    dense
+                  />
+                </v-col>
+                <v-col cols="6">
+                  <v-text-field
+                    v-model.number="params.grid_size[1]"
+                    label="地图高度"
+                    type="number"
+                    :rules="[(v) => v > 0 || '必须大于0']"
+                    outlined
+                    dense
+                  />
+                </v-col>
+              </v-row>
+
+              <!-- AGV起始位置 -->
+              <v-subheader class="px-0">AGV起始位置</v-subheader>
+              <div v-for="(pos, index) in params.agv_positions" :key="index" class="mb-2">
+                <v-row align="center">
+                  <v-col cols="4">
+                    <v-text-field
+                      v-model.number="pos[0]"
+                      :label="`AGV${index + 1} X`"
+                      type="number"
+                      outlined
+                      dense
+                      hide-details
+                    />
+                  </v-col>
+                  <v-col cols="4">
+                    <v-text-field
+                      v-model.number="pos[1]"
+                      :label="`AGV${index + 1} Y`"
+                      type="number"
+                      outlined
+                      dense
+                      hide-details
+                    />
+                  </v-col>
+                  <v-col cols="4">
+                    <v-btn
+                      icon
+                      small
+                      color="error"
+                      @click="removeAgvPosition(index)"
+                      :disabled="params.agv_positions.length <= 1"
+                    >
+                      <v-icon>mdi-delete</v-icon>
+                    </v-btn>
+                  </v-col>
+                </v-row>
+              </div>
+              <v-btn
+                small
+                color="primary"
+                @click="addAgvPosition"
+                :disabled="params.agv_positions.length >= params.num_agvs"
+              >
+                <v-icon left>mdi-plus</v-icon>
+                添加AGV位置
+              </v-btn>
+
+              <!-- 任务位置 -->
+              <v-subheader class="px-0 mt-4">任务位置配置</v-subheader>
+              <div v-for="taskId in Object.keys(params.task_locations)" :key="taskId" class="mb-3">
+                <v-card outlined>
+                  <v-card-subtitle>任务 {{ taskId }}</v-card-subtitle>
+                  <v-card-text>
+                    <v-row>
+                      <v-col cols="3">
+                        <v-text-field
+                          v-model.number="params.task_locations[taskId][0][0]"
+                          label="取货X"
+                          type="number"
+                          outlined
+                          dense
+                          hide-details
+                        />
+                      </v-col>
+                      <v-col cols="3">
+                        <v-text-field
+                          v-model.number="params.task_locations[taskId][0][1]"
+                          label="取货Y"
+                          type="number"
+                          outlined
+                          dense
+                          hide-details
+                        />
+                      </v-col>
+                      <v-col cols="3">
+                        <v-text-field
+                          v-model.number="params.task_locations[taskId][1][0]"
+                          label="送达X"
+                          type="number"
+                          outlined
+                          dense
+                          hide-details
+                        />
+                      </v-col>
+                      <v-col cols="3">
+                        <v-text-field
+                          v-model.number="params.task_locations[taskId][1][1]"
+                          label="送达Y"
+                          type="number"
+                          outlined
+                          dense
+                          hide-details
+                        />
+                      </v-col>
+                    </v-row>
+                    <v-btn icon small color="error" class="mt-2" @click="removeTask(taskId)">
+                      <v-icon>mdi-delete</v-icon>
+                    </v-btn>
+                  </v-card-text>
+                </v-card>
+              </div>
+              <v-btn small color="primary" @click="addTask">
+                <v-icon left>mdi-plus</v-icon>
+                添加任务
+              </v-btn>
+
+              <!-- 障碍物配置 -->
+              <v-subheader class="px-0 mt-4">障碍物配置</v-subheader>
+              <v-card outlined class="mb-3">
+                <v-card-subtitle>
+                  <v-icon left>mdi-wall</v-icon>
+                  障碍物位置 ({{ params.obstacles.length }} 个)
+                </v-card-subtitle>
+                <v-card-text>
+                  <div
+                    v-if="params.obstacles.length === 0"
+                    class="text-center text--secondary py-4"
+                  >
+                    暂无障碍物，点击下方按钮添加
+                  </div>
+                  <div v-else>
+                    <v-row
+                      v-for="(obstacle, index) in params.obstacles"
+                      :key="`obstacle-${index}`"
+                      align="center"
+                      class="mb-2"
+                    >
+                      <v-col cols="4">
+                        <v-text-field
+                          v-model.number="obstacle[0]"
+                          :label="`障碍物${index + 1} X`"
+                          type="number"
+                          :rules="[
+                            (v) => v >= 0 || 'X坐标不能为负数',
+                            (v) =>
+                              v < params.grid_size[0] || `X坐标不能超过${params.grid_size[0] - 1}`,
+                          ]"
+                          outlined
+                          dense
+                          hide-details="auto"
+                          @input="validateObstacle(index)"
+                        />
+                      </v-col>
+                      <v-col cols="4">
+                        <v-text-field
+                          v-model.number="obstacle[1]"
+                          :label="`障碍物${index + 1} Y`"
+                          type="number"
+                          :rules="[
+                            (v) => v >= 0 || 'Y坐标不能为负数',
+                            (v) =>
+                              v < params.grid_size[1] || `Y坐标不能超过${params.grid_size[1] - 1}`,
+                          ]"
+                          outlined
+                          dense
+                          hide-details="auto"
+                          @input="validateObstacle(index)"
+                        />
+                      </v-col>
+                      <v-col cols="4">
+                        <v-btn
+                          icon
+                          small
+                          color="error"
+                          @click="removeObstacle(index)"
+                          :disabled="loading"
+                        >
+                          <v-icon>mdi-delete</v-icon>
+                        </v-btn>
+                        <v-tooltip bottom>
+                          <template v-slot:activator="{ on, attrs }">
+                            <v-icon
+                              v-if="isObstacleConflict(obstacle)"
+                              v-bind="attrs"
+                              v-on="on"
+                              color="warning"
+                              small
+                              class="ml-1"
+                            >
+                              mdi-alert
+                            </v-icon>
+                          </template>
+                          <span>该位置与AGV起始位置或任务点冲突</span>
+                        </v-tooltip>
+                      </v-col>
+                    </v-row>
+                  </div>
+
+                  <v-divider class="my-3" />
+
+                  <v-row>
+                    <v-col cols="12">
+                      <v-btn
+                        small
+                        color="primary"
+                        @click="addObstacle"
+                        :disabled="loading"
+                        class="mr-2"
+                      >
+                        <v-icon left>mdi-plus</v-icon>
+                        添加障碍物
+                      </v-btn>
+                      <v-btn
+                        small
+                        color="warning"
+                        outlined
+                        @click="clearObstacles"
+                        :disabled="loading || params.obstacles.length === 0"
+                      >
+                        <v-icon left>mdi-delete-sweep</v-icon>
+                        清空所有
+                      </v-btn>
+                    </v-col>
+                  </v-row>
+
+                  <!-- 快速添加预设 -->
+                  <v-expansion-panels class="mt-3">
+                    <v-expansion-panel>
+                      <v-expansion-panel-header>
+                        <span>
+                          <v-icon left>mdi-creation</v-icon>
+                          快速添加预设障碍物
+                        </span>
+                      </v-expansion-panel-header>
+                      <v-expansion-panel-content>
+                        <v-row>
+                          <v-col cols="6">
+                            <v-btn
+                              small
+                              block
+                              color="info"
+                              outlined
+                              @click="addWallObstacles('horizontal')"
+                              :disabled="loading"
+                            >
+                              添加水平墙
+                            </v-btn>
+                          </v-col>
+                          <v-col cols="6">
+                            <v-btn
+                              small
+                              block
+                              color="info"
+                              outlined
+                              @click="addWallObstacles('vertical')"
+                              :disabled="loading"
+                            >
+                              添加垂直墙
+                            </v-btn>
+                          </v-col>
+                          <v-col cols="6">
+                            <v-btn
+                              small
+                              block
+                              color="info"
+                              outlined
+                              @click="addRandomObstacles"
+                              :disabled="loading"
+                            >
+                              随机添加5个
+                            </v-btn>
+                          </v-col>
+                          <v-col cols="6">
+                            <v-btn
+                              small
+                              block
+                              color="info"
+                              outlined
+                              @click="addCornerObstacles"
+                              :disabled="loading"
+                            >
+                              添加角落障碍
+                            </v-btn>
+                          </v-col>
+                        </v-row>
+                      </v-expansion-panel-content>
+                    </v-expansion-panel>
+                  </v-expansion-panels>
+                </v-card-text>
+              </v-card>
+
+              <!-- 优化参数 -->
+              <v-expansion-panels class="mt-4">
+                <v-expansion-panel>
+                  <v-expansion-panel-header>高级优化参数</v-expansion-panel-header>
+                  <v-expansion-panel-content>
+                    <v-text-field
+                      v-model.number="params.optimization_config.pop_size"
+                      label="种群大小"
+                      type="number"
+                      outlined
+                      dense
+                    />
+                    <v-text-field
+                      v-model.number="params.optimization_config.n_gen"
+                      label="迭代次数"
+                      type="number"
+                      outlined
+                      dense
+                    />
+                  </v-expansion-panel-content>
+                </v-expansion-panel>
+              </v-expansion-panels>
+            </v-form>
+          </v-card-text>
+
+          <v-card-actions>
+            <v-btn
+              color="primary"
+              block
+              large
+              :loading="loading"
+              :disabled="!formValid"
+              @click="runOptimization"
+            >
+              <v-icon left>mdi-play</v-icon>
+              开始优化调度
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-col>
+
+      <!-- 结果展示区域 -->
+      <v-col cols="12" md="8">
+        <!-- 动画展示 -->
+        <v-card elevation="2" class="mb-4">
+          <v-card-title class="success white--text">
+            <v-icon left color="white">mdi-animation-play</v-icon>
+            AGV调度动画
+            <v-spacer />
+            <v-btn v-if="animationData" icon color="white" @click="toggleAnimation">
+              <v-icon>{{ isAnimating ? 'mdi-pause' : 'mdi-play' }}</v-icon>
+            </v-btn>
+            <v-btn v-if="animationData" icon color="white" @click="resetAnimation">
+              <v-icon>mdi-restart</v-icon>
+            </v-btn>
+          </v-card-title>
+
+          <v-card-text>
+            <div class="d-flex justify-center">
+              <canvas
+                ref="animationCanvas"
+                :width="canvasSize"
+                :height="canvasSize"
+                style="border: 2px solid #e0e0e0; border-radius: 4px"
+              />
+            </div>
+
+            <v-row v-if="animationData" class="mt-3">
+              <v-col cols="6">
+                <v-card outlined>
+                  <v-card-text class="text-center">
+                    <div class="text-h6 primary--text">{{ Math.round(currentTime * 10) / 10 }}</div>
+                    <div class="text-caption">当前时间</div>
+                  </v-card-text>
+                </v-card>
               </v-col>
-              <v-col cols="12">
-                <v-text-field
-                  v-model="equipInput"
-                  label="设备数量"
-                  type="number"
-                  variant="outlined"
-                  prepend-inner-icon="mdi-factory"
-                  class="animated-input"
-                  :rules="[(v) => (v > 0 && v <= 9) || '设备数量必须在1-9之间']"
-                  @focus="onInputFocus"
-                  @blur="onInputBlur"
-                ></v-text-field>
+              <v-col cols="6">
+                <v-card outlined>
+                  <v-card-text class="text-center">
+                    <div class="text-h6 success--text">
+                      {{ Math.round(totalDistance * 10) / 10 }}
+                    </div>
+                    <div class="text-caption">总距离</div>
+                  </v-card-text>
+                </v-card>
               </v-col>
             </v-row>
-          </v-container>
-        </v-card-text>
 
-        <v-card-actions class="dialog-actions">
-          <v-spacer></v-spacer>
-          <v-btn
-            variant="text"
-            @click="cancel"
-            class="action-btn cancel-btn"
-            :ripple="{ class: 'grey--text' }"
-          >
-            <v-icon left>mdi-close</v-icon>
-            取消
-          </v-btn>
-          <v-btn
-            color="primary"
-            variant="elevated"
-            @click="submit"
-            class="action-btn submit-btn"
-            :loading="computing"
-            :disabled="!isFormValid"
-            elevation="4"
-          >
-            <v-icon left>mdi-check</v-icon>
-            确定
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+            <v-slider
+              v-if="animationData"
+              v-model="currentTime"
+              :max="animationData.total_time"
+              :step="0.1"
+              class="mt-4"
+              thumb-label
+              @input="updateAnimationFrame"
+            />
+          </v-card-text>
+        </v-card>
 
-    <!-- 主要内容区域 -->
-    <v-fade-transition mode="out-in">
-      <v-row v-if="!computing || tableData.length > 0">
-        <!-- 表格部分 -->
-        <v-col cols="12" lg="6">
-          <v-card
-            class="data-table-card elevation-hover"
-            elevation="6"
-            @mouseenter="onCardHover(true)"
-            @mouseleave="onCardHover(false)"
-          >
-            <v-card-title class="card-title">
-              <v-icon class="mr-3 title-icon" color="success">mdi-table</v-icon>
-              <span class="text-h6 font-weight-medium">AGV调度表</span>
-              <v-spacer></v-spacer>
-              <v-chip
-                :color="tableData.length > 0 ? 'success' : 'grey'"
-                variant="elevated"
-                size="small"
-                class="status-chip"
-              >
-                <v-icon left size="small">mdi-database</v-icon>
-                {{ tableData.length }} 条记录
-              </v-chip>
-            </v-card-title>
+        <!-- 帕累托前沿图表 -->
+        <v-card v-if="results" elevation="2" class="mb-4">
+          <v-card-title class="info white--text">
+            <v-icon left color="white">mdi-chart-scatter-plot</v-icon>
+            帕累托前沿分析
+          </v-card-title>
+          <v-card-text>
+            <canvas ref="paretoChart" width="400" height="300"></canvas>
+          </v-card-text>
+        </v-card>
 
-            <v-divider class="divider-animated"></v-divider>
+        <!-- 优化结果统计 -->
+        <v-card v-if="results" elevation="2">
+          <v-card-title class="warning white--text">
+            <v-icon left color="white">mdi-chart-bar</v-icon>
+            优化结果统计
+          </v-card-title>
+          <v-card-text>
+            <v-row>
+              <v-col cols="6" md="3">
+                <v-card outlined>
+                  <v-card-text class="text-center">
+                    <div class="text-h5 primary--text">
+                      {{ results.optimization_results.total_solutions }}
+                    </div>
+                    <div class="text-caption">总解数量</div>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+              <v-col cols="6" md="3">
+                <v-card outlined>
+                  <v-card-text class="text-center">
+                    <div class="text-h5 success--text">
+                      {{ Math.round(results.optimization_results.computation_time * 100) / 100 }}s
+                    </div>
+                    <div class="text-caption">计算时间</div>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+              <v-col cols="6" md="3">
+                <v-card outlined>
+                  <v-card-text class="text-center">
+                    <div class="text-h5 info--text">
+                      {{
+                        Math.round(results.optimization_results.best_solution.makespan * 10) / 10
+                      }}
+                    </div>
+                    <div class="text-caption">最优完工时间</div>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+              <v-col cols="6" md="3">
+                <v-card outlined>
+                  <v-card-text class="text-center">
+                    <div class="text-h5 warning--text">
+                      {{
+                        Math.round(results.optimization_results.best_solution.distance * 10) / 10
+                      }}
+                    </div>
+                    <div class="text-caption">最优总距离</div>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
 
-            <v-slide-y-transition>
-              <v-data-table
-                v-if="tableData.length > 0"
-                :headers="headers"
-                :items="tableData"
-                class="animated-table"
-                height="500"
-                fixed-header
-                hover
-                :loading="computing"
-                loading-text="正在计算调度方案..."
-              >
-                <template v-slot:item.timeRange="{ item, index }">
-                  <v-slide-x-transition :delay="index * 50">
-                    <v-chip color="info" variant="tonal" size="small" class="time-chip">
-                      {{ item.start }} - {{ item.end }}
-                    </v-chip>
-                  </v-slide-x-transition>
-                </template>
-
-                <template v-slot:item.job="{ item, index }">
-                  <v-slide-x-transition :delay="index * 50 + 25">
-                    <v-chip color="primary" variant="elevated" size="small" class="job-chip">
-                      <v-icon left size="small">mdi-package-variant</v-icon>
-                      {{ item.job }}
-                    </v-chip>
-                  </v-slide-x-transition>
-                </template>
-
-                <template v-slot:item.command="{ item, index }">
-                  <v-slide-x-transition :delay="index * 50 + 50">
-                    <span class="command-text">{{ item.command }}</span>
-                  </v-slide-x-transition>
-                </template>
-              </v-data-table>
-
-              <v-card-text v-else class="text-center empty-state">
-                <v-icon size="64" color="grey-lighten-2">mdi-table-off</v-icon>
-                <p class="text-h6 mt-4 text-grey">暂无调度数据</p>
-              </v-card-text>
-            </v-slide-y-transition>
-          </v-card>
-        </v-col>
-
-        <!-- 图表部分 -->
-        <v-col cols="12" lg="6">
-          <v-card
-            class="chart-card elevation-hover"
-            elevation="6"
-            @mouseenter="onCardHover(true)"
-            @mouseleave="onCardHover(false)"
-          >
-            <v-card-title class="card-title">
-              <v-icon class="mr-3 title-icon" color="info">mdi-chart-line</v-icon>
-              <span class="text-h6 font-weight-medium">可视化分析</span>
-              <v-spacer></v-spacer>
-
-              <!-- 图表切换按钮 -->
-              <v-btn-toggle
-                v-model="activeChart"
-                mandatory
-                variant="outlined"
-                divided
-                class="chart-toggle"
-              >
-                <v-btn value="strategy" size="small" class="toggle-btn">
-                  <v-icon>mdi-chart-line</v-icon>
-                  <span class="ml-1">策略</span>
-                </v-btn>
-                <v-btn value="gantt" size="small" class="toggle-btn">
-                  <v-icon>mdi-chart-gantt</v-icon>
-                  <span class="ml-1">甘特图</span>
-                </v-btn>
-              </v-btn-toggle>
-            </v-card-title>
-
-            <v-divider class="divider-animated"></v-divider>
-
-            <v-card-text class="chart-content">
-              <!-- 计算进度显示 -->
-              <v-expand-transition>
-                <v-alert
-                  v-if="computing"
-                  type="info"
-                  variant="tonal"
-                  class="mb-4 computing-alert"
-                  prominent
+            <!-- 任务分配显示 -->
+            <v-card outlined class="mt-4">
+              <v-card-subtitle>AGV任务分配</v-card-subtitle>
+              <v-card-text>
+                <div
+                  v-for="(tasks, agvId) in results.optimization_results.best_solution
+                    .agv_assignments"
+                  :key="agvId"
                 >
-                  <template v-slot:prepend>
-                    <v-progress-circular
-                      indeterminate
-                      size="24"
-                      width="3"
-                      color="info"
-                    ></v-progress-circular>
-                  </template>
-
-                  <div class="computing-content">
-                    <div class="text-h6 mb-2">正在计算AGV调度方案</div>
-                    <v-expand-transition>
-                      <div v-if="computeProgress.generation >= 0" class="progress-details">
-                        <div class="d-flex align-center mb-2">
-                          <span class="text-body-2 mr-2">进化代数:</span>
-                          <v-chip
-                            color="info"
-                            size="small"
-                            variant="elevated"
-                            class="generation-chip"
-                          >
-                            第 {{ computeProgress.generation }} 代
-                          </v-chip>
-                        </div>
-                        <v-progress-linear
-                          :model-value="computeProgress.progress"
-                          color="info"
-                          height="8"
-                          rounded
-                          class="progress-bar"
-                        >
-                          <template v-slot:default="{ value }">
-                            <span class="progress-text">{{ Math.ceil(value) }}%</span>
-                          </template>
-                        </v-progress-linear>
-                      </div>
-                    </v-expand-transition>
-                  </div>
-                </v-alert>
-              </v-expand-transition>
-
-              <!-- 图表容器 -->
-              <div class="charts-wrapper">
-                <v-fade-transition mode="out-in">
-                  <div
-                    v-if="activeChart === 'strategy'"
-                    key="strategy"
-                    ref="echarts1Ref"
-                    class="plot strategy-chart"
-                  ></div>
-                  <div v-else key="gantt" ref="echarts3Ref" class="plot gantt-chart"></div>
-                </v-fade-transition>
-
-                <!-- 收敛图 -->
-                <v-slide-y-transition>
-                  <div
-                    v-if="echarts2Data.length > 0"
-                    ref="echarts2Ref"
-                    class="plot convergence-chart"
-                  ></div>
-                </v-slide-y-transition>
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
-
-      <!-- 加载状态 -->
-      <v-row v-else class="loading-container">
-        <v-col cols="12" class="text-center">
-          <div class="loading-content">
-            <v-progress-circular
-              indeterminate
-              size="80"
-              width="6"
-              color="primary"
-              class="mb-6"
-            ></v-progress-circular>
-            <v-card class="loading-card" elevation="8" max-width="400" mx-auto>
-              <v-card-text class="text-center">
-                <h3 class="text-h5 mb-4">初始化调度系统</h3>
-                <p class="text-body-1 text-grey">正在启动智能算法引擎...</p>
+                  <v-chip class="ma-1" color="primary" small>
+                    AGV {{ agvId }}: 任务 {{ tasks.join(', ') }}
+                  </v-chip>
+                </div>
               </v-card-text>
             </v-card>
-          </div>
-        </v-col>
-      </v-row>
-    </v-fade-transition>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
 
-    <!-- 浮动操作按钮 -->
-    <v-fab-transition>
-      <v-btn
-        v-if="!computing"
-        color="success"
-        icon="mdi-cog"
-        class="fab-button"
-        size="large"
-        elevation="8"
-        @click="dialogVisible = true"
-      >
-        <v-icon size="24">mdi-cog</v-icon>
-        <v-tooltip activator="parent" location="left"> 设置参数 </v-tooltip>
-      </v-btn>
-    </v-fab-transition>
+    <!-- 错误提示 -->
+    <v-snackbar v-model="errorSnackbar" color="error" timeout="5000">
+      {{ errorMessage }}
+      <template v-slot:action="{ attrs }">
+        <v-btn text v-bind="attrs" @click="errorSnackbar = false">关闭</v-btn>
+      </template>
+    </v-snackbar>
 
-    <!-- 快速状态栏 -->
-    <v-slide-y-reverse-transition>
-      <v-card v-if="tableData.length > 0" class="status-bar" elevation="12" rounded="pill">
-        <v-card-text class="d-flex align-center px-6 py-3">
-          <v-icon color="success" class="mr-3">mdi-check-circle</v-icon>
-          <span class="text-body-2 font-weight-medium">
-            调度完成 | AGV: {{ AGVNum }} 台 | 设备: {{ equipNum }} 台 | 任务:
-            {{ tableData.length }} 个
-          </span>
-          <v-spacer></v-spacer>
-          <v-btn
-            icon="mdi-refresh"
-            size="small"
-            variant="text"
-            @click="refreshData"
-            class="refresh-btn"
-          >
-            <v-icon>mdi-refresh</v-icon>
-          </v-btn>
-        </v-card-text>
-      </v-card>
-    </v-slide-y-reverse-transition>
+    <!-- 成功提示 -->
+    <v-snackbar v-model="successSnackbar" color="success" timeout="3000">
+      优化计算完成！
+      <template v-slot:action="{ attrs }">
+        <v-btn text v-bind="attrs" @click="successSnackbar = false">关闭</v-btn>
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 
-<script setup>
-import { ref, onMounted, nextTick, onUnmounted, computed, watch } from 'vue'
-import * as echarts from 'echarts'
+<script>
+import { callAgvDispatchService } from '@/services/AgvDispatch.js'
+import Chart from 'chart.js/auto'
 
-// 响应式数据
-const tableData = ref([])
-const echarts1Data = ref([])
-const echarts2Data = ref([])
-const echarts3Data = ref([])
-const num = ref(0)
-const AGVNum = ref(3)
-const equipNum = ref(9)
-const AGVInput = ref(null)
-const equipInput = ref(null)
-const dialogVisible = ref(false)
-const showChart1 = ref(true)
-const computing = ref(false)
-const computeProgress = ref({ progress: 0, generation: -1 })
+export default {
+  name: 'AgvDispatchPage',
+  data() {
+    return {
+      formValid: false,
+      loading: false,
+      errorSnackbar: false,
+      successSnackbar: false,
+      errorMessage: '',
+      canvasSize: 500,
+      currentTime: 0,
+      isAnimating: false,
+      animationId: null,
+      totalDistance: 0,
 
-// DOM引用
-const echarts1Ref = ref(null)
-const echarts2Ref = ref(null)
-const echarts3Ref = ref(null)
+      // 新增动画相关属性
+      currentFrame: 0,
+      maxFrames: 0,
+      agvPaths: {},
+      frameRate: 30,
+      frameInterval: 1000 / 30,
+      lastFrameTime: 0,
 
-// 图表实例
-let echarts1Instance = null
-let echarts2Instance = null
-let echarts3Instance = null
-
-// Web Worker
-let worker = null
-
-// 表格头部配置
-const headers = [
-  { title: 'AGV序号', key: 'number', width: 100 },
-  { title: '时间范围', key: 'timeRange', width: 200 },
-  { title: '产品名称', key: 'job', width: 100 },
-  { title: '运行指令', key: 'command' },
-]
-
-// 初始化 Web Worker
-const initWorker = () => {
-  try {
-    worker = new Worker(new URL('./jfspWorker.js', import.meta.url))
-
-    worker.onmessage = (e) => {
-      const { type, data, error, progress, generation } = e.data
-
-      if (type === 'result') {
-        handleAlgorithmResult(data)
-      } else if (type === 'error') {
-        console.error('算法计算失败:', error)
-        computing.value = false
-        computeProgress.value = { progress: 0, generation: -1 }
-      } else if (type === 'progress') {
-        computeProgress.value = { progress, generation }
-      }
-    }
-
-    worker.onerror = (error) => {
-      console.error('Worker 错误:', error)
-      computing.value = false
-      computeProgress.value = { progress: 0, generation: -1 }
-    }
-  } catch (error) {
-    console.error('Web Worker 不支持，使用同步计算')
-    worker = null
-  }
-}
-
-// 处理算法结果
-const handleAlgorithmResult = (result) => {
-  tableData.value = result.scheduleData
-  echarts1Data.value = result.strategyData
-  echarts2Data.value = result.convergenceData
-  echarts3Data.value = result.ganttData
-  num.value = result.productCount
-
-  // 存储到localStorage
-  const agvMonitorTable = tableData.value.map((item) => ({
-    agv: item.number,
-    product: item.job,
-    command: item.command,
-  }))
-  localStorage.setItem('tabledata', JSON.stringify(agvMonitorTable))
-
-  computing.value = false
-  computeProgress.value = { progress: 100, generation: -1 }
-
-  // 绘制图表
-  nextTick(() => {
-    setTimeout(() => {
-      drawChart()
-    }, 100)
-  })
-}
-
-// AGV调度计算
-const AGVPlan = async () => {
-  try {
-    computing.value = true
-    computeProgress.value = { progress: 0, generation: 0 }
-
-    if (worker) {
-      // 使用 Web Worker 计算
-      worker.postMessage({
-        AGVNum: AGVNum.value,
-        equipNum: equipNum.value,
-      })
-    } else {
-      // 降级到同步计算（简化版本）
-      setTimeout(() => {
-        const result = generateMockData()
-        handleAlgorithmResult(result)
-      }, 1000)
-    }
-  } catch (error) {
-    console.error('AGV调度计算失败:', error)
-    computing.value = false
-    computeProgress.value = { progress: 0, generation: -1 }
-  }
-}
-
-// 生成模拟数据（当 Worker 不可用时）
-const generateMockData = () => {
-  const scheduleData = []
-  const ganttData = []
-  const strategyData = []
-  const convergenceData = []
-
-  // 生成模拟调度数据
-  for (let i = 0; i < AGVNum.value; i++) {
-    for (let j = 0; j < 3; j++) {
-      scheduleData.push({
-        number: i + 1,
-        start: j * 10 + i * 2,
-        end: (j + 1) * 10 + i * 2,
-        job: `产品${j + 1}`,
-        command: `工位${j + 1} -> 工位${j + 2}`,
-      })
-    }
-  }
-
-  // 生成模拟甘特图数据
-  for (let i = 0; i < 5; i++) {
-    for (let j = 0; j < 3; j++) {
-      ganttData.push({
-        workpiece: i,
-        process: j,
-        machine: j % equipNum.value,
-        startTime: j * 15 + i * 3,
-        endTime: (j + 1) * 15 + i * 3,
-        duration: 15,
-      })
-    }
-  }
-
-  // 生成模拟策略数据
-  for (let i = 0; i < 5; i++) {
-    const data = []
-    for (let j = 0; j < 3; j++) {
-      data.push([j * 15 + i * 3, j % equipNum.value])
-      data.push([(j + 1) * 15 + i * 3, j % equipNum.value])
-    }
-    strategyData.push(data)
-  }
-
-  // 生成模拟收敛数据
-  for (let i = 0; i < 50; i++) {
-    convergenceData.push([i, 100 - i * 0.5 + Math.random() * 5])
-  }
-
-  return {
-    scheduleData,
-    strategyData,
-    convergenceData,
-    ganttData,
-    productCount: 5,
-    machineCount: equipNum.value,
-  }
-}
-
-// 绘制图表
-const drawChart = () => {
-  try {
-    drawStrategyChart()
-    drawConvergenceChart()
-    drawGanttChart()
-  } catch (error) {
-    console.error('绘制图表失败:', error)
-  }
-}
-
-// 绘制调度策略图
-const drawStrategyChart = () => {
-  try {
-    if (!echarts1Ref.value) {
-      console.error('echarts1Ref DOM元素不存在')
-      return
-    }
-
-    if (echarts1Instance) {
-      echarts1Instance.dispose()
-    }
-
-    echarts1Instance = echarts.init(echarts1Ref.value)
-
-    const option = {
-      legend: { show: true },
-      title: { text: '调度策略' },
-      tooltip: { trigger: 'axis' },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '3%',
-        containLabel: true,
-      },
-      xAxis: {
-        type: 'category',
-        boundaryGap: false,
-      },
-      yAxis: {
-        type: 'value',
-        axisLabel: {
-          formatter: (value) => `工位${value + 1}`,
+      params: {
+        num_agvs: 3,
+        agv_positions: [
+          [0, 2],
+          [0, 3],
+          [0, 4],
+        ],
+        task_locations: {
+          0: [
+            [2, 17],
+            [17, 19],
+          ],
+          1: [
+            [2, 16],
+            [17, 18],
+          ],
+          2: [
+            [2, 15],
+            [17, 17],
+          ],
+        },
+        grid_size: [20, 20],
+        obstacles: [
+          [0, 0],
+          [0, 6],
+          [6, 0],
+          [6, 6],
+        ],
+        optimization_config: {
+          pop_size: 50,
+          n_gen: 20,
+          return_animation: true,
         },
       },
-      series: echarts1Data.value.map((dataSet, index) => ({
-        name: `产品${index + 1}`,
-        type: 'line',
-        data: dataSet,
-        connectNulls: true,
-        smooth: false,
-      })),
+
+      results: null,
+      animationData: null,
+      paretoChart: null,
+      agvColors: ['#FF5722', '#2196F3', '#4CAF50', '#FF9800', '#9C27B0', '#00BCD4'],
     }
+  },
 
-    echarts1Instance.setOption(option)
-  } catch (error) {
-    console.error('绘制策略图失败:', error)
-  }
-}
+  mounted() {
+    this.updateAgvPositions()
+  },
 
-// 绘制甘特图
-const drawGanttChart = () => {
-  try {
-    if (!echarts3Ref.value) {
-      console.error('echarts3Ref DOM元素不存在')
-      return
-    }
+  methods: {
+    updateAgvPositions() {
+      const currentLen = this.params.agv_positions.length
+      const targetLen = this.params.num_agvs
 
-    if (echarts3Instance) {
-      echarts3Instance.dispose()
-    }
-
-    echarts3Instance = echarts.init(echarts3Ref.value)
-
-    const Colors = [
-      '#5470c6',
-      '#91cc75',
-      '#fac858',
-      '#ee6666',
-      '#73c0de',
-      '#3ba272',
-      '#fc8452',
-      '#9a60b4',
-      '#ea7ccc',
-      '#ff9f7f',
-      '#ffdb5c',
-      '#ff7c7c',
-      '#9fe6b8',
-      '#87ceeb',
-      '#dda0dd',
-    ]
-
-    const dataSource = echarts3Data.value
-    if (!dataSource || dataSource.length === 0) {
-      return
-    }
-
-    // 按机器分组数据
-    const machines = {}
-    dataSource.forEach((item) => {
-      if (!machines[item.machine]) {
-        machines[item.machine] = []
-      }
-      machines[item.machine].push(item)
-    })
-
-    // 按工件分组以确定颜色
-    const workpieces = {}
-    dataSource.forEach((item) => {
-      if (!workpieces[item.workpiece]) {
-        workpieces[item.workpiece] = []
-      }
-      workpieces[item.workpiece].push(item)
-    })
-
-    // 生成甘特图数据
-    const ganttSeries = []
-    const machineNames = Object.keys(machines).sort((a, b) => parseInt(a) - parseInt(b))
-
-    // 为每个工件创建一个系列
-    Object.keys(workpieces).forEach((workpieceId, index) => {
-      const workpieceOps = workpieces[workpieceId]
-      const seriesData = []
-
-      workpieceOps.forEach((op) => {
-        const machineIndex = machineNames.indexOf(op.machine.toString())
-        seriesData.push({
-          name: `产品${parseInt(workpieceId) + 1}`,
-          value: [machineIndex, op.startTime, op.endTime, op.duration || op.endTime - op.startTime],
-          itemStyle: {
-            color: Colors[index % Colors.length],
-          },
-        })
-      })
-
-      if (seriesData.length > 0) {
-        ganttSeries.push({
-          name: `产品${parseInt(workpieceId) + 1}`,
-          type: 'custom',
-          renderItem: renderGanttItem,
-          encode: {
-            x: [1, 2],
-            y: 0,
-          },
-          data: seriesData,
-        })
-      }
-    })
-
-    function renderGanttItem(params, api) {
-      const categoryIndex = api.value(0)
-      const start = api.coord([api.value(1), categoryIndex])
-      const end = api.coord([api.value(2), categoryIndex])
-      const height = api.size([0, 1])[1] * 0.6
-
-      const rectShape = echarts.graphic.clipRectByRect(
-        {
-          x: start[0],
-          y: start[1] - height / 2,
-          width: end[0] - start[0],
-          height: height,
-        },
-        {
-          x: params.coordSys.x,
-          y: params.coordSys.y,
-          width: params.coordSys.width,
-          height: params.coordSys.height,
-        },
-      )
-
-      return (
-        rectShape && {
-          type: 'rect',
-          shape: rectShape,
-          style: api.style(),
-          styleEmphasis: {
-            stroke: '#333',
-            strokeWidth: 2,
-          },
+      if (currentLen < targetLen) {
+        for (let i = currentLen; i < targetLen; i++) {
+          this.params.agv_positions.push([0, i + 2])
         }
-      )
-    }
-
-    const option = {
-      tooltip: {
-        formatter: function (params) {
-          const data = params.data.value
-          return `
-            <div>
-              <strong>${params.data.name}</strong><br/>
-              机器: 工位${parseInt(machineNames[data[0]]) + 1}<br/>
-              开始时间: ${data[1]}<br/>
-              结束时间: ${data[2]}<br/>
-              持续时间: ${data[3]}
-            </div>
-          `
-        },
-      },
-      title: {
-        text: '甘特图',
-        left: 'center',
-        textStyle: {
-          fontSize: 16,
-        },
-      },
-      legend: {
-        type: 'scroll',
-        orient: 'horizontal',
-        top: 30,
-        itemWidth: 12,
-        itemHeight: 12,
-      },
-      grid: {
-        left: 80,
-        right: 20,
-        top: 80,
-        bottom: 40,
-        containLabel: false,
-      },
-      xAxis: {
-        type: 'value',
-        scale: true,
-        name: '时间',
-        nameLocation: 'middle',
-        nameGap: 25,
-        axisLine: {
-          show: true,
-        },
-        axisTick: {
-          show: true,
-        },
-        splitLine: {
-          show: true,
-          lineStyle: {
-            type: 'dashed',
-            opacity: 0.5,
-          },
-        },
-      },
-      yAxis: {
-        type: 'category',
-        data: machineNames.map((m) => `工位${parseInt(m) + 1}`),
-        axisLine: {
-          show: true,
-        },
-        axisTick: {
-          show: false,
-        },
-        axisLabel: {
-          fontSize: 12,
-        },
-        splitLine: {
-          show: true,
-          lineStyle: {
-            type: 'solid',
-            opacity: 0.3,
-          },
-        },
-      },
-      series: ganttSeries,
-    }
-
-    echarts3Instance.setOption(option)
-
-    // 添加窗口大小变化监听
-    window.addEventListener('resize', () => {
-      if (echarts3Instance) {
-        echarts3Instance.resize()
+      } else if (currentLen > targetLen) {
+        this.params.agv_positions.splice(targetLen)
       }
-    })
-  } catch (error) {
-    console.error('绘制甘特图失败:', error)
-  }
-}
+    },
 
-// 绘制收敛图
-const drawConvergenceChart = () => {
-  try {
-    if (!echarts2Ref.value) {
-      console.error('echarts2Ref DOM元素不存在')
-      return
-    }
+    addAgvPosition() {
+      this.params.agv_positions.push([0, this.params.agv_positions.length + 2])
+    },
 
-    if (echarts2Instance) {
-      echarts2Instance.dispose()
-    }
+    removeAgvPosition(index) {
+      this.params.agv_positions.splice(index, 1)
+    },
 
-    echarts2Instance = echarts.init(echarts2Ref.value)
+    addTask() {
+      const taskIds = Object.keys(this.params.task_locations).map((id) => parseInt(id))
+      const newTaskId = taskIds.length > 0 ? Math.max(...taskIds) + 1 : 0
+      this.params.task_locations[newTaskId.toString()] = [
+        [2, 2],
+        [18, 18],
+      ]
+    },
 
-    const option = {
-      title: { text: '算法收敛情况' },
-      tooltip: { trigger: 'axis' },
-      grid: {
-        left: '1%',
-        right: '4%',
-        top: '20%',
-        bottom: '3%',
-        containLabel: true,
-      },
-      xAxis: { type: 'value' },
-      yAxis: {
-        type: 'value',
-        name: '时间/s',
-      },
-      series: [
-        {
-          name: '时间',
-          type: 'line',
-          smooth: true,
-          data: echarts2Data.value,
-          itemStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: '#64CAFA' },
-              { offset: 1, color: '#0078D7' },
-            ]),
-          },
-          areaStyle: {},
+    removeTask(taskId) {
+      delete this.params.task_locations[taskId]
+    },
+
+    async runOptimization() {
+      if (!this.formValid) return
+
+      this.loading = true
+      this.results = null
+      this.animationData = null
+      this.currentTime = 0
+
+      try {
+        const response = await callAgvDispatchService(this.params)
+
+        if (response.success) {
+          this.results = response.data
+          this.animationData = response.data.visualization_data.animation_data
+          this.totalDistance = this.animationData.total_distance
+          this.successSnackbar = true
+
+          this.$nextTick(() => {
+            this.initializeVisualization()
+          })
+        } else {
+          this.showError(response.message || '优化计算失败')
+        }
+      } catch (error) {
+        this.showError('请求失败: ' + error.message)
+      } finally {
+        this.loading = false
+      }
+    },
+
+    showError(message) {
+      this.errorMessage = message
+      this.errorSnackbar = true
+    },
+
+    initializeVisualization() {
+      this.generateAGVPaths()
+      this.drawAnimationFrame()
+      this.drawParetoChart()
+    },
+
+    // 生成AGV路径数据
+    generateAGVPaths() {
+      if (!this.animationData) return
+
+      this.agvPaths = {}
+      const assignments = this.animationData.agv_assignments
+      const tasks = this.animationData.task_locations
+      const starts = this.animationData.agv_start_positions
+
+      for (const [agvId, taskList] of Object.entries(assignments)) {
+        const path = [starts[parseInt(agvId)]]
+        let currentPos = starts[parseInt(agvId)]
+
+        for (const taskId of taskList) {
+          const [pickup, delivery] = tasks[taskId.toString()]
+
+          // 添加到取货点的路径
+          path.push(...this.calculatePath(currentPos, pickup))
+          // 添加到送货点的路径
+          path.push(...this.calculatePath(pickup, delivery))
+          currentPos = delivery
+        }
+
+        this.agvPaths[agvId] = path
+      }
+
+      this.maxFrames = Math.max(...Object.values(this.agvPaths).map((p) => p.length))
+      this.currentTime = this.maxFrames * 0.3 // 假设每帧0.3秒
+    },
+
+    // A*路径算法 (简化版L型路径)
+    calculatePath(start, end) {
+      const path = []
+      let [x, y] = start
+      const [targetX, targetY] = end
+
+      // 先水平移动
+      while (x !== targetX) {
+        x += x < targetX ? 1 : -1
+        if (!this.isObstacle(x, y)) {
+          path.push([x, y])
+        }
+      }
+      // 再垂直移动
+      while (y !== targetY) {
+        y += y < targetY ? 1 : -1
+        if (!this.isObstacle(x, y)) {
+          path.push([x, y])
+        }
+      }
+
+      return path
+    },
+
+    // 检查是否为障碍物
+    isObstacle(x, y) {
+      return this.animationData.obstacles.some((obs) => obs[0] === x && obs[1] === y)
+    },
+
+    drawAnimationFrame() {
+      if (!this.animationData || !this.$refs.animationCanvas) return
+
+      const canvas = this.$refs.animationCanvas
+      const ctx = canvas.getContext('2d')
+      const { grid_size, obstacles, task_locations } = this.animationData
+
+      // 清空画布
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      // 计算缩放比例
+      const scale = (this.canvasSize - 40) / Math.max(grid_size[0], grid_size[1])
+      const offsetX = 20
+      const offsetY = 20
+
+      // 绘制网格
+      ctx.strokeStyle = '#e9ecef'
+      ctx.lineWidth = 1
+      for (let i = 0; i <= grid_size[0]; i++) {
+        ctx.beginPath()
+        ctx.moveTo(offsetX + i * scale, offsetY)
+        ctx.lineTo(offsetX + i * scale, offsetY + grid_size[1] * scale)
+        ctx.stroke()
+      }
+      for (let i = 0; i <= grid_size[1]; i++) {
+        ctx.beginPath()
+        ctx.moveTo(offsetX, offsetY + i * scale)
+        ctx.lineTo(offsetX + grid_size[0] * scale, offsetY + i * scale)
+        ctx.stroke()
+      }
+
+      // 绘制障碍物
+      ctx.fillStyle = '#343a40'
+      obstacles.forEach(([x, y]) => {
+        ctx.fillRect(offsetX + x * scale, offsetY + (grid_size[1] - 1 - y) * scale, scale, scale)
+      })
+
+      // 绘制任务位置
+      const taskColors = ['#e74c3c', '#2ecc71', '#3498db', '#f39c12', '#9b59b6']
+      Object.entries(task_locations).forEach(([taskId, [pickup, delivery]]) => {
+        const color = taskColors[parseInt(taskId) % taskColors.length]
+
+        // 取货点 (圆形)
+        ctx.fillStyle = color
+        ctx.beginPath()
+        ctx.arc(
+          offsetX + pickup[0] * scale + scale / 2,
+          offsetY + (grid_size[1] - 1 - pickup[1]) * scale + scale / 2,
+          scale / 3,
+          0,
+          2 * Math.PI,
+        )
+        ctx.fill()
+
+        // 标签
+        ctx.fillStyle = '#000'
+        ctx.font = '10px Arial'
+        ctx.textAlign = 'center'
+        ctx.fillText(
+          `P${taskId}`,
+          offsetX + pickup[0] * scale + scale / 2,
+          offsetY + (grid_size[1] - 1 - pickup[1]) * scale + scale / 2 + 3,
+        )
+
+        // 送货点 (方形)
+        ctx.fillStyle = color
+        ctx.fillRect(
+          offsetX + delivery[0] * scale + scale / 6,
+          offsetY + (grid_size[1] - 1 - delivery[1]) * scale + scale / 6,
+          (scale * 2) / 3,
+          (scale * 2) / 3,
+        )
+
+        ctx.fillStyle = '#000'
+        ctx.fillText(
+          `D${taskId}`,
+          offsetX + delivery[0] * scale + scale / 2,
+          offsetY + (grid_size[1] - 1 - delivery[1]) * scale + scale / 2 + 3,
+        )
+      })
+
+      // 绘制AGV轨迹和当前位置
+      Object.entries(this.agvPaths).forEach(([agvId, path], index) => {
+        if (path.length === 0) return
+
+        // 绘制轨迹
+        this.drawTrail(
+          ctx,
+          path.slice(0, this.currentFrame + 1),
+          index,
+          scale,
+          offsetX,
+          offsetY,
+          grid_size,
+        )
+
+        // 绘制AGV当前位置
+        if (this.currentFrame < path.length) {
+          const pos = path[this.currentFrame]
+          this.drawAGV(
+            ctx,
+            offsetX + pos[0] * scale + scale / 2,
+            offsetY + (grid_size[1] - 1 - pos[1]) * scale + scale / 2,
+            this.agvColors[index % this.agvColors.length],
+            scale / 3,
+            parseInt(agvId),
+          )
+        }
+      })
+    },
+
+    // 绘制轨迹
+    drawTrail(ctx, trail, agvIndex, scale, offsetX, offsetY, gridSize) {
+      if (trail.length < 2) return
+
+      const color = this.agvColors[agvIndex % this.agvColors.length]
+
+      ctx.strokeStyle = color + '80' // 半透明
+      ctx.lineWidth = 3
+      ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
+      ctx.beginPath()
+
+      const firstPos = trail[0]
+      ctx.moveTo(
+        offsetX + firstPos[0] * scale + scale / 2,
+        offsetY + (gridSize[1] - 1 - firstPos[1]) * scale + scale / 2,
+      )
+
+      for (let i = 1; i < trail.length; i++) {
+        const pos = trail[i]
+        ctx.lineTo(
+          offsetX + pos[0] * scale + scale / 2,
+          offsetY + (gridSize[1] - 1 - pos[1]) * scale + scale / 2,
+        )
+      }
+      ctx.stroke()
+    },
+
+    // 绘制AGV
+    drawAGV(ctx, x, y, color, size, agvId) {
+      // AGV主体 (三角形)
+      ctx.fillStyle = color
+      ctx.strokeStyle = '#000'
+      ctx.lineWidth = 2
+
+      ctx.beginPath()
+      ctx.moveTo(x, y - size)
+      ctx.lineTo(x - size, y + size)
+      ctx.lineTo(x + size, y + size)
+      ctx.closePath()
+      ctx.fill()
+      ctx.stroke()
+
+      // AGV标签
+      ctx.fillStyle = 'white'
+      ctx.font = 'bold 12px Arial'
+      ctx.textAlign = 'center'
+      ctx.fillText(`${agvId}`, x, y + 4)
+    },
+
+    // 根据时间计算当前帧
+    calculateCurrentFrame() {
+      if (!this.animationData || this.maxFrames === 0) return 0
+      const progress = this.currentTime / this.animationData.total_time
+      return Math.floor(progress * this.maxFrames)
+    },
+
+    startAnimation() {
+      if (!this.animationData) return
+
+      this.isAnimating = true
+      this.lastFrameTime = performance.now()
+
+      const animate = (timestamp) => {
+        if (!this.isAnimating) return
+
+        if (timestamp - this.lastFrameTime >= this.frameInterval) {
+          this.currentFrame++
+          if (this.currentFrame >= this.maxFrames) {
+            this.currentFrame = this.maxFrames - 1
+            this.isAnimating = false
+          }
+
+          // 更新时间显示
+          this.currentTime = (this.currentFrame / this.maxFrames) * this.animationData.total_time
+
+          this.drawAnimationFrame()
+          this.lastFrameTime = timestamp
+        }
+
+        if (this.isAnimating) {
+          this.animationId = requestAnimationFrame(animate)
+        }
+      }
+
+      this.animationId = requestAnimationFrame(animate)
+    },
+
+    pauseAnimation() {
+      this.isAnimating = false
+      if (this.animationId) {
+        cancelAnimationFrame(this.animationId)
+        this.animationId = null
+      }
+    },
+
+    resetAnimation() {
+      this.pauseAnimation()
+      this.currentFrame = 0
+      this.currentTime = 0
+      this.drawAnimationFrame()
+    },
+
+    toggleAnimation() {
+      if (this.isAnimating) {
+        this.pauseAnimation()
+      } else {
+        this.startAnimation()
+      }
+    },
+
+    updateAnimationFrame() {
+      if (!this.animationData) return
+
+      // 根据滑块位置计算帧数
+      this.currentFrame = this.calculateCurrentFrame()
+      this.drawAnimationFrame()
+    },
+
+    drawParetoChart() {
+      if (!this.results || !this.$refs.paretoChart) return
+
+      const ctx = this.$refs.paretoChart.getContext('2d')
+
+      if (this.paretoChart) {
+        this.paretoChart.destroy()
+      }
+
+      const paretoData = this.results.visualization_data.pareto_front
+
+      this.paretoChart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: [
+            {
+              label: '帕累托前沿',
+              data: paretoData.map(([makespan, distance]) => ({ x: makespan, y: distance })),
+              backgroundColor: '#2196F3',
+              borderColor: '#1976D2',
+              borderWidth: 2,
+              pointRadius: 6,
+            },
+          ],
         },
-      ],
+        options: {
+          responsive: true,
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: '完工时间',
+              },
+            },
+            y: {
+              title: {
+                display: true,
+                text: '总距离',
+              },
+            },
+          },
+          plugins: {
+            legend: {
+              display: true,
+            },
+            title: {
+              display: true,
+              text: 'AGV调度帕累托前沿分析',
+            },
+          },
+        },
+      })
+    },
+
+    // 障碍物管理方法
+    addObstacle() {
+      // 添加到地图中心位置，避免与边界冲突
+      const centerX = Math.floor(this.params.grid_size[0] / 2)
+      const centerY = Math.floor(this.params.grid_size[1] / 2)
+
+      // 确保不与现有障碍物重复
+      let newObstacle = [centerX, centerY]
+      let attempts = 0
+
+      while (this.isObstacleExists(newObstacle) && attempts < 10) {
+        newObstacle = [
+          Math.floor(Math.random() * this.params.grid_size[0]),
+          Math.floor(Math.random() * this.params.grid_size[1]),
+        ]
+        attempts++
+      }
+
+      this.params.obstacles.push(newObstacle)
+    },
+
+    removeObstacle(index) {
+      if (index >= 0 && index < this.params.obstacles.length) {
+        this.params.obstacles.splice(index, 1)
+      }
+    },
+
+    clearObstacles() {
+      this.$confirm('确定要清空所有障碍物吗？', '确认操作', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      })
+        .then(() => {
+          this.params.obstacles = []
+        })
+        .catch(() => {
+          // 用户取消操作
+        })
+    },
+
+    // 验证障碍物位置
+    validateObstacle(index) {
+      if (index < 0 || index >= this.params.obstacles.length) return
+
+      const obstacle = this.params.obstacles[index]
+
+      // 确保坐标在有效范围内
+      obstacle[0] = Math.max(0, Math.min(obstacle[0], this.params.grid_size[0] - 1))
+      obstacle[1] = Math.max(0, Math.min(obstacle[1], this.params.grid_size[1] - 1))
+
+      // 检查是否与其他障碍物重复
+      const duplicateIndex = this.params.obstacles.findIndex(
+        (obs, i) => i !== index && obs[0] === obstacle[0] && obs[1] === obstacle[1],
+      )
+
+      if (duplicateIndex !== -1) {
+        // 找一个附近的空位置
+        this.findNearbyEmptyPosition(obstacle)
+      }
+    },
+
+    // 检查障碍物是否已存在
+    isObstacleExists(position) {
+      return this.params.obstacles.some((obs) => obs[0] === position[0] && obs[1] === position[1])
+    },
+
+    // 检查障碍物是否与AGV起始位置或任务点冲突
+    isObstacleConflict(obstacle) {
+      // 检查是否与AGV起始位置冲突
+      const agvConflict = this.params.agv_positions.some(
+        (pos) => pos[0] === obstacle[0] && pos[1] === obstacle[1],
+      )
+
+      if (agvConflict) return true
+
+      // 检查是否与任务位置冲突
+      const taskConflict = Object.values(this.params.task_locations).some(
+        ([pickup, delivery]) =>
+          (pickup[0] === obstacle[0] && pickup[1] === obstacle[1]) ||
+          (delivery[0] === obstacle[0] && delivery[1] === obstacle[1]),
+      )
+
+      return taskConflict
+    },
+
+    // 寻找附近的空位置
+    findNearbyEmptyPosition(obstacle) {
+      const maxX = this.params.grid_size[0] - 1
+      const maxY = this.params.grid_size[1] - 1
+
+      // 在3x3范围内寻找空位
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          if (dx === 0 && dy === 0) continue
+
+          const newX = Math.max(0, Math.min(obstacle[0] + dx, maxX))
+          const newY = Math.max(0, Math.min(obstacle[1] + dy, maxY))
+          const newPos = [newX, newY]
+
+          if (!this.isObstacleExists(newPos) && !this.isObstacleConflict(newPos)) {
+            obstacle[0] = newX
+            obstacle[1] = newY
+            return
+          }
+        }
+      }
+    },
+
+    // 添加预设障碍物
+    addWallObstacles(type) {
+      const newObstacles = []
+      const midX = Math.floor(this.params.grid_size[0] / 2)
+      const midY = Math.floor(this.params.grid_size[1] / 2)
+
+      if (type === 'horizontal') {
+        // 添加水平墙
+        for (let x = midX - 2; x <= midX + 2; x++) {
+          if (x >= 0 && x < this.params.grid_size[0]) {
+            const pos = [x, midY]
+            if (!this.isObstacleExists(pos) && !this.isObstacleConflict(pos)) {
+              newObstacles.push(pos)
+            }
+          }
+        }
+      } else if (type === 'vertical') {
+        // 添加垂直墙
+        for (let y = midY - 2; y <= midY + 2; y++) {
+          if (y >= 0 && y < this.params.grid_size[1]) {
+            const pos = [midX, y]
+            if (!this.isObstacleExists(pos) && !this.isObstacleConflict(pos)) {
+              newObstacles.push(pos)
+            }
+          }
+        }
+      }
+
+      this.params.obstacles.push(...newObstacles)
+    },
+
+    addRandomObstacles() {
+      const count = 5
+      const newObstacles = []
+      let attempts = 0
+
+      while (newObstacles.length < count && attempts < 50) {
+        const pos = [
+          Math.floor(Math.random() * this.params.grid_size[0]),
+          Math.floor(Math.random() * this.params.grid_size[1]),
+        ]
+
+        if (!this.isObstacleExists(pos) && !this.isObstacleConflict(pos)) {
+          newObstacles.push(pos)
+        }
+        attempts++
+      }
+
+      this.params.obstacles.push(...newObstacles)
+    },
+
+    addCornerObstacles() {
+      const corners = [
+        [1, 1],
+        [1, this.params.grid_size[1] - 2],
+        [this.params.grid_size[0] - 2, 1],
+        [this.params.grid_size[0] - 2, this.params.grid_size[1] - 2],
+      ]
+
+      const newObstacles = corners.filter(
+        (pos) =>
+          pos[0] >= 0 &&
+          pos[0] < this.params.grid_size[0] &&
+          pos[1] >= 0 &&
+          pos[1] < this.params.grid_size[1] &&
+          !this.isObstacleExists(pos) &&
+          !this.isObstacleConflict(pos),
+      )
+
+      this.params.obstacles.push(...newObstacles)
+    },
+  },
+
+  watch: {
+    'params.num_agvs'(newVal) {
+      this.updateAgvPositions()
+    },
+
+    // 监听地图大小变化，调整障碍物位置
+    'params.grid_size': {
+      handler(newSize, oldSize) {
+        if (!oldSize) return
+
+        // 移除超出边界的障碍物
+        this.params.obstacles = this.params.obstacles.filter(
+          (obs) => obs[0] < newSize[0] && obs[1] < newSize[1],
+        )
+      },
+      deep: true,
+    },
+  },
+
+  beforeUnmount() {
+    this.pauseAnimation()
+    if (this.paretoChart) {
+      this.paretoChart.destroy()
     }
-
-    echarts2Instance.setOption(option)
-  } catch (error) {
-    console.error('绘制收敛图失败:', error)
-  }
+  },
 }
-
-// 新增响应式数据
-const activeChart = ref('strategy')
-const isFormValid = computed(() => {
-  return AGVInput.value > 0 && equipInput.value > 0 && equipInput.value <= 9
-})
-
-// 动画事件处理
-const onInputFocus = (event) => {
-  event.target.parentElement.classList.add('input-focused')
-}
-
-const onInputBlur = (event) => {
-  event.target.parentElement.classList.remove('input-focused')
-}
-
-const onCardHover = (isHover) => {
-  // 卡片悬停效果已通过CSS处理
-}
-
-const refreshData = () => {
-  AGVPlan()
-}
-
-// 监听图表切换
-watch(activeChart, (newChart) => {
-  nextTick(() => {
-    if (newChart === 'strategy') {
-      setTimeout(() => drawStrategyChart(), 300)
-    } else {
-      setTimeout(() => drawGanttChart(), 300)
-    }
-  })
-})
-
-// 切换图表显示（保持兼容性）
-const change = () => {
-  activeChart.value = activeChart.value === 'strategy' ? 'gantt' : 'strategy'
-}
-
-// 关闭对话框
-const handleClose = () => {
-  dialogVisible.value = false
-  AGVInput.value = null
-  equipInput.value = null
-}
-
-const cancel = () => {
-  handleClose()
-}
-
-// 提交参数
-const submit = () => {
-  AGVNum.value = AGVInput.value
-  equipNum.value = equipInput.value
-  handleClose()
-
-  // 销毁现有图表实例
-  if (echarts1Instance) {
-    echarts1Instance.dispose()
-    echarts1Instance = null
-  }
-  if (echarts2Instance) {
-    echarts2Instance.dispose()
-    echarts2Instance = null
-  }
-  if (echarts3Instance) {
-    echarts3Instance.dispose()
-    echarts3Instance = null
-  }
-
-  AGVPlan()
-}
-
-// 组件挂载时执行
-onMounted(() => {
-  initWorker()
-  setTimeout(() => {
-    AGVPlan()
-  }, 300)
-})
-
-// 组件卸载时清理
-onUnmounted(() => {
-  if (worker) {
-    worker.terminate()
-  }
-})
 </script>
 
 <style scoped>
-.agv-dispatch-container {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh;
-  padding: 24px;
-}
-
-/* 对话框动画 */
-.dialog-card {
-  border-radius: 16px !important;
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.95) !important;
-}
-
-.dialog-title {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white !important;
-  border-radius: 16px 16px 0 0;
-  padding: 20px 24px;
-}
-
-.title-icon {
-  animation: iconPulse 2s ease-in-out infinite;
-}
-
-@keyframes iconPulse {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-}
-
-.divider-animated {
-  background: linear-gradient(90deg, transparent, #667eea, transparent);
-  height: 2px;
-  animation: dividerGlow 3s ease-in-out infinite;
-}
-
-@keyframes dividerGlow {
-  0%,
-  100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-.dialog-content {
-  padding: 24px !important;
-}
-
-.animated-input {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.animated-input:focus-within {
-  transform: translateY(-2px);
-}
-
-.dialog-actions {
-  padding: 16px 24px 24px;
-}
-
-.action-btn {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 12px;
-  text-transform: none;
-  font-weight: 500;
-}
-
-.action-btn:hover {
-  transform: translateY(-2px);
-}
-
-.submit-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
-}
-
-.submit-btn:hover {
-  box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
-}
-
-/* 卡片样式 */
-.data-table-card,
-.chart-card {
-  border-radius: 16px !important;
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.95) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-}
-
-.elevation-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15) !important;
-}
-
-.card-title {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white !important;
-  padding: 20px 24px;
-  border-radius: 16px 16px 0 0;
-}
-
-/* 表格动画 */
-.animated-table {
-  background: transparent !important;
-}
-
-.animated-table ::v-deep(.v-data-table__wrapper) {
-  border-radius: 0 0 16px 16px;
-}
-
-.animated-table ::v-deep(tr) {
-  transition: all 0.3s ease;
-}
-
-.animated-table ::v-deep(tr:hover) {
-  background: rgba(102, 126, 234, 0.1) !important;
-  transform: scale(1.01);
-}
-
-.time-chip,
-.job-chip {
-  animation: chipSlideIn 0.6s ease;
-}
-
-@keyframes chipSlideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.command-text {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.875rem;
-  color: #424242;
-  animation: textFadeIn 0.8s ease;
-}
-
-@keyframes textFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* 图表区域 */
-.chart-toggle {
-  border-radius: 12px !important;
-}
-
-.toggle-btn {
-  transition: all 0.3s ease;
-  border-radius: 12px;
-}
-
-.chart-content {
-  padding: 24px !important;
-}
-
-.computing-alert {
-  border-radius: 12px !important;
-  border-left: 4px solid #2196f3;
-  animation: alertPulse 2s ease-in-out infinite;
-}
-
-@keyframes alertPulse {
-  0%,
-  100% {
-    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
-  }
-  50% {
-    box-shadow: 0 4px 16px rgba(33, 150, 243, 0.5);
-  }
-}
-
-.generation-chip {
-  animation: chipBounce 0.8s ease;
-}
-
-@keyframes chipBounce {
-  0%,
-  20%,
-  50%,
-  80%,
-  100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-10px);
-  }
-  60% {
-    transform: translateY(-5px);
-  }
-}
-
-.progress-bar {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.progress-text {
-  font-size: 0.75rem;
+.v-card-title {
   font-weight: 600;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* 图表容器 */
-.charts-wrapper {
-  border-radius: 12px;
-  overflow: hidden;
+canvas {
+  max-width: 100%;
+  height: auto;
 }
 
-.plot {
-  width: 100%;
-  height: 300px;
-  margin-bottom: 16px;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-}
-
-.plot:hover {
-  transform: scale(1.02);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-/* 加载状态 */
-.loading-container {
-  min-height: 60vh;
-  display: flex;
-  align-items: center;
-}
-
-.loading-content {
-  animation: loadingPulse 2s ease-in-out infinite;
-}
-
-@keyframes loadingPulse {
-  0%,
-  100% {
-    opacity: 0.8;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-.loading-card {
-  border-radius: 16px !important;
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.9) !important;
-}
-
-/* 浮动按钮 */
-.fab-button {
-  position: fixed !important;
-  bottom: 32px;
-  right: 32px;
-  z-index: 10;
-  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.fab-button:hover {
-  transform: scale(1.1) rotate(90deg);
-  box-shadow: 0 8px 30px rgba(76, 175, 80, 0.4);
-}
-
-/* 状态栏 */
-.status-bar {
-  position: fixed !important;
-  bottom: 32px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 9;
-  backdrop-filter: blur(15px);
-  background: rgba(255, 255, 255, 0.9) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.refresh-btn {
-  transition: transform 0.3s ease;
-}
-
-.refresh-btn:hover {
-  transform: rotate(180deg);
-}
-
-/* 空状态 */
-.empty-state {
-  padding: 60px 24px;
-  animation: emptyStateFade 1s ease;
-}
-
-@keyframes emptyStateFade {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* 状态芯片 */
-.status-chip {
-  animation: chipSlideIn 0.8s ease;
-}
-
-/* 响应式设计 */
-@media (max-width: 960px) {
-  .fab-button {
-    bottom: 16px;
-    right: 16px;
-  }
-
-  .status-bar {
-    bottom: 16px;
-    left: 16px;
-    right: 16px;
-    transform: none;
-  }
-
-  .plot {
-    height: 250px;
-  }
-}
-
-/* 自定义滚动条 */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+.v-expansion-panel-content {
+  padding-top: 16px;
 }
 </style>
