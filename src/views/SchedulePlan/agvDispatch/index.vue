@@ -3,7 +3,7 @@
   <v-container fluid class="pa-4">
     <v-row>
       <!-- 参数输入区域 -->
-      <v-col cols="12" md="4">
+      <v-col cols="12" md="4" class="tw:!overflow-auto tw:!h-full">
         <v-card elevation="2" class="mb-4">
           <v-card-title class="primary white--text">
             <v-icon left color="white">mdi-robot</v-icon>
@@ -414,6 +414,38 @@
           <!-- 固定操作按钮区域 -->
           <v-divider />
           <v-card-actions class="pa-4">
+            <!-- 配置管理按钮组 -->
+            <v-row class="mb-3">
+              <v-col cols="12">
+                <v-btn small block color="info" outlined @click="exportConfig" :disabled="loading">
+                  <v-icon left small>mdi-download</v-icon>
+                  导出配置
+                </v-btn>
+              </v-col>
+              <v-col cols="12">
+                <v-btn
+                  small
+                  block
+                  color="success"
+                  outlined
+                  @click="triggerImportConfig"
+                  :disabled="loading"
+                >
+                  <v-icon left small>mdi-upload</v-icon>
+                  导入配置
+                </v-btn>
+                <!-- 隐藏的文件输入 -->
+                <input
+                  ref="configFileInput"
+                  type="file"
+                  accept=".json"
+                  style="display: none"
+                  @change="importConfig"
+                />
+              </v-col>
+            </v-row>
+
+            <!-- 主要操作按钮 -->
             <v-btn
               color="primary"
               block
@@ -492,7 +524,7 @@
         <v-card v-if="results" elevation="2" class="mb-4">
           <v-card-title class="deep-purple white--text">
             <v-icon left color="white">mdi-chart-gantt</v-icon>
-            AGV任务干特图
+            AGV任务甘特图
             <v-spacer />
             <v-btn-toggle v-model="ganttViewMode" mandatory dense>
               <v-btn small value="timeline" text color="white">
@@ -729,6 +761,7 @@
                 readonly
                 outlined
                 dense
+                persistent-placeholder
               />
             </v-col>
             <v-col cols="6">
@@ -738,6 +771,7 @@
                 readonly
                 outlined
                 dense
+                persistent-placeholder
               />
             </v-col>
             <v-col cols="6">
@@ -747,6 +781,7 @@
                 readonly
                 outlined
                 dense
+                persistent-placeholder
               />
             </v-col>
             <v-col cols="6">
@@ -756,6 +791,7 @@
                 readonly
                 outlined
                 dense
+                persistent-placeholder
               />
             </v-col>
             <v-col cols="6">
@@ -765,6 +801,7 @@
                 readonly
                 outlined
                 dense
+                persistent-placeholder
               />
             </v-col>
             <v-col cols="6">
@@ -774,6 +811,7 @@
                 readonly
                 outlined
                 dense
+                persistent-placeholder
               />
             </v-col>
             <v-col cols="12">
@@ -783,6 +821,7 @@
                 readonly
                 outlined
                 dense
+                persistent-placeholder
               />
             </v-col>
           </v-row>
@@ -793,6 +832,74 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- 配置导入确认弹窗 -->
+    <v-dialog v-model="importConfirmDialog" max-width="500">
+      <v-card>
+        <v-card-title class="warning white--text">
+          <v-icon left color="white">mdi-alert</v-icon>
+          确认导入配置
+        </v-card-title>
+        <v-card-text class="pt-4">
+          <v-alert type="warning" outlined class="mb-4">
+            导入新配置将覆盖当前所有参数设置，此操作不可撤销。
+          </v-alert>
+
+          <div v-if="importPreview" class="config-preview">
+            <v-card outlined>
+              <v-card-subtitle>配置预览</v-card-subtitle>
+              <v-card-text>
+                <v-row>
+                  <v-col cols="6">
+                    <div class="text-caption">AGV数量</div>
+                    <div class="text-body-2 font-weight-bold">{{ importPreview.num_agvs }}</div>
+                  </v-col>
+                  <v-col cols="6">
+                    <div class="text-caption">地图大小</div>
+                    <div class="text-body-2 font-weight-bold">
+                      {{ importPreview.grid_size[0] }} × {{ importPreview.grid_size[1] }}
+                    </div>
+                  </v-col>
+                  <v-col cols="6">
+                    <div class="text-caption">任务数量</div>
+                    <div class="text-body-2 font-weight-bold">
+                      {{ Object.keys(importPreview.task_locations).length }}
+                    </div>
+                  </v-col>
+                  <v-col cols="6">
+                    <div class="text-caption">障碍物数量</div>
+                    <div class="text-body-2 font-weight-bold">
+                      {{ importPreview.obstacles.length }}
+                    </div>
+                  </v-col>
+                </v-row>
+              </v-card-text>
+            </v-card>
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn text @click="cancelImport">取消</v-btn>
+          <v-spacer />
+          <v-btn color="warning" @click="confirmImport">确认导入</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- 配置导出成功提示 -->
+    <v-snackbar v-model="exportSuccessSnackbar" color="success" timeout="3000">
+      配置文件已成功导出！
+      <template v-slot:action="{ attrs }">
+        <v-btn text v-bind="attrs" @click="exportSuccessSnackbar = false">关闭</v-btn>
+      </template>
+    </v-snackbar>
+
+    <!-- 配置导入成功提示 -->
+    <v-snackbar v-model="importSuccessSnackbar" color="success" timeout="3000">
+      配置文件已成功导入！
+      <template v-slot:action="{ attrs }">
+        <v-btn text v-bind="attrs" @click="importSuccessSnackbar = false">关闭</v-btn>
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -841,6 +948,13 @@ export default {
         y: 0,
         content: '',
       },
+
+      // 新增配置管理相关数据
+      importConfirmDialog: false,
+      importPreview: null,
+      pendingConfigData: null,
+      exportSuccessSnackbar: false,
+      importSuccessSnackbar: false,
 
       params: {
         num_agvs: 3,
@@ -1312,7 +1426,7 @@ export default {
               ctx.fillText(text, startX + width / 2, y + barHeight / 2 + 3)
             }
 
-            // 保存任务位置信息供点击检测使用
+            // 保存任务位置信信息供点击检测使用
             task._renderInfo = {
               x: startX,
               y: y,
@@ -1947,37 +2061,273 @@ export default {
     resetToDefault() {
       this.applyQuickConfig('medium')
     },
-  },
 
-  watch: {
-    'params.num_agvs'(newVal) {
-      this.updateAgvPositions()
+    // 导出配置文件
+    exportConfig() {
+      try {
+        // 创建配置对象，包含所有参数和元数据
+        const configData = {
+          version: '1.0.0',
+          timestamp: new Date().toISOString(),
+          description: 'AGV调度系统配置文件',
+          config: {
+            ...this.params,
+            // 深拷贝确保数据完整性
+            agv_positions: JSON.parse(JSON.stringify(this.params.agv_positions)),
+            task_locations: JSON.parse(JSON.stringify(this.params.task_locations)),
+            obstacles: JSON.parse(JSON.stringify(this.params.obstacles)),
+            optimization_config: JSON.parse(JSON.stringify(this.params.optimization_config)),
+          },
+        }
+
+        // 创建并下载文件
+        const dataStr = JSON.stringify(configData, null, 2)
+        const dataBlob = new Blob([dataStr], { type: 'application/json' })
+
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(dataBlob)
+        link.download = `agv_config_${this.formatDateTime(new Date())}.json`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        // 清理URL对象
+        URL.revokeObjectURL(link.href)
+
+        this.exportSuccessSnackbar = true
+      } catch (error) {
+        this.showError('导出配置文件失败: ' + error.message)
+      }
     },
 
-    // 监听地图大小变化，调整障碍物位置
-    'params.grid_size': {
-      handler(newSize, oldSize) {
-        if (!oldSize) return
-
-        // 移除超出边界的障碍物
-        this.params.obstacles = this.params.obstacles.filter(
-          (obs) => obs[0] < newSize[0] && obs[1] < newSize[1],
-        )
-      },
-      deep: true,
+    // 触发导入配置文件
+    triggerImportConfig() {
+      this.$refs.configFileInput.click()
     },
 
-    ganttViewMode() {
-      this.updateGanttView()
+    // 导入配置文件
+    async importConfig(event) {
+      const file = event.target.files[0]
+      if (!file) return
+
+      // 验证文件类型
+      if (!file.name.toLowerCase().endsWith('.json')) {
+        this.showError('请选择JSON格式的配置文件')
+        this.resetFileInput()
+        return
+      }
+
+      try {
+        const fileContent = await this.readFileAsText(file)
+        const configData = JSON.parse(fileContent)
+
+        // 验证配置文件格式
+        if (!this.validateConfigFile(configData)) {
+          this.showError('配置文件格式不正确或数据不完整')
+          this.resetFileInput()
+          return
+        }
+
+        // 显示预览并确认导入
+        this.importPreview = configData.config || configData
+        this.pendingConfigData = configData.config || configData
+        this.importConfirmDialog = true
+      } catch (error) {
+        this.showError('读取配置文件失败: ' + error.message)
+      } finally {
+        this.resetFileInput()
+      }
     },
+
+    // 确认导入配置
+    confirmImport() {
+      if (!this.pendingConfigData) return
+
+      try {
+        // 应用配置
+        this.applyImportedConfig(this.pendingConfigData)
+
+        this.importConfirmDialog = false
+        this.importPreview = null
+        this.pendingConfigData = null
+        this.importSuccessSnackbar = true
+
+        // 切换到基础配置标签
+        this.$nextTick(() => {
+          this.activeTab = 0
+        })
+      } catch (error) {
+        this.showError('应用配置失败: ' + error.message)
+      }
+    },
+
+    // 取消导入
+    cancelImport() {
+      this.importConfirmDialog = false
+      this.importPreview = null
+      this.pendingConfigData = null
+    },
+
+    // 应用导入的配置
+    applyImportedConfig(configData) {
+      // 验证并应用基础参数
+      this.params.num_agvs = this.validateNumber(configData.num_agvs, 1, 10, 3)
+
+      // 验证并应用地图大小
+      if (Array.isArray(configData.grid_size) && configData.grid_size.length === 2) {
+        this.params.grid_size[0] = this.validateNumber(configData.grid_size[0], 5, 50, 20)
+        this.params.grid_size[1] = this.validateNumber(configData.grid_size[1], 5, 50, 20)
+      }
+
+      // 验证并应用AGV位置
+      if (Array.isArray(configData.agv_positions)) {
+        this.params.agv_positions = configData.agv_positions
+          .filter((pos) => Array.isArray(pos) && pos.length === 2)
+          .map((pos) => [
+            this.validateNumber(pos[0], 0, this.params.grid_size[0] - 1, 0),
+            this.validateNumber(pos[1], 0, this.params.grid_size[1] - 1, 0),
+          ])
+          .slice(0, this.params.num_agvs)
+
+        // 确保AGV位置数量匹配
+        while (this.params.agv_positions.length < this.params.num_agvs) {
+          this.params.agv_positions.push([0, this.params.agv_positions.length])
+        }
+      }
+
+      // 验证并应用任务位置
+      if (configData.task_locations && typeof configData.task_locations === 'object') {
+        this.params.task_locations = {}
+        Object.entries(configData.task_locations).forEach(([taskId, locations]) => {
+          if (Array.isArray(locations) && locations.length === 2) {
+            const [pickup, delivery] = locations
+            if (
+              Array.isArray(pickup) &&
+              Array.isArray(delivery) &&
+              pickup.length === 2 &&
+              delivery.length === 2
+            ) {
+              this.params.task_locations[taskId] = [
+                [
+                  this.validateNumber(pickup[0], 0, this.params.grid_size[0] - 1, 0),
+                  this.validateNumber(pickup[1], 0, this.params.grid_size[1] - 1, 0),
+                ],
+                [
+                  this.validateNumber(delivery[0], 0, this.params.grid_size[0] - 1, 0),
+                  this.validateNumber(delivery[1], 0, this.params.grid_size[1] - 1, 0),
+                ],
+              ]
+            }
+          }
+        })
+      }
+
+      // 验证并应用障碍物
+      if (Array.isArray(configData.obstacles)) {
+        this.params.obstacles = configData.obstacles
+          .filter((obs) => Array.isArray(obs) && obs.length === 2)
+          .map((obs) => [
+            this.validateNumber(obs[0], 0, this.params.grid_size[0] - 1, 0),
+            this.validateNumber(obs[1], 0, this.params.grid_size[1] - 1, 0),
+          ])
+          .filter((obs) => !this.isObstacleConflict(obs))
+      }
+
+      // 验证并应用优化配置
+      if (configData.optimization_config && typeof configData.optimization_config === 'object') {
+        this.params.optimization_config = {
+          pop_size: this.validateNumber(configData.optimization_config.pop_size, 10, 200, 50),
+          n_gen: this.validateNumber(configData.optimization_config.n_gen, 5, 100, 20),
+          return_animation: Boolean(configData.optimization_config.return_animation !== false),
+        }
+      }
+    },
+
+    // 验证配置文件格式
+    validateConfigFile(configData) {
+      try {
+        // 检查是否有配置数据
+        const config = configData.config || configData
+
+        // 必需字段验证
+        const requiredFields = ['num_agvs', 'grid_size', 'agv_positions', 'task_locations']
+        const hasRequiredFields = requiredFields.every((field) => config.hasOwnProperty(field))
+
+        if (!hasRequiredFields) {
+          console.warn('配置文件缺少必需字段:', requiredFields)
+          return false
+        }
+
+        // 数据类型验证
+        if (typeof config.num_agvs !== 'number' || config.num_agvs <= 0) {
+          console.warn('AGV数量格式不正确')
+          return false
+        }
+
+        if (!Array.isArray(config.grid_size) || config.grid_size.length !== 2) {
+          console.warn('地图大小格式不正确')
+          return false
+        }
+
+        if (!Array.isArray(config.agv_positions)) {
+          console.warn('AGV位置格式不正确')
+          return false
+        }
+
+        if (typeof config.task_locations !== 'object' || config.task_locations === null) {
+          console.warn('任务位置格式不正确')
+          return false
+        }
+
+        return true
+      } catch (error) {
+        console.error('配置文件验证失败:', error)
+        return false
+      }
+    },
+
+    // 验证数值范围
+    validateNumber(value, min, max, defaultValue) {
+      const num = Number(value)
+      if (isNaN(num) || num < min || num > max) {
+        return defaultValue
+      }
+      return num
+    },
+
+    // 读取文件内容
+    readFileAsText(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = (e) => resolve(e.target.result)
+        reader.onerror = (e) => reject(new Error('文件读取失败'))
+        reader.readAsText(file, 'UTF-8')
+      })
+    },
+
+    // 重置文件输入
+    resetFileInput() {
+      if (this.$refs.configFileInput) {
+        this.$refs.configFileInput.value = ''
+      }
+    },
+
+    // 格式化日期时间
+    formatDateTime(date) {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      const seconds = String(date.getSeconds()).padStart(2, '0')
+
+      return `${year}${month}${day}_${hours}${minutes}${seconds}`
+    },
+
+    // ...existing code...
   },
 
-  beforeUnmount() {
-    this.pauseAnimation()
-    if (this.paretoChart) {
-      this.paretoChart.destroy()
-    }
-  },
+  // ...existing code...
 }
 </script>
 
@@ -2054,5 +2404,41 @@ canvas {
   pointer-events: none;
   max-width: 200px;
   white-space: nowrap;
+}
+
+/* 新增配置管理样式 */
+.config-preview {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.config-preview .v-card {
+  border-radius: 8px;
+}
+
+.config-preview .text-caption {
+  color: #666;
+  font-size: 0.75rem;
+}
+
+.config-preview .text-body-2 {
+  color: #333;
+  margin-top: 2px;
+}
+
+/* 文件输入隐藏样式 */
+input[type='file'] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 按钮组样式优化 */
+.v-card-actions .v-row {
+  margin: 0;
+}
+
+.v-card-actions .v-col {
+  padding: 0 6px;
 }
 </style>
