@@ -10,157 +10,187 @@
             AGV调度参数配置
           </v-card-title>
 
-          <v-card-text class="pt-4">
-            <v-form ref="form" v-model="formValid">
-              <!-- AGV数量 -->
-              <v-text-field
-                v-model.number="params.num_agvs"
-                label="AGV数量"
-                type="number"
-                :rules="[(v) => v > 0 || 'AGV数量必须大于0']"
-                prepend-icon="mdi-numeric"
-                outlined
-                dense
-              />
-
-              <!-- 地图大小 -->
-              <v-row>
-                <v-col cols="6">
+          <v-tabs-items v-model="activeTab">
+            <!-- 基础配置 -->
+            <v-tab-item>
+              <v-card-text class="pt-4">
+                <v-form ref="form" v-model="formValid">
+                  <!-- AGV数量 -->
                   <v-text-field
-                    v-model.number="params.grid_size[0]"
-                    label="地图宽度"
+                    v-model.number="params.num_agvs"
+                    label="AGV数量"
                     type="number"
-                    :rules="[(v) => v > 0 || '必须大于0']"
+                    :rules="[(v) => v > 0 || 'AGV数量必须大于0']"
+                    prepend-icon="mdi-numeric"
                     outlined
                     dense
                   />
-                </v-col>
-                <v-col cols="6">
-                  <v-text-field
-                    v-model.number="params.grid_size[1]"
-                    label="地图高度"
-                    type="number"
-                    :rules="[(v) => v > 0 || '必须大于0']"
-                    outlined
-                    dense
-                  />
-                </v-col>
-              </v-row>
 
-              <!-- AGV起始位置 -->
-              <v-subheader class="px-0">AGV起始位置</v-subheader>
-              <div v-for="(pos, index) in params.agv_positions" :key="index" class="mb-2">
-                <v-row align="center">
-                  <v-col cols="4">
-                    <v-text-field
-                      v-model.number="pos[0]"
-                      :label="`AGV${index + 1} X`"
-                      type="number"
-                      outlined
-                      dense
-                      hide-details
-                    />
-                  </v-col>
-                  <v-col cols="4">
-                    <v-text-field
-                      v-model.number="pos[1]"
-                      :label="`AGV${index + 1} Y`"
-                      type="number"
-                      outlined
-                      dense
-                      hide-details
-                    />
-                  </v-col>
-                  <v-col cols="4">
-                    <v-btn
-                      icon
-                      small
-                      color="error"
-                      @click="removeAgvPosition(index)"
-                      :disabled="params.agv_positions.length <= 1"
-                    >
-                      <v-icon>mdi-delete</v-icon>
-                    </v-btn>
-                  </v-col>
-                </v-row>
-              </div>
-              <v-btn
-                small
-                color="primary"
-                @click="addAgvPosition"
-                :disabled="params.agv_positions.length >= params.num_agvs"
-              >
-                <v-icon left>mdi-plus</v-icon>
-                添加AGV位置
-              </v-btn>
+                  <!-- 地图大小 -->
+                  <v-row>
+                    <v-col cols="6">
+                      <v-text-field
+                        v-model.number="params.grid_size[0]"
+                        label="地图宽度"
+                        type="number"
+                        :rules="[(v) => v > 0 || '必须大于0']"
+                        outlined
+                        dense
+                      />
+                    </v-col>
+                    <v-col cols="6">
+                      <v-text-field
+                        v-model.number="params.grid_size[1]"
+                        label="地图高度"
+                        type="number"
+                        :rules="[(v) => v > 0 || '必须大于0']"
+                        outlined
+                        dense
+                      />
+                    </v-col>
+                  </v-row>
 
-              <!-- 任务位置 -->
-              <v-subheader class="px-0 mt-4">任务位置配置</v-subheader>
-              <div v-for="taskId in Object.keys(params.task_locations)" :key="taskId" class="mb-3">
-                <v-card outlined>
-                  <v-card-subtitle>任务 {{ taskId }}</v-card-subtitle>
-                  <v-card-text>
-                    <v-row>
-                      <v-col cols="3">
-                        <v-text-field
-                          v-model.number="params.task_locations[taskId][0][0]"
-                          label="取货X"
-                          type="number"
-                          outlined
-                          dense
-                          hide-details
-                        />
-                      </v-col>
-                      <v-col cols="3">
-                        <v-text-field
-                          v-model.number="params.task_locations[taskId][0][1]"
-                          label="取货Y"
-                          type="number"
-                          outlined
-                          dense
-                          hide-details
-                        />
-                      </v-col>
-                      <v-col cols="3">
-                        <v-text-field
-                          v-model.number="params.task_locations[taskId][1][0]"
-                          label="送达X"
-                          type="number"
-                          outlined
-                          dense
-                          hide-details
-                        />
-                      </v-col>
-                      <v-col cols="3">
-                        <v-text-field
-                          v-model.number="params.task_locations[taskId][1][1]"
-                          label="送达Y"
-                          type="number"
-                          outlined
-                          dense
-                          hide-details
-                        />
-                      </v-col>
-                    </v-row>
-                    <v-btn icon small color="error" class="mt-2" @click="removeTask(taskId)">
-                      <v-icon>mdi-delete</v-icon>
-                    </v-btn>
-                  </v-card-text>
-                </v-card>
-              </div>
-              <v-btn small color="primary" @click="addTask">
-                <v-icon left>mdi-plus</v-icon>
-                添加任务
-              </v-btn>
+                  <!-- AGV起始位置 -->
+                  <v-subheader class="px-0">AGV起始位置配置</v-subheader>
+                  <v-expansion-panels accordion>
+                    <v-expansion-panel>
+                      <v-expansion-panel-header>
+                        AGV位置设置 ({{ params.agv_positions.length }} 个)
+                      </v-expansion-panel-header>
+                      <v-expansion-panel-content>
+                        <div v-for="(pos, index) in params.agv_positions" :key="index" class="mb-2">
+                          <v-row align="center">
+                            <v-col cols="4">
+                              <v-text-field
+                                v-model.number="pos[0]"
+                                :label="`AGV${index + 1} X`"
+                                type="number"
+                                outlined
+                                dense
+                                hide-details
+                              />
+                            </v-col>
+                            <v-col cols="4">
+                              <v-text-field
+                                v-model.number="pos[1]"
+                                :label="`AGV${index + 1} Y`"
+                                type="number"
+                                outlined
+                                dense
+                                hide-details
+                              />
+                            </v-col>
+                            <v-col cols="4">
+                              <v-btn
+                                icon
+                                small
+                                color="error"
+                                @click="removeAgvPosition(index)"
+                                :disabled="params.agv_positions.length <= 1"
+                              >
+                                <v-icon>mdi-delete</v-icon>
+                              </v-btn>
+                            </v-col>
+                          </v-row>
+                        </div>
+                        <v-btn
+                          small
+                          color="primary"
+                          @click="addAgvPosition"
+                          :disabled="params.agv_positions.length >= params.num_agvs"
+                        >
+                          <v-icon left>mdi-plus</v-icon>
+                          添加AGV位置
+                        </v-btn>
+                      </v-expansion-panel-content>
+                    </v-expansion-panel>
+                  </v-expansion-panels>
+                </v-form>
+              </v-card-text>
+            </v-tab-item>
 
-              <!-- 障碍物配置 -->
-              <v-subheader class="px-0 mt-4">障碍物配置</v-subheader>
-              <v-card outlined class="mb-3">
-                <v-card-subtitle>
+            <!-- 任务配置 -->
+            <v-tab-item>
+              <v-card-text class="pt-4">
+                <v-subheader class="px-0">任务位置配置</v-subheader>
+                <div class="task-config-container" style="max-height: 400px; overflow-y: auto">
+                  <div
+                    v-for="taskId in Object.keys(params.task_locations)"
+                    :key="taskId"
+                    class="mb-3"
+                  >
+                    <v-card outlined>
+                      <v-card-subtitle>
+                        <v-icon left small>mdi-package-variant</v-icon>
+                        任务 {{ taskId }}
+                        <v-spacer />
+                        <v-btn icon small color="error" @click="removeTask(taskId)">
+                          <v-icon>mdi-delete</v-icon>
+                        </v-btn>
+                      </v-card-subtitle>
+                      <v-card-text>
+                        <v-row>
+                          <v-col cols="6">
+                            <v-text-field
+                              v-model.number="params.task_locations[taskId][0][0]"
+                              label="取货X"
+                              type="number"
+                              outlined
+                              dense
+                              hide-details
+                            />
+                          </v-col>
+                          <v-col cols="6">
+                            <v-text-field
+                              v-model.number="params.task_locations[taskId][0][1]"
+                              label="取货Y"
+                              type="number"
+                              outlined
+                              dense
+                              hide-details
+                            />
+                          </v-col>
+                          <v-col cols="6">
+                            <v-text-field
+                              v-model.number="params.task_locations[taskId][1][0]"
+                              label="送达X"
+                              type="number"
+                              outlined
+                              dense
+                              hide-details
+                            />
+                          </v-col>
+                          <v-col cols="6">
+                            <v-text-field
+                              v-model.number="params.task_locations[taskId][1][1]"
+                              label="送达Y"
+                              type="number"
+                              outlined
+                              dense
+                              hide-details
+                            />
+                          </v-col>
+                        </v-row>
+                      </v-card-text>
+                    </v-card>
+                  </div>
+                </div>
+                <v-btn small color="primary" @click="addTask" class="mt-2">
+                  <v-icon left>mdi-plus</v-icon>
+                  添加任务
+                </v-btn>
+              </v-card-text>
+            </v-tab-item>
+
+            <!-- 障碍物配置 -->
+            <v-tab-item>
+              <v-card-text class="pt-4">
+                <v-subheader class="px-0">
                   <v-icon left>mdi-wall</v-icon>
-                  障碍物位置 ({{ params.obstacles.length }} 个)
-                </v-card-subtitle>
-                <v-card-text>
+                  障碍物配置 ({{ params.obstacles.length }} 个)
+                </v-subheader>
+
+                <div class="obstacle-config-container" style="max-height: 300px; overflow-y: auto">
                   <div
                     v-if="params.obstacles.length === 0"
                     class="text-center text--secondary py-4"
@@ -177,7 +207,7 @@
                       <v-col cols="4">
                         <v-text-field
                           v-model.number="obstacle[0]"
-                          :label="`障碍物${index + 1} X`"
+                          :label="`${index + 1} X`"
                           type="number"
                           :rules="[
                             (v) => v >= 0 || 'X坐标不能为负数',
@@ -193,7 +223,7 @@
                       <v-col cols="4">
                         <v-text-field
                           v-model.number="obstacle[1]"
-                          :label="`障碍物${index + 1} Y`"
+                          :label="`${index + 1} Y`"
                           type="number"
                           :rules="[
                             (v) => v >= 0 || 'Y坐标不能为负数',
@@ -234,126 +264,156 @@
                       </v-col>
                     </v-row>
                   </div>
+                </div>
 
-                  <v-divider class="my-3" />
+                <v-divider class="my-3" />
 
-                  <v-row>
-                    <v-col cols="12">
-                      <v-btn
-                        small
-                        color="primary"
-                        @click="addObstacle"
-                        :disabled="loading"
-                        class="mr-2"
-                      >
-                        <v-icon left>mdi-plus</v-icon>
-                        添加障碍物
-                      </v-btn>
-                      <v-btn
-                        small
-                        color="warning"
-                        outlined
-                        @click="clearObstacles"
-                        :disabled="loading || params.obstacles.length === 0"
-                      >
-                        <v-icon left>mdi-delete-sweep</v-icon>
-                        清空所有
-                      </v-btn>
-                    </v-col>
-                  </v-row>
-
-                  <!-- 快速添加预设 -->
-                  <v-expansion-panels class="mt-3">
-                    <v-expansion-panel>
-                      <v-expansion-panel-header>
-                        <span>
-                          <v-icon left>mdi-creation</v-icon>
-                          快速添加预设障碍物
-                        </span>
-                      </v-expansion-panel-header>
-                      <v-expansion-panel-content>
-                        <v-row>
-                          <v-col cols="6">
-                            <v-btn
-                              small
-                              block
-                              color="info"
-                              outlined
-                              @click="addWallObstacles('horizontal')"
-                              :disabled="loading"
-                            >
-                              添加水平墙
-                            </v-btn>
-                          </v-col>
-                          <v-col cols="6">
-                            <v-btn
-                              small
-                              block
-                              color="info"
-                              outlined
-                              @click="addWallObstacles('vertical')"
-                              :disabled="loading"
-                            >
-                              添加垂直墙
-                            </v-btn>
-                          </v-col>
-                          <v-col cols="6">
-                            <v-btn
-                              small
-                              block
-                              color="info"
-                              outlined
-                              @click="addRandomObstacles"
-                              :disabled="loading"
-                            >
-                              随机添加5个
-                            </v-btn>
-                          </v-col>
-                          <v-col cols="6">
-                            <v-btn
-                              small
-                              block
-                              color="info"
-                              outlined
-                              @click="addCornerObstacles"
-                              :disabled="loading"
-                            >
-                              添加角落障碍
-                            </v-btn>
-                          </v-col>
-                        </v-row>
-                      </v-expansion-panel-content>
-                    </v-expansion-panel>
-                  </v-expansion-panels>
-                </v-card-text>
-              </v-card>
-
-              <!-- 优化参数 -->
-              <v-expansion-panels class="mt-4">
-                <v-expansion-panel>
-                  <v-expansion-panel-header>高级优化参数</v-expansion-panel-header>
-                  <v-expansion-panel-content>
-                    <v-text-field
-                      v-model.number="params.optimization_config.pop_size"
-                      label="种群大小"
-                      type="number"
+                <v-row>
+                  <v-col cols="6">
+                    <v-btn small color="primary" @click="addObstacle" :disabled="loading" block>
+                      <v-icon left>mdi-plus</v-icon>
+                      添加
+                    </v-btn>
+                  </v-col>
+                  <v-col cols="6">
+                    <v-btn
+                      small
+                      color="warning"
                       outlined
-                      dense
-                    />
-                    <v-text-field
-                      v-model.number="params.optimization_config.n_gen"
-                      label="迭代次数"
-                      type="number"
-                      outlined
-                      dense
-                    />
-                  </v-expansion-panel-content>
-                </v-expansion-panel>
-              </v-expansion-panels>
-            </v-form>
-          </v-card-text>
+                      @click="clearObstacles"
+                      :disabled="loading || params.obstacles.length === 0"
+                      block
+                    >
+                      <v-icon left>mdi-delete-sweep</v-icon>
+                      清空
+                    </v-btn>
+                  </v-col>
+                </v-row>
 
-          <v-card-actions>
+                <!-- 预设障碍物 -->
+                <v-expansion-panels class="mt-3">
+                  <v-expansion-panel>
+                    <v-expansion-panel-header>
+                      <span>
+                        <v-icon left>mdi-creation</v-icon>
+                        快速预设
+                      </span>
+                    </v-expansion-panel-header>
+                    <v-expansion-panel-content>
+                      <v-row>
+                        <v-col cols="6">
+                          <v-btn
+                            small
+                            block
+                            color="info"
+                            outlined
+                            @click="addWallObstacles('horizontal')"
+                            :disabled="loading"
+                          >
+                            水平墙
+                          </v-btn>
+                        </v-col>
+                        <v-col cols="6">
+                          <v-btn
+                            small
+                            block
+                            color="info"
+                            outlined
+                            @click="addWallObstacles('vertical')"
+                            :disabled="loading"
+                          >
+                            垂直墙
+                          </v-btn>
+                        </v-col>
+                        <v-col cols="6">
+                          <v-btn
+                            small
+                            block
+                            color="info"
+                            outlined
+                            @click="addRandomObstacles"
+                            :disabled="loading"
+                          >
+                            随机5个
+                          </v-btn>
+                        </v-col>
+                        <v-col cols="6">
+                          <v-btn
+                            small
+                            block
+                            color="info"
+                            outlined
+                            @click="addCornerObstacles"
+                            :disabled="loading"
+                          >
+                            角落障碍
+                          </v-btn>
+                        </v-col>
+                      </v-row>
+                    </v-expansion-panel-content>
+                  </v-expansion-panel>
+                </v-expansion-panels>
+              </v-card-text>
+            </v-tab-item>
+
+            <!-- 高级配置 -->
+            <v-tab-item>
+              <v-card-text class="pt-4">
+                <v-subheader class="px-0">优化算法参数</v-subheader>
+                <v-text-field
+                  v-model.number="params.optimization_config.pop_size"
+                  label="种群大小"
+                  type="number"
+                  prepend-icon="mdi-account-group"
+                  outlined
+                  dense
+                  hint="建议值: 50-100"
+                  persistent-hint
+                />
+                <v-text-field
+                  v-model.number="params.optimization_config.n_gen"
+                  label="迭代次数"
+                  type="number"
+                  prepend-icon="mdi-refresh"
+                  outlined
+                  dense
+                  hint="建议值: 20-50"
+                  persistent-hint
+                  class="mt-3"
+                />
+
+                <v-divider class="my-4" />
+
+                <v-subheader class="px-0">快速预设配置</v-subheader>
+                <v-row>
+                  <v-col cols="6">
+                    <v-btn small block color="success" outlined @click="applyQuickConfig('small')">
+                      小规模测试
+                    </v-btn>
+                  </v-col>
+                  <v-col cols="6">
+                    <v-btn small block color="info" outlined @click="applyQuickConfig('medium')">
+                      中等规模
+                    </v-btn>
+                  </v-col>
+                  <v-col cols="6">
+                    <v-btn small block color="warning" outlined @click="applyQuickConfig('large')">
+                      大规模仓库
+                    </v-btn>
+                  </v-col>
+                  <v-col cols="6">
+                    <v-btn small block color="purple" outlined @click="resetToDefault">
+                      重置默认
+                    </v-btn>
+                  </v-col>
+                </v-row>
+              </v-card-text>
+            </v-tab-item>
+          </v-tabs-items>
+
+          <!-- 固定操作按钮区域 -->
+          <v-divider />
+          <v-card-actions class="pa-4">
             <v-btn
               color="primary"
               block
@@ -428,88 +488,99 @@
           </v-card-text>
         </v-card>
 
-        <!-- 帕累托前沿图表 -->
-        <v-card v-if="results" elevation="2" class="mb-4">
-          <v-card-title class="info white--text">
-            <v-icon left color="white">mdi-chart-scatter-plot</v-icon>
-            帕累托前沿分析
-          </v-card-title>
-          <v-card-text>
-            <canvas ref="paretoChart" width="400" height="300"></canvas>
-          </v-card-text>
-        </v-card>
-
-        <!-- 优化结果统计 -->
-        <v-card v-if="results" elevation="2">
-          <v-card-title class="warning white--text">
-            <v-icon left color="white">mdi-chart-bar</v-icon>
-            优化结果统计
-          </v-card-title>
-          <v-card-text>
-            <v-row>
-              <v-col cols="6" md="3">
-                <v-card outlined>
-                  <v-card-text class="text-center">
-                    <div class="text-h5 primary--text">
-                      {{ results.optimization_results.total_solutions }}
-                    </div>
-                    <div class="text-caption">总解数量</div>
-                  </v-card-text>
-                </v-card>
-              </v-col>
-              <v-col cols="6" md="3">
-                <v-card outlined>
-                  <v-card-text class="text-center">
-                    <div class="text-h5 success--text">
-                      {{ Math.round(results.optimization_results.computation_time * 100) / 100 }}s
-                    </div>
-                    <div class="text-caption">计算时间</div>
-                  </v-card-text>
-                </v-card>
-              </v-col>
-              <v-col cols="6" md="3">
-                <v-card outlined>
-                  <v-card-text class="text-center">
-                    <div class="text-h5 info--text">
-                      {{
-                        Math.round(results.optimization_results.best_solution.makespan * 10) / 10
-                      }}
-                    </div>
-                    <div class="text-caption">最优完工时间</div>
-                  </v-card-text>
-                </v-card>
-              </v-col>
-              <v-col cols="6" md="3">
-                <v-card outlined>
-                  <v-card-text class="text-center">
-                    <div class="text-h5 warning--text">
-                      {{
-                        Math.round(results.optimization_results.best_solution.distance * 10) / 10
-                      }}
-                    </div>
-                    <div class="text-caption">最优总距离</div>
-                  </v-card-text>
-                </v-card>
-              </v-col>
-            </v-row>
-
-            <!-- 任务分配显示 -->
-            <v-card outlined class="mt-4">
-              <v-card-subtitle>AGV任务分配</v-card-subtitle>
+        <!-- 结果统计和图表 -->
+        <v-row v-if="results">
+          <!-- 帕累托前沿图表 -->
+          <v-col cols="12" lg="6">
+            <v-card elevation="2" class="mb-4">
+              <v-card-title class="info white--text">
+                <v-icon left color="white">mdi-chart-scatter-plot</v-icon>
+                帕累托前沿分析
+              </v-card-title>
               <v-card-text>
-                <div
-                  v-for="(tasks, agvId) in results.optimization_results.best_solution
-                    .agv_assignments"
-                  :key="agvId"
-                >
-                  <v-chip class="ma-1" color="primary" small>
-                    AGV {{ agvId }}: 任务 {{ tasks.join(', ') }}
-                  </v-chip>
-                </div>
+                <canvas ref="paretoChart" width="400" height="300"></canvas>
               </v-card-text>
             </v-card>
-          </v-card-text>
-        </v-card>
+          </v-col>
+
+          <!-- 优化结果统计 -->
+          <v-col cols="12" lg="6">
+            <v-card elevation="2" class="mb-4">
+              <v-card-title class="warning white--text">
+                <v-icon left color="white">mdi-chart-bar</v-icon>
+                优化结果统计
+              </v-card-title>
+              <v-card-text>
+                <v-row>
+                  <v-col cols="6">
+                    <v-card outlined>
+                      <v-card-text class="text-center">
+                        <div class="text-h6 primary--text">
+                          {{ results.optimization_results.total_solutions }}
+                        </div>
+                        <div class="text-caption">总解数量</div>
+                      </v-card-text>
+                    </v-card>
+                  </v-col>
+                  <v-col cols="6">
+                    <v-card outlined>
+                      <v-card-text class="text-center">
+                        <div class="text-h6 success--text">
+                          {{
+                            Math.round(results.optimization_results.computation_time * 100) / 100
+                          }}s
+                        </div>
+                        <div class="text-caption">计算时间</div>
+                      </v-card-text>
+                    </v-card>
+                  </v-col>
+                  <v-col cols="6">
+                    <v-card outlined>
+                      <v-card-text class="text-center">
+                        <div class="text-h6 info--text">
+                          {{
+                            Math.round(results.optimization_results.best_solution.makespan * 10) /
+                            10
+                          }}
+                        </div>
+                        <div class="text-caption">最优完工时间</div>
+                      </v-card-text>
+                    </v-card>
+                  </v-col>
+                  <v-col cols="6">
+                    <v-card outlined>
+                      <v-card-text class="text-center">
+                        <div class="text-h6 warning--text">
+                          {{
+                            Math.round(results.optimization_results.best_solution.distance * 10) /
+                            10
+                          }}
+                        </div>
+                        <div class="text-caption">最优总距离</div>
+                      </v-card-text>
+                    </v-card>
+                  </v-col>
+                </v-row>
+
+                <!-- 任务分配显示 -->
+                <v-card outlined class="mt-4">
+                  <v-card-subtitle>AGV任务分配</v-card-subtitle>
+                  <v-card-text>
+                    <div
+                      v-for="(tasks, agvId) in results.optimization_results.best_solution
+                        .agv_assignments"
+                      :key="agvId"
+                    >
+                      <v-chip class="ma-1" color="primary" small>
+                        AGV {{ agvId }}: 任务 {{ tasks.join(', ') }}
+                      </v-chip>
+                    </div>
+                  </v-card-text>
+                </v-card>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
       </v-col>
     </v-row>
 
@@ -539,6 +610,9 @@ export default {
   name: 'AgvDispatchPage',
   data() {
     return {
+      // 新增标签页状态
+      activeTab: 0,
+
       formValid: false,
       loading: false,
       errorSnackbar: false,
@@ -597,6 +671,95 @@ export default {
       animationData: null,
       paretoChart: null,
       agvColors: ['#FF5722', '#2196F3', '#4CAF50', '#FF9800', '#9C27B0', '#00BCD4'],
+
+      // 默认配置预设
+      defaultConfigs: {
+        small: {
+          num_agvs: 2,
+          grid_size: [10, 10],
+          agv_positions: [
+            [0, 0],
+            [0, 1],
+          ],
+          task_locations: {
+            0: [
+              [2, 8],
+              [8, 2],
+            ],
+            1: [
+              [1, 7],
+              [7, 1],
+            ],
+          },
+          obstacles: [[5, 5]],
+          optimization_config: { pop_size: 20, n_gen: 10 },
+        },
+        medium: {
+          num_agvs: 3,
+          grid_size: [15, 15],
+          agv_positions: [
+            [0, 2],
+            [0, 3],
+            [0, 4],
+          ],
+          task_locations: {
+            0: [
+              [2, 12],
+              [12, 13],
+            ],
+            1: [
+              [3, 11],
+              [11, 12],
+            ],
+            2: [
+              [4, 10],
+              [10, 11],
+            ],
+          },
+          obstacles: [
+            [7, 7],
+            [7, 8],
+            [8, 7],
+            [8, 8],
+          ],
+          optimization_config: { pop_size: 50, n_gen: 20 },
+        },
+        large: {
+          num_agvs: 5,
+          grid_size: [25, 25],
+          agv_positions: [
+            [0, 2],
+            [0, 3],
+            [0, 4],
+            [0, 5],
+            [0, 6],
+          ],
+          task_locations: {
+            0: [
+              [2, 22],
+              [22, 20],
+            ],
+            1: [
+              [3, 21],
+              [21, 19],
+            ],
+            2: [
+              [4, 20],
+              [20, 18],
+            ],
+            3: [
+              [5, 19],
+              [19, 17],
+            ],
+            4: [
+              [6, 18],
+              [18, 16],
+            ],
+          },
+          obstacles: [],
+          optimization_config: { pop_size: 100, n_gen: 50 },
+        },
+      },
     }
   },
 
@@ -1203,6 +1366,21 @@ export default {
 
       this.params.obstacles.push(...newObstacles)
     },
+
+    // 新增快速配置方法
+    applyQuickConfig(type) {
+      if (this.defaultConfigs[type]) {
+        const config = JSON.parse(JSON.stringify(this.defaultConfigs[type]))
+        Object.assign(this.params, config)
+        this.$nextTick(() => {
+          this.activeTab = 0 // 切换到基础配置标签
+        })
+      }
+    },
+
+    resetToDefault() {
+      this.applyQuickConfig('medium')
+    },
   },
 
   watch: {
@@ -1245,5 +1423,37 @@ canvas {
 
 .v-expansion-panel-content {
   padding-top: 16px;
+}
+
+/* 新增样式 */
+.task-config-container::-webkit-scrollbar,
+.obstacle-config-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.task-config-container::-webkit-scrollbar-track,
+.obstacle-config-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.task-config-container::-webkit-scrollbar-thumb,
+.obstacle-config-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.task-config-container::-webkit-scrollbar-thumb:hover,
+.obstacle-config-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.v-tabs {
+  flex-shrink: 0;
+}
+
+.v-tab {
+  font-size: 12px;
+  min-width: 70px;
 }
 </style>
