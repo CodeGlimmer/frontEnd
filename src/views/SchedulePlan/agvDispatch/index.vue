@@ -488,6 +488,119 @@
           </v-card-text>
         </v-card>
 
+        <!-- 干特图展示 -->
+        <v-card v-if="results" elevation="2" class="mb-4">
+          <v-card-title class="deep-purple white--text">
+            <v-icon left color="white">mdi-chart-gantt</v-icon>
+            AGV任务干特图
+            <v-spacer />
+            <v-btn-toggle v-model="ganttViewMode" mandatory dense>
+              <v-btn small value="timeline" text color="white">
+                <v-icon>mdi-timeline</v-icon>
+                时间线
+              </v-btn>
+              <v-btn small value="resource" text color="white">
+                <v-icon>mdi-account-multiple</v-icon>
+                资源视图
+              </v-btn>
+            </v-btn-toggle>
+          </v-card-title>
+
+          <v-card-text>
+            <div class="gantt-container">
+              <canvas
+                ref="ganttCanvas"
+                :width="ganttCanvasWidth"
+                :height="ganttCanvasHeight"
+                style="border: 1px solid #e0e0e0; border-radius: 4px; cursor: crosshair"
+                @mousemove="onGanttMouseMove"
+                @mouseleave="onGanttMouseLeave"
+                @click="onGanttClick"
+              />
+            </div>
+
+            <!-- 干特图控制面板 -->
+            <v-row class="mt-3">
+              <v-col cols="6" md="3">
+                <v-card outlined>
+                  <v-card-text class="text-center">
+                    <div class="text-h6 deep-purple--text">
+                      {{ ganttData ? Object.keys(ganttData.agv_schedules).length : 0 }}
+                    </div>
+                    <div class="text-caption">AGV数量</div>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+              <v-col cols="6" md="3">
+                <v-card outlined>
+                  <v-card-text class="text-center">
+                    <div class="text-h6 success--text">
+                      {{ ganttData ? ganttData.total_tasks : 0 }}
+                    </div>
+                    <div class="text-caption">总任务数</div>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+              <v-col cols="6" md="3">
+                <v-card outlined>
+                  <v-card-text class="text-center">
+                    <div class="text-h6 info--text">
+                      {{ ganttData ? Math.round(ganttData.makespan * 10) / 10 : 0 }}
+                    </div>
+                    <div class="text-caption">总完工时间</div>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+              <v-col cols="6" md="3">
+                <v-card outlined>
+                  <v-card-text class="text-center">
+                    <div class="text-h6 warning--text">
+                      {{ ganttData ? Math.round(ganttUtilization * 100) : 0 }}%
+                    </div>
+                    <div class="text-caption">平均利用率</div>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
+
+            <!-- 时间范围控制 -->
+            <v-row class="mt-3">
+              <v-col cols="12">
+                <v-range-slider
+                  v-model="ganttTimeRange"
+                  :max="ganttData ? ganttData.makespan : 100"
+                  :step="0.1"
+                  label="时间范围"
+                  thumb-label="always"
+                  class="mt-4"
+                  @input="updateGanttView"
+                >
+                  <template v-slot:prepend>
+                    <v-text-field
+                      :value="ganttTimeRange[0]"
+                      type="number"
+                      style="width: 60px"
+                      dense
+                      hide-details
+                      @change="updateTimeRange(0, $event)"
+                    />
+                  </template>
+                  <template v-slot:append>
+                    <v-text-field
+                      :value="ganttTimeRange[1]"
+                      type="number"
+                      style="width: 60px"
+                      dense
+                      hide-details
+                      @change="updateTimeRange(1, $event)"
+                    />
+                  </template>
+                </v-range-slider>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
+
         <!-- 结果统计和图表 -->
         <v-row v-if="results">
           <!-- 帕累托前沿图表 -->
@@ -599,6 +712,87 @@
         <v-btn text v-bind="attrs" @click="successSnackbar = false">关闭</v-btn>
       </template>
     </v-snackbar>
+
+    <!-- 干特图详情弹窗 -->
+    <v-dialog v-model="ganttDetailDialog" max-width="600">
+      <v-card>
+        <v-card-title class="deep-purple white--text">
+          <v-icon left color="white">mdi-information</v-icon>
+          任务详情
+        </v-card-title>
+        <v-card-text v-if="selectedGanttItem" class="pt-4">
+          <v-row>
+            <v-col cols="6">
+              <v-text-field
+                :value="selectedGanttItem.agvId"
+                label="AGV编号"
+                readonly
+                outlined
+                dense
+              />
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                :value="selectedGanttItem.taskId"
+                label="任务编号"
+                readonly
+                outlined
+                dense
+              />
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                :value="selectedGanttItem.type"
+                label="任务类型"
+                readonly
+                outlined
+                dense
+              />
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                :value="`${Math.round(selectedGanttItem.duration * 10) / 10}s`"
+                label="持续时间"
+                readonly
+                outlined
+                dense
+              />
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                :value="`${Math.round(selectedGanttItem.start_time * 10) / 10}s`"
+                label="开始时间"
+                readonly
+                outlined
+                dense
+              />
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                :value="`${Math.round(selectedGanttItem.end_time * 10) / 10}s`"
+                label="结束时间"
+                readonly
+                outlined
+                dense
+              />
+            </v-col>
+            <v-col cols="12">
+              <v-text-field
+                :value="`(${selectedGanttItem.location[0]}, ${selectedGanttItem.location[1]})`"
+                label="位置坐标"
+                readonly
+                outlined
+                dense
+              />
+            </v-col>
+          </v-row>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn text @click="ganttDetailDialog = false">关闭</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -631,6 +825,22 @@ export default {
       frameRate: 30,
       frameInterval: 1000 / 30,
       lastFrameTime: 0,
+
+      // 新增干特图相关数据
+      ganttData: null,
+      ganttViewMode: 'timeline',
+      ganttCanvasWidth: 800,
+      ganttCanvasHeight: 400,
+      ganttTimeRange: [0, 100],
+      ganttUtilization: 0,
+      selectedGanttItem: null,
+      ganttDetailDialog: false,
+      ganttTooltip: {
+        show: false,
+        x: 0,
+        y: 0,
+        content: '',
+      },
 
       params: {
         num_agvs: 3,
@@ -808,6 +1018,7 @@ export default {
       this.loading = true
       this.results = null
       this.animationData = null
+      this.ganttData = null
       this.currentTime = 0
 
       try {
@@ -817,6 +1028,10 @@ export default {
           this.results = response.data
           this.animationData = response.data.visualization_data.animation_data
           this.totalDistance = this.animationData.total_distance
+
+          // 生成干特图数据
+          this.generateGanttData()
+
           this.successSnackbar = true
 
           this.$nextTick(() => {
@@ -841,6 +1056,357 @@ export default {
       this.generateAGVPaths()
       this.drawAnimationFrame()
       this.drawParetoChart()
+      this.drawGanttChart()
+    },
+
+    // 生成干特图数据
+    generateGanttData() {
+      if (!this.results || !this.animationData) return
+
+      const assignments = this.animationData.agv_assignments
+      const taskLocations = this.animationData.task_locations
+      const agvStartPositions = this.animationData.agv_start_positions
+
+      const agvSchedules = {}
+      let totalTasks = 0
+      let maxEndTime = 0
+
+      Object.entries(assignments).forEach(([agvId, taskList]) => {
+        const agvIdNum = parseInt(agvId)
+        const schedule = []
+        let currentTime = 0
+        let currentPosition = agvStartPositions[agvIdNum]
+
+        taskList.forEach((taskId) => {
+          const [pickupPos, deliveryPos] = taskLocations[taskId.toString()]
+
+          // 移动到取货点
+          const moveToPickupTime = this.calculateTravelTime(currentPosition, pickupPos)
+          if (moveToPickupTime > 0) {
+            schedule.push({
+              type: 'move',
+              taskId: taskId,
+              start_time: currentTime,
+              end_time: currentTime + moveToPickupTime,
+              duration: moveToPickupTime,
+              location: pickupPos,
+              description: `移动到取货点 ${taskId}`,
+            })
+            currentTime += moveToPickupTime
+          }
+
+          // 取货操作
+          const pickupTime = 0.5 // 假设取货需要0.5秒
+          schedule.push({
+            type: 'pickup',
+            taskId: taskId,
+            start_time: currentTime,
+            end_time: currentTime + pickupTime,
+            duration: pickupTime,
+            location: pickupPos,
+            description: `取货任务 ${taskId}`,
+          })
+          currentTime += pickupTime
+
+          // 移动到送货点
+          const moveToDeliveryTime = this.calculateTravelTime(pickupPos, deliveryPos)
+          if (moveToDeliveryTime > 0) {
+            schedule.push({
+              type: 'move',
+              taskId: taskId,
+              start_time: currentTime,
+              end_time: currentTime + moveToDeliveryTime,
+              duration: moveToDeliveryTime,
+              location: deliveryPos,
+              description: `移动到送货点 ${taskId}`,
+            })
+            currentTime += moveToDeliveryTime
+          }
+
+          // 送货操作
+          const deliveryTime = 0.5 // 假设送货需要0.5秒
+          schedule.push({
+            type: 'delivery',
+            taskId: taskId,
+            start_time: currentTime,
+            end_time: currentTime + deliveryTime,
+            duration: deliveryTime,
+            location: deliveryPos,
+            description: `送货任务 ${taskId}`,
+          })
+          currentTime += deliveryTime
+          currentPosition = deliveryPos
+          totalTasks++
+        })
+
+        agvSchedules[agvId] = schedule
+        maxEndTime = Math.max(maxEndTime, currentTime)
+      })
+
+      // 计算利用率
+      const totalWorkTime = Object.values(agvSchedules).reduce((sum, schedule) => {
+        return sum + schedule.reduce((scheduleSum, task) => scheduleSum + task.duration, 0)
+      }, 0)
+
+      const totalAvailableTime = Object.keys(agvSchedules).length * maxEndTime
+      this.ganttUtilization =
+        totalAvailableTime > 0 ? (totalWorkTime / totalAvailableTime) * 100 : 0
+
+      this.ganttData = {
+        agv_schedules: agvSchedules,
+        makespan: maxEndTime,
+        total_tasks: totalTasks,
+      }
+
+      this.ganttTimeRange = [0, maxEndTime]
+    },
+
+    // 计算移动时间（简化版，基于曼哈顿距离）
+    calculateTravelTime(from, to) {
+      const distance = Math.abs(from[0] - to[0]) + Math.abs(from[1] - to[1])
+      return distance * 0.3 // 假设每个单位距离需要0.3秒
+    },
+
+    // 绘制干特图
+    drawGanttChart() {
+      if (!this.ganttData || !this.$refs.ganttCanvas) return
+
+      const canvas = this.$refs.ganttCanvas
+      const ctx = canvas.getContext('2d')
+
+      // 清空画布
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      const margin = { top: 50, right: 50, bottom: 50, left: 80 }
+      const chartWidth = canvas.width - margin.left - margin.right
+      const chartHeight = canvas.height - margin.top - margin.bottom
+
+      const agvIds = Object.keys(this.ganttData.agv_schedules)
+      const rowHeight = chartHeight / agvIds.length
+      const timeScale = chartWidth / (this.ganttTimeRange[1] - this.ganttTimeRange[0])
+
+      // 绘制背景网格
+      this.drawGanttGrid(ctx, margin, chartWidth, chartHeight, rowHeight, timeScale)
+
+      // 绘制时间轴
+      this.drawGanttTimeAxis(ctx, margin, chartWidth, timeScale)
+
+      // 绘制AGV标签
+      this.drawGanttAgvLabels(ctx, margin, agvIds, rowHeight)
+
+      // 绘制任务条
+      this.drawGanttTasks(ctx, margin, rowHeight, timeScale, agvIds)
+    },
+
+    // 绘制网格
+    drawGanttGrid(ctx, margin, chartWidth, chartHeight, rowHeight, timeScale) {
+      ctx.strokeStyle = '#e0e0e0'
+      ctx.lineWidth = 1
+
+      // 垂直网格线（时间）
+      const timeStep = this.calculateTimeStep()
+      for (let t = this.ganttTimeRange[0]; t <= this.ganttTimeRange[1]; t += timeStep) {
+        const x = margin.left + (t - this.ganttTimeRange[0]) * timeScale
+        ctx.beginPath()
+        ctx.moveTo(x, margin.top)
+        ctx.lineTo(x, margin.top + chartHeight)
+        ctx.stroke()
+      }
+
+      // 水平网格线（AGV）
+      for (let i = 0; i <= Object.keys(this.ganttData.agv_schedules).length; i++) {
+        const y = margin.top + i * rowHeight
+        ctx.beginPath()
+        ctx.moveTo(margin.left, y)
+        ctx.lineTo(margin.left + chartWidth, y)
+        ctx.stroke()
+      }
+    },
+
+    // 计算时间轴步长
+    calculateTimeStep() {
+      const timeRange = this.ganttTimeRange[1] - this.ganttTimeRange[0]
+      if (timeRange <= 10) return 1
+      if (timeRange <= 50) return 5
+      if (timeRange <= 100) return 10
+      return Math.ceil(timeRange / 10)
+    },
+
+    // 绘制时间轴
+    drawGanttTimeAxis(ctx, margin, chartWidth, timeScale) {
+      ctx.fillStyle = '#333'
+      ctx.font = '12px Arial'
+      ctx.textAlign = 'center'
+
+      const timeStep = this.calculateTimeStep()
+      for (let t = this.ganttTimeRange[0]; t <= this.ganttTimeRange[1]; t += timeStep) {
+        const x = margin.left + (t - this.ganttTimeRange[0]) * timeScale
+        ctx.fillText(t.toFixed(1), x, margin.top - 10)
+      }
+
+      // 时间轴标题
+      ctx.textAlign = 'center'
+      ctx.font = 'bold 14px Arial'
+      ctx.fillText('时间 (秒)', margin.left + chartWidth / 2, 20)
+    },
+
+    // 绘制AGV标签
+    drawGanttAgvLabels(ctx, margin, agvIds, rowHeight) {
+      ctx.fillStyle = '#333'
+      ctx.font = '14px Arial'
+      ctx.textAlign = 'right'
+
+      agvIds.forEach((agvId, index) => {
+        const y = margin.top + index * rowHeight + rowHeight / 2
+        ctx.fillText(`AGV ${agvId}`, margin.left - 10, y + 5)
+      })
+    },
+
+    // 绘制任务条
+    drawGanttTasks(ctx, margin, rowHeight, timeScale, agvIds) {
+      const taskColors = {
+        move: '#FFC107',
+        pickup: '#4CAF50',
+        delivery: '#2196F3',
+      }
+
+      agvIds.forEach((agvId, agvIndex) => {
+        const schedule = this.ganttData.agv_schedules[agvId]
+        const y = margin.top + agvIndex * rowHeight + 5
+        const barHeight = rowHeight - 10
+
+        schedule.forEach((task, taskIndex) => {
+          if (
+            task.start_time >= this.ganttTimeRange[1] ||
+            task.end_time <= this.ganttTimeRange[0]
+          ) {
+            return // 不在显示范围内
+          }
+
+          const startX =
+            margin.left + Math.max(0, (task.start_time - this.ganttTimeRange[0]) * timeScale)
+          const endX =
+            margin.left +
+            Math.min(
+              (this.ganttTimeRange[1] - this.ganttTimeRange[0]) * timeScale,
+              (task.end_time - this.ganttTimeRange[0]) * timeScale,
+            )
+          const width = endX - startX
+
+          if (width > 0) {
+            // 绘制任务条
+            ctx.fillStyle = taskColors[task.type] || '#9E9E9E'
+            ctx.fillRect(startX, y, width, barHeight)
+
+            // 绘制边框
+            ctx.strokeStyle = '#fff'
+            ctx.lineWidth = 1
+            ctx.strokeRect(startX, y, width, barHeight)
+
+            // 绘制任务文本
+            if (width > 40) {
+              ctx.fillStyle = '#fff'
+              ctx.font = '10px Arial'
+              ctx.textAlign = 'center'
+              const text = `T${task.taskId}-${task.type.charAt(0).toUpperCase()}`
+              ctx.fillText(text, startX + width / 2, y + barHeight / 2 + 3)
+            }
+
+            // 保存任务位置信息供点击检测使用
+            task._renderInfo = {
+              x: startX,
+              y: y,
+              width: width,
+              height: barHeight,
+              agvId: agvId,
+            }
+          }
+        })
+      })
+    },
+
+    // 干特图鼠标移动事件
+    onGanttMouseMove(event) {
+      if (!this.ganttData) return
+
+      const rect = this.$refs.ganttCanvas.getBoundingClientRect()
+      const x = event.clientX - rect.left
+      const y = event.clientY - rect.top
+
+      let hoveredTask = null
+
+      // 查找鼠标悬停的任务
+      Object.values(this.ganttData.agv_schedules).forEach((schedule) => {
+        schedule.forEach((task) => {
+          if (task._renderInfo) {
+            const { x: taskX, y: taskY, width, height } = task._renderInfo
+            if (x >= taskX && x <= taskX + width && y >= taskY && y <= taskY + height) {
+              hoveredTask = task
+            }
+          }
+        })
+      })
+
+      // 更新鼠标样式和提示
+      this.$refs.ganttCanvas.style.cursor = hoveredTask ? 'pointer' : 'crosshair'
+
+      if (hoveredTask) {
+        this.ganttTooltip = {
+          show: true,
+          x: event.clientX,
+          y: event.clientY,
+          content: `${hoveredTask.description} (${hoveredTask.duration.toFixed(1)}s)`,
+        }
+      } else {
+        this.ganttTooltip.show = false
+      }
+    },
+
+    // 干特图鼠标离开事件
+    onGanttMouseLeave() {
+      this.ganttTooltip.show = false
+      this.$refs.ganttCanvas.style.cursor = 'crosshair'
+    },
+
+    // 干特图点击事件
+    onGanttClick(event) {
+      if (!this.ganttData) return
+
+      const rect = this.$refs.ganttCanvas.getBoundingClientRect()
+      const x = event.clientX - rect.left
+      const y = event.clientY - rect.top
+
+      // 查找点击的任务
+      Object.values(this.ganttData.agv_schedules).forEach((schedule) => {
+        schedule.forEach((task) => {
+          if (task._renderInfo) {
+            const { x: taskX, y: taskY, width, height, agvId } = task._renderInfo
+            if (x >= taskX && x <= taskX + width && y >= taskY && y <= taskY + height) {
+              this.selectedGanttItem = {
+                ...task,
+                agvId,
+              }
+              this.ganttDetailDialog = true
+            }
+          }
+        })
+      })
+    },
+
+    // 更新时间范围
+    updateTimeRange(index, value) {
+      const newValue = parseFloat(value)
+      if (!isNaN(newValue)) {
+        this.$set(this.ganttTimeRange, index, newValue)
+        this.updateGanttView()
+      }
+    },
+
+    // 更新干特图视图
+    updateGanttView() {
+      this.$nextTick(() => {
+        this.drawGanttChart()
+      })
     },
 
     // 生成AGV路径数据
@@ -1400,6 +1966,10 @@ export default {
       },
       deep: true,
     },
+
+    ganttViewMode() {
+      this.updateGanttView()
+    },
   },
 
   beforeUnmount() {
@@ -1455,5 +2025,34 @@ canvas {
 .v-tab {
   font-size: 12px;
   min-width: 70px;
+}
+
+/* 新增干特图样式 */
+.gantt-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.gantt-container canvas {
+  display: block;
+  margin: 0 auto;
+}
+
+.v-btn-toggle .v-btn {
+  min-width: 80px !important;
+}
+
+/* 干特图工具提示样式 */
+.gantt-tooltip {
+  position: fixed;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 1000;
+  pointer-events: none;
+  max-width: 200px;
+  white-space: nowrap;
 }
 </style>
