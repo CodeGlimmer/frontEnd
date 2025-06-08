@@ -153,6 +153,13 @@ export default createRouter({
               },
             },
             {
+              path: 'editor',
+              name: 'editor',
+              components: {
+                main: () => import('@/views/littleapps/JsonEditor.vue'),
+              },
+            },
+            {
               path: 'scheduleApp',
               name: 'scheduleApp',
               components: {

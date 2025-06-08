@@ -155,6 +155,14 @@
               ></v-list-item>
             </template>
 
+             <v-list-item
+              prepend-icon="mdi-code-json"
+              title="JSON编辑器"
+              value="shop"
+              to="/index/editor"
+              @click="$vuetify.display.smAndDown && (showNavigationDrawer = false)"
+            ></v-list-item>
+
             <v-list-item
               prepend-icon="mdi-store"
               title="购物"

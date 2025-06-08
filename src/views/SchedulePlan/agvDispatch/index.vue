@@ -1,4 +1,3 @@
-<!-- filepath: /home/codeglimmer/Desktop/frontEnd/src/views/SchedulePlan/agvDispatch/index.vue -->
 <template>
   <v-container fluid class="pa-4">
     <v-row>
