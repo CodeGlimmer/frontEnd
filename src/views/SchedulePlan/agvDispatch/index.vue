@@ -1389,7 +1389,7 @@ export default {
         const y = margin.top + agvIndex * rowHeight + 5
         const barHeight = rowHeight - 10
 
-        schedule.forEach((task, taskIndex) => {
+        schedule.forEach((task) => {
           if (
             task.start_time >= this.ganttTimeRange[1] ||
             task.end_time <= this.ganttTimeRange[0]

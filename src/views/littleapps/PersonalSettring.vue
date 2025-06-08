@@ -311,7 +311,7 @@
                   <div class="pa-6">
                     <h2 class="text-h4 font-weight-bold mb-6">通知设置</h2>
 
-                    <v-list>
+                    <v-list class="tw:!glass">
                       <v-list-subheader class="pl-0 text-h6">电子邮件通知</v-list-subheader>
                       <v-list-item>
                         <template v-slot:prepend>
@@ -482,7 +482,11 @@
                     <v-card class="mb-6" variant="outlined">
                       <v-card-title class="text-h5">常见问题</v-card-title>
                       <v-expansion-panels variant="accordion">
-                        <v-expansion-panel v-for="(faq, index) in faqs" :key="index">
+                        <v-expansion-panel
+                          v-for="(faq, index) in faqs"
+                          :key="index"
+                          class="tw:!glass"
+                        >
                           <v-expansion-panel-title class="text-body-1">{{
                             faq.question
                           }}</v-expansion-panel-title>

@@ -126,24 +126,6 @@ const startVideoStream = () => {
       const { width, height, data: rawData } = message
       const imageData = ctx.createImageData(width, height)
       const buffer = imageData.data
-
-      // for (let i = 0; i < height; i++) {
-      //   for (let j = 0; j < width; j++) {
-      //     const srcIndex = (i * width + j) * 3
-      //     const destIndex = (i * width + j) * 4
-      //     buffer[destIndex] = rawData[srcIndex].charCodeAt()
-      //     buffer[destIndex + 1] = rawData[srcIndex + 1].charCodeAt()
-      //     buffer[destIndex + 2] = rawData[srcIndex + 2].charCodeAt()
-      //     buffer[destIndex + 3] = 255
-      //   }
-      // }
-      // for (let idx in buffer) {
-      //   if (idx % 4 === 3) {
-      //     buffer[idx] = 255
-      //   } else {
-      //     buffer[idx] = rawData[idx].charCodeAt()
-      //   }
-      // }
       // TODO 实现了视屏画面的显示，但是颜色配置异常，需要调整
       for (let idx = 0; idx < rawData.length; idx += 4) {
         buffer[idx + 3] = rawData[idx].charCodeAt()

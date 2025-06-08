@@ -115,9 +115,9 @@
   <div class="image" ref="imageRef"></div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useThemeStore } from '@/stores'
-import { ArrowUpRight, Sun, Moon } from 'lucide-vue-next'
+import { ArrowUpRight } from 'lucide-vue-next'
 import { OptionComponents } from '@/views/FoxGlove'
 import { Channel, Viewer, ViewerComponents } from '@byslin/web_rviz'
 import GlobalOptions from '@/views/FoxGlove/GlobalOptions.vue'
@@ -369,7 +369,7 @@ const getDefaultOptions = (type: string) => {
 watch(
   isDarkMode,
   (newValue) => {
-    rvizOptions.value.globalOptions.background = newValue ? '#212121' : '#303030'
+    rvizOptions.value.globalOptions.background = newValue ? '#000000' : '#303030'
   },
   { immediate: true },
 )
@@ -394,8 +394,8 @@ watch(
 }
 
 .dark-sider {
-  background-color: #1f2937;
-  border-right: 1px solid #374151;
+  background-color: #000000;
+  border-right: 1px solid #333333;
 }
 
 .sider-content {
@@ -407,8 +407,8 @@ watch(
 }
 
 .dark-sider-content {
-  background-color: #1f2937;
-  color: #f9fafb;
+  background-color: #000000;
+  color: #ffffff;
 }
 
 .sider-content :deep(.arco-collapse-item-header-title) {
@@ -506,43 +506,43 @@ watch(
 
 /* 折叠面板暗色模式 */
 .dark-collapse :deep(.arco-collapse-item) {
-  background-color: #1f2937;
-  border-bottom: 1px solid #374151;
+  background-color: #000000;
+  border-bottom: 1px solid #333333;
 }
 
 .dark-collapse :deep(.arco-collapse-item-header) {
-  background-color: #1f2937;
-  color: #f9fafb;
-  border-bottom: 1px solid #374151;
+  background-color: #000000;
+  color: #ffffff;
+  border-bottom: 1px solid #333333;
 }
 
 .dark-collapse :deep(.arco-collapse-item-header:hover) {
-  background-color: #374151;
+  background-color: #1a1a1a;
 }
 
 .dark-collapse :deep(.arco-collapse-item-content) {
-  background-color: #1f2937;
-  color: #f9fafb;
+  background-color: #000000;
+  color: #ffffff;
 }
 
 /* 表单暗色模式 */
 .dark-collapse :deep(.arco-form-item-label) {
-  color: #f9fafb;
+  color: #ffffff;
 }
 
 .dark-collapse :deep(.arco-input-wrapper) {
-  background-color: #374151;
-  border-color: #4b5563;
+  background-color: #1a1a1a;
+  border-color: #333333;
 }
 
 .dark-collapse :deep(.arco-input) {
-  background-color: #374151;
-  color: #f9fafb;
-  border-color: #4b5563;
+  background-color: #1a1a1a;
+  color: #ffffff;
+  border-color: #333333;
 }
 
 .dark-collapse :deep(.arco-input:hover) {
-  border-color: #6b7280;
+  border-color: #555555;
 }
 
 .dark-collapse :deep(.arco-input:focus) {
@@ -551,8 +551,8 @@ watch(
 }
 
 .dark-collapse :deep(.arco-input-number) {
-  background-color: #374151;
-  border-color: #4b5563;
+  background-color: #1a1a1a;
+  border-color: #333333;
 }
 
 .dark-collapse :deep(.arco-input-number .arco-input) {
@@ -560,13 +560,13 @@ watch(
 }
 
 .dark-collapse :deep(.arco-select-view-single) {
-  background-color: #374151;
-  border-color: #4b5563;
-  color: #f9fafb;
+  background-color: #1a1a1a;
+  border-color: #333333;
+  color: #ffffff;
 }
 
 .dark-collapse :deep(.arco-select-view-single:hover) {
-  border-color: #6b7280;
+  border-color: #555555;
 }
 
 .dark-collapse :deep(.arco-select-view-single:focus) {
@@ -575,7 +575,7 @@ watch(
 }
 
 .dark-collapse :deep(.arco-switch) {
-  background-color: #4b5563;
+  background-color: #333333;
 }
 
 .dark-collapse :deep(.arco-switch-checked) {
@@ -583,11 +583,11 @@ watch(
 }
 
 .dark-collapse :deep(.arco-btn-text) {
-  color: #f9fafb;
+  color: #ffffff;
 }
 
 .dark-collapse :deep(.arco-btn-text:hover) {
-  background-color: #374151;
+  background-color: #1a1a1a;
 }
 
 /* 连接设置样式 */
@@ -631,9 +631,9 @@ watch(
 
 /* 连接设置暗色模式 */
 .dark-connection-settings :deep(.arco-input-group-prepend) {
-  background-color: #374151;
-  border-color: #4b5563;
-  color: #f9fafb;
+  background-color: #1a1a1a;
+  border-color: #333333;
+  color: #ffffff;
 }
 
 .dark-connection-settings :deep(.arco-btn-primary) {
@@ -694,25 +694,25 @@ watch(
 
 /* 控制按钮暗色模式 */
 .dark-controls :deep(.arco-btn-mini) {
-  background-color: #374151;
-  border-color: #4b5563;
-  color: #f9fafb;
+  background-color: #1a1a1a;
+  border-color: #333333;
+  color: #ffffff;
 }
 
 .dark-controls :deep(.arco-btn-mini:hover) {
-  background-color: #4b5563;
-  border-color: #6b7280;
+  background-color: #333333;
+  border-color: #555555;
 }
 
 .dark-controls :deep(.arco-dropdown-button) {
-  background-color: #374151;
-  border-color: #4b5563;
-  color: #f9fafb;
+  background-color: #1a1a1a;
+  border-color: #333333;
+  color: #ffffff;
 }
 
 .dark-controls :deep(.arco-dropdown-button:hover) {
-  background-color: #4b5563;
-  border-color: #6b7280;
+  background-color: #333333;
+  border-color: #555555;
 }
 
 .click-topic.active {
@@ -755,8 +755,8 @@ watch(
 }
 
 .dark-connection-placeholder {
-  background-color: #1f2937;
-  color: #d1d5db;
+  background-color: #000000;
+  color: #cccccc;
 }
 
 /* 下拉菜单样式 - 亮色模式 */
@@ -794,31 +794,31 @@ watch(
 
 /* 下拉菜单暗色模式 */
 .dark-mode :deep(.arco-dropdown-list) {
-  background-color: #374151;
-  border-color: #4b5563;
+  background-color: #1a1a1a;
+  border-color: #333333;
 }
 
 .dark-mode :deep(.arco-dropdown-option) {
-  color: #f9fafb;
+  color: #ffffff;
 }
 
 .dark-mode :deep(.arco-dropdown-option:hover) {
-  background-color: #4b5563;
+  background-color: #333333;
 }
 
 /* 颜色选择器暗色模式 */
 .dark-collapse :deep(.arco-color-picker-trigger) {
-  background-color: #374151;
-  border-color: #4b5563;
+  background-color: #1a1a1a;
+  border-color: #333333;
 }
 
 .dark-mode :deep(.arco-color-picker-panel) {
-  background-color: #374151;
-  border-color: #4b5563;
+  background-color: #1a1a1a;
+  border-color: #333333;
 }
 
 .dark-mode :deep(.arco-color-picker-panel .arco-color-picker-palette) {
-  background-color: #374151;
+  background-color: #1a1a1a;
 }
 
 /* Scrollbar 样式 - 亮色模式 */
@@ -846,15 +846,15 @@ watch(
 }
 
 .dark-sider-content::-webkit-scrollbar-track {
-  background: #1f2937;
+  background: #000000;
 }
 
 .dark-sider-content::-webkit-scrollbar-thumb {
-  background: #4b5563;
+  background: #333333;
   border-radius: 3px;
 }
 
 .dark-sider-content::-webkit-scrollbar-thumb:hover {
-  background: #6b7280;
+  background: #555555;
 }
 </style>
