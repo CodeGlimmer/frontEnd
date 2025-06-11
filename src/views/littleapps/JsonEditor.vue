@@ -7,12 +7,12 @@
           <!-- 标题栏 -->
           <v-card-title class="primary white--text d-flex align-center pa-4">
             <v-icon color="white" class="mr-3">mdi-code-json</v-icon>
-            <span class="text-h5 font-weight-medium">JSON Editor Pro</span>
+            <span class="text-h5 font-weight-medium">JSON Editor</span>
             <v-spacer></v-spacer>
             <!-- 状态指示器 -->
             <v-chip
               :color="isValidJson ? 'success' : 'error'"
-              :class="{ 'pulse': !isValidJson }"
+              :class="{ pulse: !isValidJson }"
               small
               dark
               class="ml-2"
@@ -156,13 +156,7 @@
                 <v-icon small color="primary" class="mr-2">mdi-code-tags</v-icon>
                 <span class="font-weight-medium">代码编辑器</span>
                 <v-spacer></v-spacer>
-                <v-chip
-                  v-if="lastSaved"
-                  small
-                  outlined
-                  color="success"
-                  class="ml-2"
-                >
+                <v-chip v-if="lastSaved" small outlined color="success" class="ml-2">
                   <v-icon small left>mdi-clock-check</v-icon>
                   最后保存: {{ lastSaved }}
                 </v-chip>
@@ -266,14 +260,7 @@
 
               <v-spacer></v-spacer>
 
-              <v-btn
-                @click="showSearchDialog = false"
-                text
-                small
-                class="mb-2"
-              >
-                取消
-              </v-btn>
+              <v-btn @click="showSearchDialog = false" text small class="mb-2"> 取消 </v-btn>
             </v-col>
           </v-row>
         </v-card-actions>
@@ -287,12 +274,7 @@
           <v-icon color="white" class="mr-3">mdi-history</v-icon>
           <span class="text-h6">编辑历史</span>
           <v-spacer></v-spacer>
-          <v-btn
-            icon
-            color="white"
-            @click="clearHistory"
-            :disabled="history.length === 0"
-          >
+          <v-btn icon color="white" @click="clearHistory" :disabled="history.length === 0">
             <v-icon>mdi-delete-sweep</v-icon>
           </v-btn>
           <v-btn icon color="white" @click="showHistoryDialog = false">
@@ -300,14 +282,10 @@
           </v-btn>
         </v-card-title>
 
-        <v-card-text class="pa-0" style="height: 400px;">
+        <v-card-text class="pa-0" style="height: 400px">
           <v-list v-if="history.length > 0" class="py-0">
             <template v-for="(item, index) in history" :key="index">
-              <v-list-item
-                @click="restoreFromHistory(index)"
-                class="history-item px-4 py-3"
-                ripple
-              >
+              <v-list-item @click="restoreFromHistory(index)" class="history-item px-4 py-3" ripple>
                 <v-list-item-avatar class="mr-4">
                   <v-avatar color="purple lighten-4" size="40">
                     <v-icon color="purple">mdi-restore</v-icon>
@@ -353,9 +331,7 @@
             共 {{ history.length }} 条记录
           </v-chip>
           <v-spacer></v-spacer>
-          <v-btn @click="showHistoryDialog = false" color="primary" text>
-            关闭
-          </v-btn>
+          <v-btn @click="showHistoryDialog = false" color="primary" text> 关闭 </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -376,11 +352,7 @@
           {{ snackbar.message }}
         </v-col>
         <v-col class="shrink">
-          <v-btn
-            icon
-            color="white"
-            @click="snackbar.show = false"
-          >
+          <v-btn icon color="white" @click="snackbar.show = false">
             <v-icon>mdi-close</v-icon>
           </v-btn>
         </v-col>
@@ -425,15 +397,15 @@ export default {
         show: false,
         message: '',
         color: 'success',
-        icon: 'mdi-check-circle'
-      }
+        icon: 'mdi-check-circle',
+      },
     }
   },
 
   computed: {
     hasContent() {
       return this.editorReady && this.editor && this.editor.state.doc.toString().trim() !== ''
-    }
+    },
   },
 
   watch: {
@@ -447,7 +419,7 @@ export default {
 
     selectedTheme(newTheme) {
       this.updateEditorTheme(newTheme)
-    }
+    },
   },
 
   mounted() {
@@ -485,7 +457,7 @@ export default {
             run: () => {
               this.saveFile()
               return true
-            }
+            },
           },
           {
             key: 'Ctrl-f',
@@ -493,8 +465,8 @@ export default {
             run: () => {
               this.showSearchDialog = true
               return true
-            }
-          }
+            },
+          },
         ])
 
         // 更新监听器
@@ -511,32 +483,25 @@ export default {
         const customTheme = EditorView.theme({
           '&': {
             height: '100%',
-            fontSize: '14px'
+            fontSize: '14px',
           },
           '.cm-scroller': {
             fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
-            lineHeight: '1.5'
+            lineHeight: '1.5',
           },
           '.cm-focused': {
-            outline: '1px solid #1976d2'
+            outline: '1px solid #1976d2',
           },
           '.cm-editor': {
-            borderRadius: '4px'
-          }
+            borderRadius: '4px',
+          },
         })
 
         // 创建编辑器，使用更简单的扩展配置
         this.editor = new EditorView({
           doc: '{\n  "name": "JSON Editor Pro",\n  "version": "1.0.0",\n  "features": [\n    "文件加载",\n    "语法高亮",\n    "格式化",\n    "历史记录"\n  ]\n}',
-          extensions: [
-            basicSetup,
-            json(),
-            oneDark,
-            customKeymap,
-            updateListener,
-            customTheme
-          ],
-          parent: this.$refs.editorContainer
+          extensions: [basicSetup, json(), oneDark, customKeymap, updateListener, customTheme],
+          parent: this.$refs.editorContainer,
         })
 
         this.editorReady = true
@@ -571,8 +536,8 @@ export default {
           changes: {
             from: 0,
             to: this.editor.state.doc.length,
-            insert: text
-          }
+            insert: text,
+          },
         })
 
         this.currentFileName = file.name || 'unknown.json'
@@ -580,7 +545,9 @@ export default {
         this.showMessage(`文件 "${this.currentFileName}" 加载成功`, 'success', 'mdi-file-check')
       } catch (error) {
         this.hasError = true
-        setTimeout(() => { this.hasError = false }, 600)
+        setTimeout(() => {
+          this.hasError = false
+        }, 600)
         this.showMessage('文件加载失败: ' + error.message, 'error', 'mdi-file-alert')
       } finally {
         this.loading = false
@@ -599,7 +566,11 @@ export default {
         // 检查文件对象是否有效
         if (!(file instanceof File) && !(file instanceof Blob)) {
           console.log('File object properties:', Object.keys(file))
-          reject(new Error(`无效的文件对象类型: ${typeof file}, constructor: ${file?.constructor?.name}`))
+          reject(
+            new Error(
+              `无效的文件对象类型: ${typeof file}, constructor: ${file?.constructor?.name}`,
+            ),
+          )
           return
         }
 
@@ -641,7 +612,11 @@ export default {
         try {
           JSON.parse(content)
         } catch (jsonError) {
-          this.showMessage('保存失败: JSON格式错误 - ' + jsonError.message, 'error', 'mdi-alert-circle')
+          this.showMessage(
+            '保存失败: JSON格式错误 - ' + jsonError.message,
+            'error',
+            'mdi-alert-circle',
+          )
           return
         }
 
@@ -684,8 +659,8 @@ export default {
           changes: {
             from: 0,
             to: this.editor.state.doc.length,
-            insert: formatted
-          }
+            insert: formatted,
+          },
         })
 
         this.addToHistory('JSON格式化')
@@ -707,8 +682,8 @@ export default {
           changes: {
             from: 0,
             to: this.editor.state.doc.length,
-            insert: compressed
-          }
+            insert: compressed,
+          },
         })
 
         this.addToHistory('JSON压缩')
@@ -753,7 +728,7 @@ export default {
     // 节流的历史记录添加，避免频繁更新
     throttledAddToHistory: (() => {
       let timeout = null
-      return function(description) {
+      return function (description) {
         if (timeout) clearTimeout(timeout)
         timeout = setTimeout(() => {
           this.addToHistory(description)
@@ -775,7 +750,7 @@ export default {
       this.history.unshift({
         timestamp,
         description,
-        content: content.substring(0, 1000) // 限制内容长度，避免内存问题
+        content: content.substring(0, 1000), // 限制内容长度，避免内存问题
       })
 
       if (this.history.length > this.maxHistorySize) {
@@ -790,8 +765,8 @@ export default {
           changes: {
             from: 0,
             to: this.editor.state.doc.length,
-            insert: item.content
-          }
+            insert: item.content,
+          },
         })
         this.showHistoryDialog = false
         this.showMessage('已恢复历史版本', 'success', 'mdi-restore')
@@ -853,8 +828,8 @@ export default {
           changes: {
             from: 0,
             to: this.editor.state.doc.length,
-            insert: newContent
-          }
+            insert: newContent,
+          },
         })
         this.addToHistory('替换文本')
         this.showMessage('替换完成', 'success', 'mdi-find-replace')
@@ -871,15 +846,17 @@ export default {
 
       const content = this.editor.state.doc.toString()
       const newContent = content.replaceAll(this.searchText, this.replaceText)
-      const count = (content.match(new RegExp(this.searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length
+      const count = (
+        content.match(new RegExp(this.searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []
+      ).length
 
       if (content !== newContent) {
         this.editor.dispatch({
           changes: {
             from: 0,
             to: this.editor.state.doc.length,
-            insert: newContent
-          }
+            insert: newContent,
+          },
         })
         this.addToHistory(`全部替换 (${count}处)`)
         this.showMessage(`全部替换完成，共替换 ${count} 处`, 'success', 'mdi-find-replace')
@@ -895,8 +872,8 @@ export default {
         changes: {
           from: 0,
           to: this.editor.state.doc.length,
-          insert: ''
-        }
+          insert: '',
+        },
       })
       this.selectedFile = null
       this.currentFileName = ''
@@ -910,7 +887,7 @@ export default {
         show: true,
         message,
         color,
-        icon
+        icon,
       }
     },
 
@@ -919,7 +896,7 @@ export default {
       const preview = content.replace(/\s+/g, ' ').trim()
       return preview.length > 50 ? preview.substring(0, 50) + '...' : preview
     },
-  }
+  },
 }
 </script>
 
@@ -970,7 +947,8 @@ export default {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
@@ -986,9 +964,16 @@ export default {
 }
 
 @keyframes materialShake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
 }
 
 /* 移除按钮组样式，使用普通按钮样式 */
