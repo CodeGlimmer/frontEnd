@@ -50,7 +50,7 @@
               <div class="tw:!flex-1 tw:!flex tw:!gap-4">
                 <div class="input-wrapper tw:flex-1 tw:relative">
                   <input
-                    v-model="rosUrl"
+                    v-model="inputUrl"
                     type="text"
                     placeholder="请输入ROS服务器地址"
                     class="ros-input tw:w-full tw:px-4 tw:py-3 tw:text-base tw:border tw:border-gray-300 tw:dark:border-gray-600 tw:rounded-lg tw:bg-white tw:dark:bg-gray-800 tw:text-gray-900 tw:dark:text-gray-100 tw:placeholder-gray-500 tw:dark:placeholder-gray-400"
@@ -59,7 +59,7 @@
                 </div>
                 <button
                   @click="connectRos"
-                  :disabled="!rosUrl.trim()"
+                  :disabled="!inputUrl.trim()"
                   class="connect-button tw:px-6 tw:py-3 tw:text-base tw:font-medium tw:text-white tw:bg-blue-600 tw:rounded-lg tw:relative tw:overflow-hidden"
                 >
                   <span class="button-text">连接</span>
@@ -82,6 +82,7 @@
     >
       <RosViewCard
         class="tw:w-full tw:!mx-4 tw:hover:!shadow-m-elevation-24 tw:hover:-translate-y-2 tw:transition-transform tw:duration-200 tw:ease-in-out"
+        :wsUrl="rosUrl"
       />
     </div>
     <div
@@ -89,34 +90,63 @@
     >
       <VelocityShow
         class="tw:hover:-translate-y-2 tw:hover:!shadow-m-elevation-12 tw:ease-in-out tw:!transition-all tw:duration-500 border-thin tw:hover:!bg-m-grey-lighten3 tw:dark:hover:!bg-m-grey-darken3 tw:!w-full"
+        :rosbridgeUrl="rosUrl"
       />
     </div>
     <div
       class="tw:col-span-12 tw:md:col-span-3 tw:motion-translate-x-in-[-85%] tw:motion-translate-y-in-[-65%] tw:motion-blur-in-[30px] tw:motion-ease-spring-bouncier tw:motion-delay-300 elevation-8 pa-2 tw:rounded-xl tw:!mx-2 tw:dark:!bg-m-grey-darken4"
     >
-      <SendingOperations />
+      <SendingOperations :rosUrl />
     </div>
     <div
       class="tw:col-span-12 tw:md:col-span-9 tw:md:!ml-2 tw:rounded-xl tw:!mr-2.5 tw:motion-translate-x-in-[-85%] tw:motion-translate-y-in-[-65%] tw:motion-blur-in-[30px] tw:motion-ease-spring-bouncier tw:motion-delay-500 tw:flex tw:justify-center tw:items-center"
     >
       <QuickCommands
-        class="tw:!mx-2 tw:!my-2 tw:!p-2 tw:!md:mx-1 tw:w-full tw:motion-translate-x-in-[-85%] tw:motion-translate-y-in-[-65%] tw:motion-blur-in-[30px] tw:motion-ease-spring-bouncier tw:motion-delay-500 tw:hover:!shadow-m-elevation-12 tw:hover:!-translate-y-2 tw:!transition-transform tw:!duration-500 tw:!ease-in-out"
+        class="tw:!mx-2 tw:!my-2 tw:!p-2 tw:!md:mx-1 tw:w-full tw:motion-translate-x-in-[-85%] tw:motion-translate-y-in-[-65%] tw:motion-blur-in-[30px] tw:motion-ease-spring-bouncier tw:motion-delay-500 tw:hover:!shadow-m-elevation-12 tw:hover:!-translate-y-2 tw:!transition-transform tw:!duration-200 tw:!ease-in-out"
       />
     </div>
-  </div>
+
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import QuickCommands from './QuickCommands.vue'
 import SendingOperations from './SendingOperations.vue'
 import VelocityShow from './VelocityShow.vue'
 import WorkingStatus from './WorkingStatus.vue'
 import RosViewCard from '../AgvMonitoring/RosViewCard.vue'
 
+// localStorage 键名
+const ROS_URL_STORAGE_KEY = 'ros_url'
+
 // ROS URL 相关变量
+const inputUrl = ref('')
 const rosUrl = ref('')
 const isFormExpanded = ref(false)
+
+// 从 localStorage 加载 ROS URL
+const loadRosUrlFromStorage = () => {
+  try {
+    const savedUrl = localStorage.getItem(ROS_URL_STORAGE_KEY)
+    if (savedUrl) {
+      inputUrl.value = savedUrl
+      rosUrl.value = savedUrl
+      console.log('从本地存储加载 ROS URL:', savedUrl)
+    }
+  } catch (error) {
+    console.error('加载 ROS URL 失败:', error)
+  }
+}
+
+// 保存 ROS URL 到 localStorage
+const saveRosUrlToStorage = (url) => {
+  try {
+    localStorage.setItem(ROS_URL_STORAGE_KEY, url)
+    console.log('ROS URL 已保存到本地存储:', url)
+  } catch (error) {
+    console.error('保存 ROS URL 失败:', error)
+  }
+}
 
 // 切换表单展开/收起
 const toggleForm = () => {
@@ -125,9 +155,18 @@ const toggleForm = () => {
 
 // 连接ROS的方法
 const connectRos = () => {
-  // 这里你可以添加连接逻辑
-  console.log('连接ROS:', rosUrl.value)
+  const url = inputUrl.value.trim()
+  if (url) {
+    rosUrl.value = url
+    saveRosUrlToStorage(url)
+    console.log('连接ROS:', url)
+  }
 }
+
+// 组件挂载时加载存储的 URL
+onMounted(() => {
+  loadRosUrlFromStorage()
+})
 </script>
 
 <style lang="scss" scoped>

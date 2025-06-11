@@ -1,5 +1,5 @@
 <template>
-  <v-card v-motion :initial="motionConfig.initial" :enter="motionConfig.enter">
+  <v-card class="quick-commands-card">
     <v-card-item>
       <v-card-title class="text-subtitle-1">快速指令</v-card-title>
     </v-card-item>
@@ -14,12 +14,6 @@
 </template>
 
 <script setup>
-// 动画配置
-const motionConfig = {
-  initial: { opacity: 0, y: 50 },
-  enter: { opacity: 1, y: 0, transition: { duration: 500, delay: 800 } },
-}
-
 // 按钮事件处理函数
 const handleRefreshMap = () => {
   // TODO: 实现刷新地图逻辑
@@ -36,3 +30,17 @@ const handleEmergencyStop = () => {
   console.log('急停')
 }
 </script>
+
+<style scoped>
+.quick-commands-card {
+  transition:
+    transform 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+  will-change: transform, box-shadow;
+}
+
+.quick-commands-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+</style>

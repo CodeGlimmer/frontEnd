@@ -13,7 +13,7 @@ import { Controler } from '@/lib/rosConnection'
 import KeyBoard from '@/components/KeyBoard.vue'
 
 // 获取到父组件传过来的linear与angular参数
-const { linear, angular } = defineProps({
+const { linear, angular, rosUrl } = defineProps({
   linear: {
     type: Number,
     default: 5,
@@ -21,6 +21,10 @@ const { linear, angular } = defineProps({
   angular: {
     type: Number,
     default: 0.2,
+  },
+  rosUrl: {
+    type: String,
+    default: 'ws://0.0.0.0:9091',
   },
 })
 
@@ -33,7 +37,7 @@ const updateKeyState = (newKeyState) => {
 }
 
 onMounted(() => {
-  controler = new Controler({ linear, angular, rosUrl: 'ws://0.0.0.0:9091' })
+  controler = new Controler({ linear, angular, rosUrl })
 })
 
 onUnmounted(() => {
