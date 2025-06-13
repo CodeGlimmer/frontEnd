@@ -713,7 +713,42 @@ const initChart = () => {
 
       chartInstance = echarts.init(chartContainer.value, null, {
         renderer: 'canvas',
+        useDirtyRect: true, // 启用脏矩形优化
       })
+
+      // 添加被动事件监听器处理
+      const chartDom = chartContainer.value
+      if (chartDom) {
+        // 移除默认的滚轮事件监听器并添加被动监听器
+        const handlePassiveWheel = (e) => {
+          // 只在图表容器内处理滚轮事件
+          if (chartInstance && e.target.closest('.chart-container')) {
+            // 使用ECharts API进行缩放
+            const zr = chartInstance.getZr()
+            if (zr) {
+              const delta = e.deltaY > 0 ? -0.1 : 0.1
+              chartInstance.dispatchAction({
+                type: 'dataZoom',
+                start: Math.max(
+                  0,
+                  (chartInstance.getOption().dataZoom?.[0]?.start || 0) - delta * 10,
+                ),
+                end: Math.min(
+                  100,
+                  (chartInstance.getOption().dataZoom?.[0]?.end || 100) - delta * 10,
+                ),
+              })
+            }
+          }
+        }
+
+        // 添加被动滚轮事件监听器
+        chartDom.addEventListener('wheel', handlePassiveWheel, { passive: true })
+
+        // 存储事件处理器引用以便后续清理
+        chartInstance._passiveWheelHandler = handlePassiveWheel
+        chartInstance._chartDom = chartDom
+      }
 
       // 获取过滤后的数据
       const { dates, actual, predicted } = filteredData.value
@@ -953,6 +988,11 @@ const initChart = () => {
             zoomLock: false,
             throttle: 100,
             rangeMode: ['value', 'value'],
+            // 禁用默认的滚轮缩放，改用我们的被动事件处理
+            disabled: false,
+            zoomOnMouseWheel: false, // 禁用鼠标滚轮缩放
+            moveOnMouseMove: true, // 允许鼠标拖拽移动
+            moveOnMouseWheel: false, // 禁用滚轮移动
           },
           {
             type: 'slider',
@@ -1375,9 +1415,13 @@ onUnmounted(() => {
     resizeObserverInstance = null
   }
 
-  // 安全销毁图表实例
+  // 安全销毁图表实例和清理被动事件监听器
   if (chartInstance) {
     try {
+      // 清理被动滚轮事件监听器
+      if (chartInstance._passiveWheelHandler && chartInstance._chartDom) {
+        chartInstance._chartDom.removeEventListener('wheel', chartInstance._passiveWheelHandler)
+      }
       chartInstance.dispose()
     } catch (e) {
       console.log('卸载时销毁实例出错:', e)

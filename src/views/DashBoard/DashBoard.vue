@@ -105,7 +105,7 @@
         class="tw:!mx-2 tw:!my-2 tw:!p-2 tw:!md:mx-1 tw:w-full tw:motion-translate-x-in-[-85%] tw:motion-translate-y-in-[-65%] tw:motion-blur-in-[30px] tw:motion-ease-spring-bouncier tw:motion-delay-500 tw:hover:!shadow-m-elevation-12 tw:hover:!-translate-y-2 tw:!transition-transform tw:!duration-200 tw:!ease-in-out"
       />
     </div>
-
+  </div>
 </template>
 
 <script setup>
@@ -120,7 +120,7 @@ import RosViewCard from '../AgvMonitoring/RosViewCard.vue'
 const ROS_URL_STORAGE_KEY = 'ros_url'
 
 // ROS URL 相关变量
-const inputUrl = ref('')
+const inputUrl = ref('ws://localhost:9090')
 const rosUrl = ref('')
 const isFormExpanded = ref(false)
 
@@ -128,6 +128,7 @@ const isFormExpanded = ref(false)
 const loadRosUrlFromStorage = () => {
   try {
     const savedUrl = localStorage.getItem(ROS_URL_STORAGE_KEY)
+    // const savedUrl = 'ws://localhost:9090'
     if (savedUrl) {
       inputUrl.value = savedUrl
       rosUrl.value = savedUrl
