@@ -421,7 +421,7 @@ onUnmounted(() => {
         </div>
       </div>
       <div class="footer-bottom">
-        <p>&copy; 2024 AGV Monitor. All rights reserved.</p>
+        <p>&copy; 2025 AGV Monitor. All rights reserved.</p>
       </div>
     </footer>
   </div>

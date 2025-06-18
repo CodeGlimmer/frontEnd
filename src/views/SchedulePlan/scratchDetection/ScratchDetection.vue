@@ -3,7 +3,7 @@
     <v-fade-transition>
       <v-card class="mx-auto mb-6 elevation-3" max-width="800">
         <v-card-title class="text-h5">
-          <v-icon left color="primary" class="rotate-on-hover">mdi-image-search</v-icon>
+          <v-icon left color="primary">mdi-image-search</v-icon>
           <span class="title-text">划痕检测系统</span>
         </v-card-title>
 
@@ -600,10 +600,6 @@ const formatFileSize = (bytes) => {
 .v-card:hover {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important;
   transform: translateY(-3px);
-}
-
-.rotate-on-hover:hover {
-  animation: rotate360 1s linear;
 }
 
 @keyframes rotate360 {

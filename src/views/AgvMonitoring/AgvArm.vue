@@ -3,16 +3,28 @@
     <v-row>
       <v-col cols="12">
         <v-card class="elevation-4 rounded-lg">
-          <v-card-title class="text-h4 font-weight-bold primary--text">
+          <v-card-title class="text-h4 font-weight-bold primary--text bg-info tw:glass">
             <v-icon large class="mr-3">mdi-robot-industrial</v-icon>
             AGV 机械臂控制
           </v-card-title>
 
+          <!-- 在连接状态下方加入 URL 输入和重连按钮 -->
           <v-card-subtitle class="text-subtitle-1">
             实时控制机械臂运动 | 连接状态:
             <v-chip :color="rosConnected ? 'success' : 'error'" small>
               {{ rosConnected ? '已连接' : '未连接' }}
             </v-chip>
+
+            <v-text-field
+              v-model="rosUrl"
+              label="ROS URL"
+              dense
+              outlined
+              hide-details
+              suffix-icon="mdi-refresh"
+              @click:append="reconnectROS"
+              class="mt-2"
+            ></v-text-field>
           </v-card-subtitle>
 
           <v-card-text>
@@ -27,7 +39,7 @@
 
               <!-- 步进电机 A -->
               <v-col cols="12" md="6">
-                <v-card outlined class="pa-4">
+                <v-card outlined class="pa-4 tw:hover:!shadow-m-elevation-6">
                   <v-card-title class="text-h6">电机 A</v-card-title>
                   <v-slider
                     v-model="armParams.A"
@@ -67,7 +79,7 @@
 
               <!-- 步进电机 B -->
               <v-col cols="12" md="6">
-                <v-card outlined class="pa-4">
+                <v-card outlined class="pa-4 tw:hover:!shadow-m-elevation-6">
                   <v-card-title class="text-h6">电机 B</v-card-title>
                   <v-slider
                     v-model="armParams.B"
@@ -117,7 +129,7 @@
 
               <!-- 舵机 C -->
               <v-col cols="12" md="6">
-                <v-card outlined class="pa-4">
+                <v-card outlined class="pa-4 tw:hover:!shadow-m-elevation-6">
                   <v-card-title class="text-h6">舵机 C</v-card-title>
                   <v-slider
                     v-model="armParams.C"
@@ -158,7 +170,7 @@
 
               <!-- 舵机 D -->
               <v-col cols="12" md="6">
-                <v-card outlined class="pa-4">
+                <v-card outlined class="pa-4 tw:hover:!shadow-m-elevation-6">
                   <v-card-title class="text-h6">舵机 D</v-card-title>
                   <v-slider
                     v-model="armParams.D"
@@ -371,10 +383,21 @@ const snackbar = reactive({
   color: 'success',
 })
 
+// 新增：可编辑的 ROS 地址
+const rosUrl = ref('ws://localhost:9090')
+
+// 新增：重连方法
+const reconnectROS = () => {
+  if (ros.value) {
+    ros.value.close()
+  }
+  initROS()
+}
+
 // 初始化ROS连接
 const initROS = () => {
   ros.value = new ROSLIB.Ros({
-    url: 'ws://localhost:9090',
+    url: rosUrl.value,
   })
 
   ros.value.on('connection', () => {
