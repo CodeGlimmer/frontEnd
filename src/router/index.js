@@ -129,6 +129,15 @@ export default createRouter({
                     sidebar: () => import('@/views/SchedulePlan/PlanSideBar.vue'),
                   },
                 },
+                {
+                  path: 'scratch-detection',
+                  name: 'scratch-detection',
+                  components: {
+                    main: () =>
+                      import('@/views/SchedulePlan/scratchDetection/ScratchDetection.vue'),
+                    sidebar: () => import('@/views/SchedulePlan/PlanSideBar.vue'),
+                  },
+                },
               ],
             },
             {
