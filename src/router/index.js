@@ -107,6 +107,14 @@ export default createRouter({
                     main: () => import('@/views/AgvMonitoring/FoxGlove.vue'),
                   },
                 },
+                {
+                  path: 'agv-arm',
+                  name: 'agv-arm',
+                  components: {
+                    main: () => import('@/views/AgvMonitoring/AgvArm.vue'),
+                    sidebar: () => import('@/views/AgvMonitoring/AgvMonitoringSideBar.vue'),
+                  },
+                },
               ],
             },
             {
