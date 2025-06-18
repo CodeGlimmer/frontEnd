@@ -34,5 +34,12 @@
       value="foxglove"
       to="/index/agvmonitoring/foxglove"
     ></v-list-item>
+
+    <v-list-item
+      prepend-icon="mdi-robot-industrial"
+      title="AGV机械臂"
+      value="arm"
+      to="/index/agvmonitoring/agv-arm"
+    ></v-list-item>
   </v-list>
 </template>
