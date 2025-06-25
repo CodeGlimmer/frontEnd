@@ -4,37 +4,66 @@
       <!-- 响应式App Bar -->
       <v-app-bar class="elevation-12" app fixed>
         <!-- 在移动端和桌面端都显示的菜单按钮 -->
-        <v-btn icon="mdi-apps" @click="showNavigationDrawer = !showNavigationDrawer"> </v-btn>
+        <v-btn
+          ref="menuToggleBtn"
+          icon="mdi-apps"
+          @click="showNavigationDrawer = !showNavigationDrawer"
+          @mouseenter="onButtonHover"
+          @mouseleave="onButtonLeave"
+          @mousedown="onButtonPress"
+          @mouseup="onButtonRelease"
+        >
+        </v-btn>
         <v-spacer></v-spacer>
 
         <!-- 桌面端显示所有按钮，移动端隐藏并放入菜单中 -->
         <div class="d-none d-sm-flex">
           <v-btn
+            ref="dashboardBtn"
             prepend-icon="mdi-view-dashboard-outline"
             variant="outlined"
             class="me-2"
             to="/index/"
+            @mouseenter="onButtonHover"
+            @mouseleave="onButtonLeave"
+            @mousedown="onButtonPress"
+            @mouseup="onButtonRelease"
             >DashBoard</v-btn
           >
           <v-btn
+            ref="orderBtn"
             prepend-icon="mdi-database-outline"
             variant="outlined"
             class="me-2"
             to="/index/ordermanagement"
+            @mouseenter="onButtonHover"
+            @mouseleave="onButtonLeave"
+            @mousedown="onButtonPress"
+            @mouseup="onButtonRelease"
             >订单管理</v-btn
           >
           <v-btn
+            ref="agvBtn"
             prepend-icon="mdi-eye-outline"
             variant="outlined"
             class="me-2"
             to="/index/agvmonitoring"
+            @mouseenter="onButtonHover"
+            @mouseleave="onButtonLeave"
+            @mousedown="onButtonPress"
+            @mouseup="onButtonRelease"
             >AGV监控</v-btn
           >
           <v-btn
+            ref="schedulingBtn"
             prepend-icon="mdi-invoice-text-clock-outline"
             variant="outlined"
             class="me-2"
             to="/index/schedulingplanning"
+            @mouseenter="onButtonHover"
+            @mouseleave="onButtonLeave"
+            @mousedown="onButtonPress"
+            @mouseup="onButtonRelease"
             >调度规划</v-btn
           >
         </div>
@@ -42,7 +71,16 @@
         <!-- 移动端的应用选择菜单 -->
         <v-menu v-if="$vuetify.display.smAndDown" v-model="appMenuOpen">
           <template v-slot:activator="{ props }">
-            <v-btn v-bind="props" icon="mdi-dots-vertical" class="me-2"></v-btn>
+            <v-btn
+              ref="mobileMenuBtn"
+              v-bind="props"
+              icon="mdi-dots-vertical"
+              class="me-2"
+              @mouseenter="onButtonHover"
+              @mouseleave="onButtonLeave"
+              @mousedown="onButtonPress"
+              @mouseup="onButtonRelease"
+            ></v-btn>
           </template>
           <v-list>
             <v-list-item
@@ -69,11 +107,15 @@
         </v-menu>
         <!-- 主题切换按钮在所有尺寸下都保持显示 -->
         <v-btn
+          ref="themeToggleBtn"
           :prepend-icon="theme === 'light' ? 'mdi-weather-sunny' : 'mdi-weather-night'"
           :text="$vuetify.display.smAndUp ? 'Toggle Theme' : ''"
           slim
           @click="handleThemeChange"
-          ref="themeToggleBtn"
+          @mouseenter="onButtonHover"
+          @mouseleave="onButtonLeave"
+          @mousedown="onButtonPress"
+          @mouseup="onButtonRelease"
         ></v-btn>
       </v-app-bar>
 
@@ -100,16 +142,26 @@
         >
           <template v-slot:append>
             <v-btn
+              ref="railToggleBtn"
               v-if="$vuetify.display.mdAndUp"
               variant="text"
               icon="mdi-chevron-left"
               @click.stop="rail = !rail"
+              @mouseenter="onButtonHover"
+              @mouseleave="onButtonLeave"
+              @mousedown="onButtonPress"
+              @mouseup="onButtonRelease"
             ></v-btn>
             <v-btn
+              ref="drawerCloseBtn"
               v-else
               variant="text"
               icon="mdi-close"
               @click.stop="showNavigationDrawer = false"
+              @mouseenter="onButtonHover"
+              @mouseleave="onButtonLeave"
+              @mousedown="onButtonPress"
+              @mouseup="onButtonRelease"
             ></v-btn>
           </template>
         </v-list-item>
@@ -155,7 +207,7 @@
               ></v-list-item>
             </template>
 
-             <v-list-item
+            <v-list-item
               prepend-icon="mdi-code-json"
               title="JSON编辑器"
               value="shop"
@@ -233,20 +285,30 @@
                 <v-row>
                   <v-col cols="6">
                     <v-btn
+                      ref="settingBtn"
                       prepend-icon="mdi-cog"
                       size="small"
                       :block="$vuetify.display.xs"
                       to="/index/setting"
+                      @mouseenter="onButtonHover"
+                      @mouseleave="onButtonLeave"
+                      @mousedown="onButtonPress"
+                      @mouseup="onButtonRelease"
                       >setting</v-btn
                     >
                   </v-col>
                   <v-col cols="6">
                     <v-btn
+                      ref="signOutBtn"
                       prepend-icon="mdi-logout"
                       color="error"
                       size="small"
                       :block="$vuetify.display.xs"
                       @click="signOut"
+                      @mouseenter="onButtonHover"
+                      @mouseleave="onButtonLeave"
+                      @mousedown="onButtonPress"
+                      @mouseup="onButtonRelease"
                       >sign out</v-btn
                     >
                   </v-col>
@@ -260,11 +322,16 @@
             <v-menu v-model="optionsMenu" :close-on-content-click="false" location="end" offset="8">
               <template v-slot:activator="{ props }">
                 <v-btn
+                  ref="optionsMenuBtn"
                   v-bind="props"
                   icon="mdi-dots-horizontal-circle"
                   color="primary"
                   size="large"
                   class="mb-2"
+                  @mouseenter="onButtonHover"
+                  @mouseleave="onButtonLeave"
+                  @mousedown="onButtonPress"
+                  @mouseup="onButtonRelease"
                 ></v-btn>
               </template>
               <v-card min-width="200" class="options-menu">
@@ -316,7 +383,7 @@
 
 <script setup>
 import { useThemeStore } from '@/stores'
-import { ref, toRefs, onMounted } from 'vue'
+import { ref, toRefs, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useThemeTransition } from '@/utils'
 import { useDisplay } from 'vuetify'
@@ -325,6 +392,7 @@ import axios from 'axios'
 import { computed, onUnmounted } from 'vue'
 import { useFloatingOrb } from '@/composables/useFloatingOrb'
 import FloatingOrb from '@/views/FloatingActionButton/FloatingOrb.vue'
+import { gsap } from 'gsap'
 
 const themeStore = useThemeStore()
 const { theme } = toRefs(themeStore)
@@ -339,6 +407,19 @@ const display = useDisplay()
 const pic = ref('https://randomuser.me/api/portraits/men/9.jpg')
 const username = ref('')
 const email = ref('')
+
+// 按钮 refs
+const menuToggleBtn = ref(null)
+const dashboardBtn = ref(null)
+const orderBtn = ref(null)
+const agvBtn = ref(null)
+const schedulingBtn = ref(null)
+const mobileMenuBtn = ref(null)
+const railToggleBtn = ref(null)
+const drawerCloseBtn = ref(null)
+const settingBtn = ref(null)
+const signOutBtn = ref(null)
+const optionsMenuBtn = ref(null)
 
 // 自动处理移动端初始导航抽屉状态
 showNavigationDrawer.value = !display.smAndDown.value
@@ -382,6 +463,257 @@ const handleUserClick = (event) => {
     }
     // 在移动端不做额外处理
   }
+}
+
+// 按钮动画函数
+const onButtonHover = (event) => {
+  const button = event.currentTarget
+  if (!button) return
+
+  // 基础缩放动画
+  gsap.to(button, {
+    scale: 1.05,
+    duration: 0.3,
+    ease: 'power2.out',
+    transformOrigin: 'center center',
+  })
+
+  // 添加发光效果
+  gsap.to(button, {
+    boxShadow: '0 0 20px rgba(var(--v-theme-primary), 0.4)',
+    duration: 0.3,
+    ease: 'power2.out',
+  })
+
+  // 图标动画 - 根据按钮类型使用不同动画
+  const icon = button.querySelector('.v-icon')
+  if (icon) {
+    const buttonRef = button.getAttribute('ref') || ''
+
+    if (buttonRef === 'themeToggleBtn') {
+      // 主题切换按钮：太阳/月亮旋转动画
+      gsap.to(icon, {
+        rotation: 180,
+        scale: 1.2,
+        duration: 0.5,
+        ease: 'back.out(1.7)',
+      })
+    } else if (buttonRef === 'menuToggleBtn') {
+      // 菜单按钮：脉冲动画
+      gsap.to(icon, {
+        scale: 1.3,
+        duration: 0.3,
+        ease: 'power2.out',
+        yoyo: true,
+        repeat: 1,
+      })
+    } else if (buttonRef.includes('railToggle') || buttonRef.includes('drawerClose')) {
+      // 抽屉控制按钮：左右摆动
+      gsap.to(icon, {
+        rotation: 15,
+        duration: 0.2,
+        ease: 'power2.out',
+        yoyo: true,
+        repeat: 3,
+      })
+    } else {
+      // 其他按钮：标准旋转
+      gsap.to(icon, {
+        rotation: 360,
+        duration: 0.6,
+        ease: 'power2.out',
+      })
+    }
+  }
+
+  // 为特定按钮添加额外效果
+  const buttonRef = button.getAttribute('ref') || ''
+  if (buttonRef === 'signOutBtn') {
+    // 登出按钮：红色发光效果
+    gsap.to(button, {
+      boxShadow: '0 0 20px rgba(244, 67, 54, 0.5)',
+      duration: 0.3,
+      ease: 'power2.out',
+    })
+  }
+}
+
+const onButtonLeave = (event) => {
+  const button = event.currentTarget
+  if (!button) return
+
+  gsap.to(button, {
+    scale: 1,
+    duration: 0.3,
+    ease: 'power2.out',
+    transformOrigin: 'center center',
+  })
+
+  // 移除发光效果
+  gsap.to(button, {
+    boxShadow: 'none',
+    duration: 0.3,
+    ease: 'power2.out',
+  })
+
+  // 重置图标动画
+  const icon = button.querySelector('.v-icon')
+  if (icon) {
+    const buttonRef = button.getAttribute('ref') || ''
+
+    if (buttonRef === 'themeToggleBtn') {
+      // 主题切换按钮：重置旋转和缩放
+      gsap.to(icon, {
+        rotation: 0,
+        scale: 1,
+        duration: 0.4,
+        ease: 'power2.out',
+      })
+    } else {
+      // 其他按钮：标准重置
+      gsap.to(icon, {
+        rotation: 0,
+        scale: 1,
+        duration: 0.3,
+        ease: 'power2.out',
+      })
+    }
+  }
+}
+
+const onButtonPress = (event) => {
+  const button = event.currentTarget
+  if (!button) return
+
+  // 按下时的缩放动画
+  gsap.to(button, {
+    scale: 0.95,
+    duration: 0.1,
+    ease: 'power2.out',
+    transformOrigin: 'center center',
+  })
+
+  // 添加涟漪效果
+  createRippleEffect(button, event)
+
+  // 为特定按钮添加特殊按下效果
+  const buttonRef = button.getAttribute('ref') || ''
+  if (buttonRef === 'themeToggleBtn') {
+    // 主题切换按钮：快速闪烁效果
+    gsap.to(button, {
+      opacity: 0.7,
+      duration: 0.1,
+      yoyo: true,
+      repeat: 1,
+      ease: 'power2.inOut',
+    })
+  }
+}
+
+const onButtonRelease = (event) => {
+  const button = event.currentTarget
+  if (!button) return
+
+  // 释放时恢复到悬停状态
+  gsap.to(button, {
+    scale: 1.05,
+    duration: 0.2,
+    ease: 'back.out(1.7)',
+    transformOrigin: 'center center',
+  })
+
+  // 添加成功反馈动画
+  const buttonRef = button.getAttribute('ref') || ''
+  if (buttonRef === 'signOutBtn') {
+    // 登出按钮：震动效果
+    gsap.to(button, {
+      x: -2,
+      duration: 0.1,
+      yoyo: true,
+      repeat: 3,
+      ease: 'power2.inOut',
+    })
+  } else if (buttonRef.includes('setting')) {
+    // 设置按钮：齿轮旋转效果
+    const icon = button.querySelector('.v-icon')
+    if (icon) {
+      gsap.to(icon, {
+        rotation: 180,
+        duration: 0.4,
+        ease: 'power2.out',
+      })
+    }
+  }
+}
+
+// 创建涟漪效果
+const createRippleEffect = (button, event) => {
+  const rect = button.getBoundingClientRect()
+  const size = Math.max(rect.width, rect.height) * 2
+  const x = event.clientX - rect.left - size / 2
+  const y = event.clientY - rect.top - size / 2
+
+  // 创建主涟漪
+  const ripple = document.createElement('div')
+  ripple.style.cssText = `
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(var(--v-theme-primary), 0.4) 0%, rgba(var(--v-theme-primary), 0.1) 70%, transparent 100%);
+    width: ${size}px;
+    height: ${size}px;
+    left: ${x}px;
+    top: ${y}px;
+    pointer-events: none;
+    transform: scale(0);
+    z-index: 1000;
+  `
+
+  // 创建第二层涟漪效果
+  const ripple2 = document.createElement('div')
+  ripple2.style.cssText = `
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(var(--v-theme-primary), 0.2);
+    width: ${size * 0.6}px;
+    height: ${size * 0.6}px;
+    left: ${x + size * 0.2}px;
+    top: ${y + size * 0.2}px;
+    pointer-events: none;
+    transform: scale(0);
+    z-index: 1001;
+  `
+
+  button.style.position = 'relative'
+  button.style.overflow = 'hidden'
+  button.appendChild(ripple)
+  button.appendChild(ripple2)
+
+  // 主涟漪动画
+  gsap.to(ripple, {
+    scale: 1,
+    opacity: 0,
+    duration: 0.8,
+    ease: 'power2.out',
+    onComplete: () => {
+      if (ripple.parentNode) {
+        ripple.parentNode.removeChild(ripple)
+      }
+    },
+  })
+
+  // 第二层涟漪动画
+  gsap.to(ripple2, {
+    scale: 1.5,
+    opacity: 0,
+    duration: 0.6,
+    delay: 0.1,
+    ease: 'power2.out',
+    onComplete: () => {
+      if (ripple2.parentNode) {
+        ripple2.parentNode.removeChild(ripple2)
+      }
+    },
+  })
 }
 
 // 悬浮球相关逻辑
@@ -466,9 +798,66 @@ const handleVisualViewportChange = () => {
   adjustForKeyboard()
 }
 
+// 初始化按钮动画
+const initButtonAnimations = () => {
+  nextTick(() => {
+    // 获取所有按钮元素
+    const buttons = [
+      menuToggleBtn.value,
+      dashboardBtn.value,
+      orderBtn.value,
+      agvBtn.value,
+      schedulingBtn.value,
+      mobileMenuBtn.value,
+      themeToggleBtn.value,
+      railToggleBtn.value,
+      drawerCloseBtn.value,
+      settingBtn.value,
+      signOutBtn.value,
+      optionsMenuBtn.value,
+    ].filter(Boolean)
+
+    // 为每个按钮设置初始状态并添加入场动画
+    buttons.forEach((button, index) => {
+      if (button) {
+        // 设置初始状态
+        gsap.set(button, {
+          scale: 0.8,
+          opacity: 0,
+          y: 20,
+        })
+
+        // 入场动画
+        gsap.to(button, {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+          delay: index * 0.1,
+          ease: 'back.out(1.7)',
+          onComplete: () => {
+            // 添加轻微的浮动动画
+            gsap.to(button, {
+              y: -2,
+              duration: 2,
+              repeat: -1,
+              yoyo: true,
+              ease: 'power2.inOut',
+              delay: Math.random() * 2,
+            })
+          },
+        })
+      }
+    })
+  })
+}
+
 onMounted(() => {
   // 初始化悬浮球
   initializeFloatingOrb()
+
+  // 初始化按钮动画
+  initButtonAnimations()
 
   // 添加事件监听器
   window.addEventListener('resize', handleResize)
@@ -629,6 +1018,7 @@ onMounted(() => {
 /* 避免悬浮球影响页面内容的滚动 */
 :deep(.v-main) {
   /* 保持原有样式，不添加额外的padding */
+  position: relative;
 }
 
 /* 响应式适配 */
@@ -657,6 +1047,243 @@ onMounted(() => {
     /* 通过margin来处理安全区域偏移 */
     margin-bottom: var(--safe-area-bottom);
     margin-right: var(--safe-area-right);
+  }
+}
+
+/* 按钮动画增强样式 */
+.v-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+  /* 为按钮添加基础的3D效果 */
+  transform-style: preserve-3d;
+
+  &:hover {
+    /* 悬停时的基础样式，GSAP会覆盖这些 */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active {
+    /* 点击时的基础样式，GSAP会覆盖这些 */
+    transform: translateY(0);
+  }
+
+  /* 图标动画增强 */
+  .v-icon {
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transform-origin: center;
+  }
+
+  /* 为outlined按钮添加特殊效果 */
+  &.v-btn--variant-outlined {
+    border: 2px solid;
+    background: linear-gradient(
+      45deg,
+      transparent 30%,
+      rgba(var(--v-theme-primary), 0.1) 50%,
+      transparent 70%
+    );
+    background-size: 200% 200%;
+    background-position: 100% 0;
+
+    &:hover {
+      background-position: 0 100%;
+      border-color: rgb(var(--v-theme-primary));
+    }
+  }
+
+  /* 为图标按钮添加特殊的脉冲效果 */
+  &.v-btn--icon {
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(var(--v-theme-primary), 0.2);
+      transform: translate(-50%, -50%);
+      transition: all 0.3s ease;
+      z-index: -1;
+    }
+
+    &:hover::before {
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+
+/* App Bar 按钮特殊样式 */
+.v-app-bar .v-btn {
+  backdrop-filter: blur(10px);
+
+  &:hover {
+    background: rgba(var(--v-theme-primary), 0.1);
+  }
+}
+
+/* 导航抽屉按钮特殊样式 */
+.v-navigation-drawer .v-btn {
+  &:hover {
+    background: rgba(var(--v-theme-primary), 0.08);
+    transform: translateX(4px);
+  }
+}
+
+/* 主题切换按钮特殊动画 */
+.v-btn[ref='themeToggleBtn'] {
+  .v-icon {
+    filter: drop-shadow(0 0 8px rgba(var(--v-theme-primary), 0.6));
+  }
+
+  &:hover .v-icon {
+    filter: drop-shadow(0 0 12px rgba(var(--v-theme-primary), 0.8));
+  }
+}
+
+/* 关键帧动画定义 */
+@keyframes buttonPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(var(--v-theme-primary), 0.4);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 8px rgba(var(--v-theme-primary), 0.1);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(var(--v-theme-primary), 0);
+  }
+}
+
+@keyframes iconSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes buttonShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes buttonGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(var(--v-theme-primary), 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(var(--v-theme-primary), 0.6);
+  }
+}
+
+/* 特殊按钮动画类 */
+.btn-pulse {
+  animation: buttonPulse 2s infinite;
+}
+
+.btn-glow {
+  animation: buttonGlow 2s ease-in-out infinite;
+}
+
+.btn-shake {
+  animation: buttonShake 0.5s ease-in-out;
+}
+
+/* 登出按钮特殊样式 */
+.v-btn[ref='signOutBtn'] {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      45deg,
+      transparent 30%,
+      rgba(244, 67, 54, 0.1) 50%,
+      transparent 70%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: inherit;
+  }
+
+  &:hover::before {
+    opacity: 1;
+  }
+}
+
+/* 设置按钮特殊样式 */
+.v-btn[ref='settingBtn'] {
+  .v-icon {
+    transition: transform 0.3s ease;
+  }
+
+  &:hover .v-icon {
+    transform: rotate(90deg);
+  }
+}
+
+/* 菜单切换按钮特殊样式 */
+.v-btn[ref='menuToggleBtn'] {
+  &:hover {
+    animation: buttonPulse 1s ease-in-out;
+  }
+}
+
+/* 抽屉控制按钮样式 */
+.v-btn[ref='railToggleBtn'],
+.v-btn[ref='drawerCloseBtn'] {
+  .v-icon {
+    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  &:hover .v-icon {
+    transform: scale(1.2) rotate(180deg);
+  }
+}
+
+/* 响应式动画优化 */
+@media (prefers-reduced-motion: reduce) {
+  .v-btn,
+  .v-btn .v-icon {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  .v-btn {
+    &:hover {
+      transform: none;
+      box-shadow: none;
+    }
+
+    &:active {
+      transform: scale(0.98);
+      transition: transform 0.1s ease;
+    }
   }
 }
 </style>

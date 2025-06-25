@@ -403,6 +403,10 @@
                   <div class="pa-6">
                     <h2 class="text-h4 font-weight-bold mb-6">外观设置</h2>
 
+                    <v-alert type="info" variant="tonal" class="mb-6" icon="mdi-information">
+                      设置会实时预览，点击"应用设置"保存您的偏好
+                    </v-alert>
+
                     <div class="theme-section mb-6">
                       <h3 class="text-h6 mb-4">主题模式</h3>
                       <v-btn-toggle
@@ -411,6 +415,7 @@
                         color="primary"
                         variant="outlined"
                         class="theme-toggle-btn"
+                        @update:model-value="applyThemeMode"
                       >
                         <v-btn value="light" prepend-icon="mdi-white-balance-sunny">浅色</v-btn>
                         <v-btn value="dark" prepend-icon="mdi-weather-night">深色</v-btn>
@@ -428,7 +433,7 @@
                           :class="{ 'selected-theme': themeColor === color.value }"
                           class="ma-2 theme-color-chip"
                           size="large"
-                          @click="themeColor = color.value"
+                          @click="selectThemeColor(color.value)"
                         >
                           {{ color.name }}
                           <v-icon
@@ -453,6 +458,7 @@
                         prepend-icon="mdi-format-font-size-decrease"
                         append-icon="mdi-format-font-size-increase"
                         color="primary"
+                        @update:model-value="applyFontSize"
                       >
                         <template v-slot:thumb-label="{ modelValue }"> {{ modelValue }}% </template>
                       </v-slider>
@@ -463,12 +469,19 @@
                     </div>
 
                     <div class="d-flex justify-end mt-6">
-                      <v-btn variant="text" color="primary" class="mr-4">恢复默认</v-btn>
+                      <v-btn
+                        variant="text"
+                        color="primary"
+                        class="mr-4"
+                        @click="resetAppearanceDefaults"
+                        >恢复默认</v-btn
+                      >
                       <v-btn
                         variant="elevated"
                         color="primary"
                         class="save-btn"
                         @click="saveAppearance"
+                        :loading="saving"
                         >应用设置</v-btn
                       >
                     </div>
@@ -640,11 +653,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { userService } from '@/services'
 import { availableHost } from '@/utils'
 import axios from 'axios'
 import { imageToBase64 } from '@/utils'
+import { useThemeStore } from '@/stores/theme'
+import { useTheme } from 'vuetify'
 
 // 背景视频
 const backgroundVideo = ref(
@@ -725,6 +740,10 @@ const notifications = reactive({
   },
 })
 
+// 主题store和Vuetify主题
+const themeStore = useThemeStore()
+const vuetifyTheme = useTheme()
+
 // 外观设置
 const themeMode = ref('system')
 const themeColor = ref('primary')
@@ -737,6 +756,82 @@ const themeColors = ref([
   { name: '靛蓝色', value: 'indigo' },
   { name: '玫瑰红', value: 'pink' },
 ])
+
+// 从localStorage加载保存的设置
+const loadAppearanceSettings = () => {
+  const savedThemeMode = localStorage.getItem('themeMode')
+  const savedThemeColor = localStorage.getItem('themeColor')
+  const savedFontSize = localStorage.getItem('fontSize')
+
+  if (savedThemeMode) {
+    themeMode.value = savedThemeMode
+    applyThemeMode(savedThemeMode)
+  }
+  if (savedThemeColor) {
+    themeColor.value = savedThemeColor
+    applyThemeColor(savedThemeColor)
+  }
+  if (savedFontSize) {
+    fontSize.value = parseInt(savedFontSize)
+    applyFontSize(parseInt(savedFontSize))
+  }
+}
+
+// 应用主题模式
+const applyThemeMode = (mode) => {
+  if (mode === 'light') {
+    themeStore.theme = 'light'
+    vuetifyTheme.global.name.value = 'light'
+  } else if (mode === 'dark') {
+    themeStore.theme = 'dark'
+    vuetifyTheme.global.name.value = 'dark'
+  } else if (mode === 'system') {
+    // 检测系统主题
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    themeStore.theme = prefersDark ? 'dark' : 'light'
+    vuetifyTheme.global.name.value = prefersDark ? 'dark' : 'light'
+  }
+}
+
+// 应用主题颜色
+const applyThemeColor = (color) => {
+  // 定义颜色映射
+  const colorMap = {
+    primary: '#1976D2',
+    success: '#4CAF50',
+    purple: '#9C27B0',
+    orange: '#FF9800',
+    indigo: '#3F51B5',
+    pink: '#E91E63',
+  }
+
+  if (colorMap[color]) {
+    // 更新CSS变量
+    document.documentElement.style.setProperty('--v-theme-primary', colorMap[color])
+
+    // 更新Vuetify主题
+    const currentTheme = vuetifyTheme.global.current.value
+    if (currentTheme.colors) {
+      currentTheme.colors.primary = colorMap[color]
+    }
+
+    // 强制更新主题
+    const currentThemeName = vuetifyTheme.global.name.value
+    vuetifyTheme.global.name.value = currentThemeName === 'dark' ? 'light' : 'dark'
+    vuetifyTheme.global.name.value = currentThemeName
+  }
+}
+
+// 应用字体大小
+const applyFontSize = (size) => {
+  document.documentElement.style.fontSize = `${size}%`
+}
+
+// 选择主题颜色
+const selectThemeColor = (color) => {
+  themeColor.value = color
+  applyThemeColor(color)
+}
 
 // 帮助与支持
 const feedbackText = ref('')
@@ -780,6 +875,34 @@ onMounted(() => {
   })
   // 初始化编辑数据
   resetEditedData()
+  // 加载外观设置
+  loadAppearanceSettings()
+
+  // 监听系统主题变化
+  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  mediaQuery.addEventListener('change', (e) => {
+    if (themeMode.value === 'system') {
+      const newTheme = e.matches ? 'dark' : 'light'
+      themeStore.theme = newTheme
+      vuetifyTheme.global.name.value = newTheme
+    }
+  })
+})
+
+// 监听主题设置变化
+watch(themeMode, (newMode) => {
+  applyThemeMode(newMode)
+  localStorage.setItem('themeMode', newMode)
+})
+
+watch(themeColor, (newColor) => {
+  applyThemeColor(newColor)
+  localStorage.setItem('themeColor', newColor)
+})
+
+watch(fontSize, (newSize) => {
+  applyFontSize(newSize)
+  localStorage.setItem('fontSize', newSize.toString())
 })
 
 // 方法
@@ -907,6 +1030,16 @@ const saveNotifications = () => {
 const saveAppearance = () => {
   saving.value = true
 
+  // 应用所有设置
+  applyThemeMode(themeMode.value)
+  applyThemeColor(themeColor.value)
+  applyFontSize(fontSize.value)
+
+  // 保存到localStorage
+  localStorage.setItem('themeMode', themeMode.value)
+  localStorage.setItem('themeColor', themeColor.value)
+  localStorage.setItem('fontSize', fontSize.value.toString())
+
   // 模拟保存过程
   setTimeout(() => {
     saving.value = false
@@ -916,7 +1049,29 @@ const saveAppearance = () => {
     setTimeout(() => {
       showSuccess.value = false
     }, 3000)
-  }, 1500)
+  }, 500)
+}
+
+// 恢复外观默认设置
+const resetAppearanceDefaults = () => {
+  themeMode.value = 'system'
+  themeColor.value = 'primary'
+  fontSize.value = 100
+
+  // 立即应用默认设置
+  applyThemeMode('system')
+  applyThemeColor('primary')
+  applyFontSize(100)
+
+  // 清除localStorage中的设置
+  localStorage.removeItem('themeMode')
+  localStorage.removeItem('themeColor')
+  localStorage.removeItem('fontSize')
+
+  showSuccess.value = true
+  setTimeout(() => {
+    showSuccess.value = false
+  }, 3000)
 }
 
 // 提交反馈
