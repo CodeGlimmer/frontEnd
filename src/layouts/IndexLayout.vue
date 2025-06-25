@@ -125,7 +125,7 @@
         :rail="rail && $vuetify.display.mdAndUp"
         :temporary="$vuetify.display.smAndDown"
         :permanent="$vuetify.display.mdAndUp"
-        class="elevation-12"
+        class="elevation-12 hyprland-drawer"
         :class="{ 'fixed-drawer': $vuetify.display.mdAndUp }"
         rounded="lg"
         border
@@ -923,23 +923,91 @@ onMounted(() => {
 
 .fixed-drawer {
   position: fixed !important;
-  top: 64px !important; /* 与AppBar的高度一致，适应不同Vuetify主题可能需要调整 */
+  top: 64px !important;
   height: calc(100vh - 64px) !important;
   overflow-y: auto;
   z-index: 99;
-  transition: 0.2s ease-in-out;
+
+  /* Hyprland 风格的丝滑动画 */
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  transform-origin: left center;
+
+  /* 添加硬件加速 */
+  will-change: transform, width;
+  backface-visibility: hidden;
+
+  /* 抽屉阴影效果 */
+  box-shadow:
+    0 0 0 1px rgba(var(--v-theme-surface-variant), 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.08),
+    0 16px 32px rgba(0, 0, 0, 0.04);
+
+  /* 毛玻璃效果 */
+  backdrop-filter: blur(20px) saturate(1.2);
+  background: rgba(var(--v-theme-surface), 0.95);
+}
+
+/* 抽屉展开/收缩时的平滑过渡 */
+.fixed-drawer.v-navigation-drawer--rail {
+  /* Rail 模式的特殊动画 */
+  transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+  /* 收缩时的变换 */
+  transform: translateX(0) scale(1);
+
+  /* 收缩状态的阴影调整 */
+  box-shadow:
+    0 0 0 1px rgba(var(--v-theme-surface-variant), 0.08),
+    0 1px 4px rgba(0, 0, 0, 0.02),
+    0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
 .main-content {
-  padding-top: 64px !important; /* 与AppBar的高度一致 */
+  padding-top: 64px !important;
   height: 100vh;
   overflow: hidden;
+
+  /* 主内容区域的丝滑过渡 */
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  will-change: margin-left, transform;
+
+  /* 当抽屉状态改变时，主内容区域的响应 */
+  transform: translateZ(0); /* 启用硬件加速 */
 }
 
 .scrollable-content {
   height: 100%;
   overflow-y: auto;
   padding: 16px;
+
+  /* 内容区域的丝滑滚动 */
+  scroll-behavior: smooth;
+
+  /* 自定义滚动条样式 */
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(var(--v-theme-surface-variant), 0.1);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(var(--v-theme-primary), 0.3);
+    border-radius: 4px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: rgba(var(--v-theme-primary), 0.5);
+    }
+  }
+
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }
 
 .options-menu {
@@ -955,10 +1023,399 @@ onMounted(() => {
   }
 }
 
+/* 保持原有布局，只增强动画效果 */
+.layout-wrapper {
+  /* 保持原有的相对定位布局 */
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+
+  /* 添加微妙的背景纹理 */
+  background:
+    radial-gradient(circle at 20% 80%, rgba(var(--v-theme-primary), 0.01) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(var(--v-theme-secondary), 0.01) 0%, transparent 50%),
+    linear-gradient(
+      135deg,
+      rgba(var(--v-theme-surface), 1) 0%,
+      rgba(var(--v-theme-surface-variant), 0.02) 100%
+    );
+
+  /* 窗口级别的过渡 */
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* App Bar 的 Hyprland 风格增强 */
+.v-app-bar {
+  /* 动态边框效果 */
+  border-bottom: 1px solid rgba(var(--v-theme-outline), 0.12);
+
+  /* 背景模糊和透明度 */
+  backdrop-filter: blur(24px) saturate(1.8);
+  background: rgba(var(--v-theme-surface), 0.85) !important;
+
+  /* 微妙的阴影层次 */
+  box-shadow:
+    0 1px 0 rgba(var(--v-theme-outline), 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.02);
+
+  /* 悬停时的微妙变化 */
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+  &:hover {
+    backdrop-filter: blur(28px) saturate(2);
+    box-shadow:
+      0 1px 0 rgba(var(--v-theme-outline), 0.12),
+      0 4px 12px rgba(0, 0, 0, 0.06),
+      0 8px 24px rgba(0, 0, 0, 0.04);
+  }
+}
+
+/* 导航抽屉的增强动画 */
+.v-navigation-drawer {
+  /* Hyprland 风格的窗口边框 */
+  border-right: 1px solid rgba(var(--v-theme-outline), 0.12);
+
+  /* 抽屉内容的动画 */
+  .v-list-item {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border-radius: 8px;
+    margin: 2px 8px;
+
+    &:hover {
+      transform: translateX(4px);
+      background: rgba(var(--v-theme-primary), 0.08);
+      box-shadow: 0 2px 8px rgba(var(--v-theme-primary), 0.16);
+    }
+
+    &.v-list-item--active {
+      background: rgba(var(--v-theme-primary), 0.12);
+      transform: translateX(2px);
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 24px;
+        background: rgb(var(--v-theme-primary));
+        border-radius: 0 2px 2px 0;
+      }
+    }
+  }
+
+  /* 抽屉标题的动画 */
+  .v-list-subheader {
+    transition: all 0.3s ease;
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  /* Rail 模式下隐藏文本 */
+  &.v-navigation-drawer--rail {
+    .v-list-subheader {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .v-list-item-title {
+      opacity: 0;
+      transform: translateX(-20px);
+      transition: all 0.3s ease;
+    }
+
+    .v-list-item-subtitle {
+      opacity: 0;
+      transform: translateX(-20px);
+      transition: all 0.3s ease;
+    }
+  }
+}
+
 /* 移动设备样式调整 */
 @media (max-width: 600px) {
   .scrollable-content {
     padding: 8px;
+  }
+}
+
+/* 内容淡入动画 */
+@keyframes contentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hyprland 风格的抽屉增强 */
+.hyprland-drawer {
+  /* 高级视觉效果 */
+  backdrop-filter: blur(20px) saturate(1.2);
+  background: rgba(var(--v-theme-surface), 0.95) !important;
+
+  /* 边框和阴影 */
+  border: 1px solid rgba(var(--v-theme-outline), 0.12);
+  box-shadow:
+    0 0 0 1px rgba(var(--v-theme-surface-variant), 0.12),
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.04);
+}
+
+/* 抽屉内容的分层动画 */
+.hyprland-drawer .v-list-item {
+  /* 基础过渡 */
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  overflow: hidden;
+
+  /* 悬停时的 Hyprland 风格效果 */
+  &:hover {
+    transform: translateX(6px) scale(1.02);
+    background: linear-gradient(
+      90deg,
+      rgba(var(--v-theme-primary), 0.08) 0%,
+      rgba(var(--v-theme-primary), 0.04) 100%
+    );
+
+    /* 添加微妙的发光效果 */
+    box-shadow:
+      0 2px 8px rgba(var(--v-theme-primary), 0.16),
+      inset 0 1px 0 rgba(var(--v-theme-primary), 0.2);
+
+    /* 图标动画 */
+    .v-icon {
+      transform: scale(1.1) rotate(5deg);
+      color: rgb(var(--v-theme-primary));
+    }
+  }
+
+  /* 激活状态的增强效果 */
+  &.v-list-item--active {
+    background: linear-gradient(
+      90deg,
+      rgba(var(--v-theme-primary), 0.12) 0%,
+      rgba(var(--v-theme-primary), 0.06) 100%
+    );
+    transform: translateX(4px);
+
+    /* 左侧指示器 */
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 32px;
+      background: linear-gradient(
+        180deg,
+        rgb(var(--v-theme-primary)) 0%,
+        rgba(var(--v-theme-primary), 0.8) 100%
+      );
+      border-radius: 0 4px 4px 0;
+      box-shadow: 0 0 8px rgba(var(--v-theme-primary), 0.4);
+    }
+
+    /* 激活状态的图标效果 */
+    .v-icon {
+      color: rgb(var(--v-theme-primary));
+      filter: drop-shadow(0 0 4px rgba(var(--v-theme-primary), 0.4));
+    }
+  }
+
+  /* 点击时的反馈动画 */
+  &:active {
+    transform: translateX(2px) scale(0.98);
+    transition: all 0.1s ease;
+  }
+}
+
+/* 内容淡入动画 */
+@keyframes contentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 主内容区域的微妙动画增强 */
+.main-content .scrollable-content {
+  /* 添加微妙的进入动画 */
+  animation: contentFadeIn 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* App Bar 的 Hyprland 风格增强 */
+.v-app-bar {
+  /* 动态边框效果 */
+  border-bottom: 1px solid rgba(var(--v-theme-outline), 0.12);
+
+  /* 背景模糊和透明度 */
+  backdrop-filter: blur(24px) saturate(1.8);
+  background: rgba(var(--v-theme-surface), 0.85) !important;
+
+  /* 微妙的阴影层次 */
+  box-shadow:
+    0 1px 0 rgba(var(--v-theme-outline), 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.02);
+
+  /* 悬停时的微妙变化 */
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+  &:hover {
+    backdrop-filter: blur(28px) saturate(2);
+    box-shadow:
+      0 1px 0 rgba(var(--v-theme-outline), 0.12),
+      0 4px 12px rgba(0, 0, 0, 0.06),
+      0 8px 24px rgba(0, 0, 0, 0.04);
+  }
+}
+
+/* 抽屉和主内容之间的分隔线动画 */
+.hyprland-drawer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(var(--v-theme-outline), 0.12) 10%,
+    rgba(var(--v-theme-outline), 0.12) 90%,
+    transparent 100%
+  );
+  transition: all 0.3s ease;
+}
+
+.hyprland-drawer:hover::after {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(var(--v-theme-primary), 0.2) 10%,
+    rgba(var(--v-theme-primary), 0.2) 90%,
+    transparent 100%
+  );
+  box-shadow: 0 0 8px rgba(var(--v-theme-primary), 0.1);
+}
+
+/* 抽屉内容的分组动画 */
+.hyprland-drawer .v-list-subheader {
+  /* 标题的动画效果 */
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+
+  /* 添加微妙的下划线效果 */
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 16px;
+    right: 16px;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(var(--v-theme-primary), 0.2) 50%,
+      transparent 100%
+    );
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+  }
+
+  &:hover::after {
+    transform: scaleX(1);
+  }
+}
+
+/* Rail 模式下的特殊效果 */
+.hyprland-drawer.drawer-rail {
+  /* 收缩时的特殊视觉效果 */
+  .v-list-item {
+    justify-content: center;
+
+    .v-icon {
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    &:hover .v-icon {
+      transform: scale(1.2) rotate(10deg);
+      filter: drop-shadow(0 0 8px rgba(var(--v-theme-primary), 0.4));
+    }
+  }
+
+  /* Rail 模式的工具提示效果 */
+  .v-list-item:hover {
+    position: relative;
+
+    &::before {
+      content: attr(title);
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      margin-left: 12px;
+      padding: 8px 12px;
+      background: rgba(var(--v-theme-surface), 0.95);
+      border: 1px solid rgba(var(--v-theme-outline), 0.12);
+      border-radius: 8px;
+      font-size: 12px;
+      white-space: nowrap;
+      z-index: 1000;
+      opacity: 0;
+      animation: tooltipFadeIn 0.3s ease forwards;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+/* 工具提示淡入动画 */
+@keyframes tooltipFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+/* 响应式动画优化 */
+@media (prefers-reduced-motion: reduce) {
+  .hyprland-drawer,
+  .hyprland-main,
+  .layout-wrapper,
+  .v-app-bar {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .hyprland-drawer {
+    border: 2px solid rgb(var(--v-theme-outline));
+    backdrop-filter: none;
+    background: rgb(var(--v-theme-surface)) !important;
+  }
+
+  .v-app-bar {
+    border-bottom: 2px solid rgb(var(--v-theme-outline));
+    backdrop-filter: none;
+    background: rgb(var(--v-theme-surface)) !important;
   }
 }
 

@@ -64,7 +64,20 @@
               prepend-inner-icon="mdi-web"
               hint="例如: ws://localhost:9090"
               persistent-hint
-            ></v-text-field>
+              @keyup.enter="saveRosUrlToStorage"
+            >
+              <template v-slot:append>
+                <v-btn
+                  @click="saveRosUrlToStorage"
+                  color="primary"
+                  icon
+                  small
+                  :title="'保存连接地址'"
+                >
+                  <v-icon small>mdi-content-save</v-icon>
+                </v-btn>
+              </template>
+            </v-text-field>
           </v-card-text>
         </v-card>
       </v-col>
@@ -411,7 +424,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
 import ROSLIB from 'roslib'
 import { useThemeStore } from '@/stores/theme'
 
@@ -462,11 +475,40 @@ const snackbar = reactive({
 // 新增：可编辑的 ROS 地址
 const rosUrl = ref('ws://localhost:9090')
 
+// localStorage 键名
+const ROS_URL_STORAGE_KEY = 'agv_arm_ros_url'
+
+// 从 localStorage 加载 ROS URL
+const loadRosUrlFromStorage = () => {
+  try {
+    const savedUrl = localStorage.getItem(ROS_URL_STORAGE_KEY)
+    if (savedUrl) {
+      rosUrl.value = savedUrl
+      console.log('已加载保存的连接地址:', savedUrl)
+    }
+  } catch (error) {
+    console.warn('加载保存的 ROS URL 失败:', error)
+  }
+}
+
+// 保存 ROS URL 到 localStorage
+const saveRosUrlToStorage = () => {
+  try {
+    localStorage.setItem(ROS_URL_STORAGE_KEY, rosUrl.value)
+    showMessage('连接地址已保存', 'success')
+  } catch (error) {
+    console.warn('保存 ROS URL 失败:', error)
+    showMessage('保存连接地址失败', 'error')
+  }
+}
+
 // 新增：重连方法
 const reconnectROS = () => {
   if (ros.value) {
     ros.value.close()
   }
+  // 保存当前 URL 到 localStorage
+  saveRosUrlToStorage()
   initROS()
 }
 
@@ -586,12 +628,48 @@ const showMessage = (message, color = 'success') => {
   })
 }
 
+// 监听 ROS URL 变化，自动保存到 localStorage
+watch(
+  rosUrl,
+  (newUrl, oldUrl) => {
+    // 只有在组件已挂载且 URL 真正发生变化时才保存
+    if (isComponentMounted.value && newUrl && newUrl.trim() && newUrl !== oldUrl) {
+      // 使用防抖，避免频繁保存
+      clearTimeout(saveUrlTimeout.value)
+      saveUrlTimeout.value = setTimeout(() => {
+        try {
+          localStorage.setItem(ROS_URL_STORAGE_KEY, newUrl)
+          console.log('自动保存连接地址:', newUrl)
+        } catch (error) {
+          console.warn('自动保存 ROS URL 失败:', error)
+        }
+      }, 1000) // 1秒后保存
+    }
+  },
+  { immediate: false },
+)
+
+// 用于防抖的定时器
+const saveUrlTimeout = ref(null)
+
+// 组件挂载状态标记
+const isComponentMounted = ref(false)
+
 // 生命周期钩子
 onMounted(() => {
+  // 首先加载保存的 ROS URL
+  loadRosUrlFromStorage()
+  // 然后初始化 ROS 连接
   initROS()
+  // 标记组件已挂载
+  isComponentMounted.value = true
 })
 
 onUnmounted(() => {
+  // 清理定时器
+  if (saveUrlTimeout.value) {
+    clearTimeout(saveUrlTimeout.value)
+  }
   if (ros.value) {
     ros.value.close()
   }

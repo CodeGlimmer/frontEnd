@@ -511,8 +511,43 @@ const showOrb = () => {
   showNotification('悬浮球已恢复', 'success')
 }
 
+// 点击反馈动画
+const playClickAnimation = () => {
+  gsap.to(orbRef.value, {
+    duration: 0.1,
+    scale: 0.95,
+    ease: 'power2.out',
+    onComplete: () => {
+      gsap.to(orbRef.value, {
+        duration: 0.2,
+        scale: 1,
+        ease: 'back.out(1.7)',
+      })
+    },
+  })
+
+  // 光晕闪烁效果
+  gsap.to(glowRef.value, {
+    duration: 0.3,
+    opacity: 0.8,
+    scale: 1.3,
+    ease: 'power2.out',
+    onComplete: () => {
+      gsap.to(glowRef.value, {
+        duration: 0.5,
+        opacity: 0.3,
+        scale: 1,
+        ease: 'power2.out',
+      })
+    },
+  })
+}
+
 // 事件处理
 const handleClick = () => {
+  // 播放点击动画
+  playClickAnimation()
+
   if (isHidden.value) {
     // 隐藏状态下点击恢复
     toggleHiddenMode()
@@ -725,6 +760,7 @@ const sendToDeepSeek = async (message) => {
   } finally {
     isThinking.value = false
     orbSize.value = 'normal'
+    stopThinkingAnimation()
   }
 }
 
@@ -802,6 +838,21 @@ const stopRecordingAnimation = () => {
 }
 
 const playThinkingAnimation = () => {
+  // 悬浮球脉冲效果
+  gsap.to(orbRef.value, {
+    duration: 0.8,
+    scale: 1.1,
+    ease: 'power2.out',
+  })
+
+  // 光晕增强效果
+  gsap.to(glowRef.value, {
+    duration: 1,
+    scale: 1.5,
+    opacity: 0.8,
+    ease: 'power2.out',
+  })
+
   // 粒子动画
   nextTick(() => {
     particleRefs.value.forEach((particle, index) => {
@@ -813,16 +864,26 @@ const playThinkingAnimation = () => {
           opacity: 0,
         })
 
+        // 粒子向外扩散动画
         gsap.to(particle, {
-          duration: 2,
-          x: Math.cos((index * 45 * Math.PI) / 180) * 60,
-          y: Math.sin((index * 45 * Math.PI) / 180) * 60,
+          duration: 1.5,
+          x: Math.cos((index * 45 * Math.PI) / 180) * 40,
+          y: Math.sin((index * 45 * Math.PI) / 180) * 40,
           scale: 1,
-          opacity: 1,
+          opacity: 0.8,
           ease: 'power2.out',
+          delay: index * 0.1,
+        })
+
+        // 粒子呼吸效果
+        gsap.to(particle, {
+          duration: 1,
+          scale: 1.5,
+          opacity: 0.3,
+          ease: 'power2.inOut',
           repeat: -1,
           yoyo: true,
-          delay: index * 0.1,
+          delay: index * 0.1 + 0.5,
         })
       }
     })
@@ -830,45 +891,169 @@ const playThinkingAnimation = () => {
 
   // 悬浮球缓慢旋转
   gsap.to(orbRef.value, {
-    duration: 3,
+    duration: 4,
     rotation: 360,
     ease: 'none',
     repeat: -1,
   })
+
+  // 图标旋转效果
+  gsap.to(iconRef.value.$el, {
+    duration: 2,
+    rotation: 360,
+    ease: 'power2.inOut',
+    repeat: -1,
+  })
+}
+
+const stopThinkingAnimation = () => {
+  // 停止悬浮球旋转
+  gsap.killTweensOf(orbRef.value)
+
+  // 停止图标旋转
+  gsap.killTweensOf(iconRef.value.$el)
+
+  // 停止粒子动画
+  particleRefs.value.forEach((particle) => {
+    if (particle) {
+      gsap.killTweensOf(particle)
+      gsap.set(particle, { opacity: 0, scale: 0 })
+    }
+  })
+
+  // 恢复悬浮球状态
+  gsap.to(orbRef.value, {
+    duration: 0.5,
+    scale: 1,
+    rotation: 0,
+    ease: 'power2.out',
+  })
+
+  // 恢复光晕状态
+  gsap.to(glowRef.value, {
+    duration: 0.3,
+    scale: 1,
+    opacity: 0.3,
+    ease: 'power2.out',
+  })
+
+  // 恢复图标状态
+  gsap.to(iconRef.value.$el, {
+    duration: 0.3,
+    rotation: 0,
+    ease: 'power2.out',
+  })
 }
 
 const playMenuAnimation = () => {
-  gsap.set(menuRef.value, { scale: 0, opacity: 0 })
+  // 菜单容器动画
+  gsap.set(menuRef.value, {
+    scale: 0,
+    opacity: 0,
+    rotation: -10,
+    transformOrigin: 'bottom right',
+  })
 
   gsap.to(menuRef.value, {
-    duration: 0.5,
+    duration: 0.6,
     scale: 1,
     opacity: 1,
+    rotation: 0,
     ease: 'back.out(1.7)',
   })
 
-  // 菜单项依次出现
+  // 菜单项依次出现，带有更丰富的动画
   menuItemRefs.value.forEach((item, index) => {
     if (item) {
-      gsap.set(item, { scale: 0, opacity: 0 })
+      gsap.set(item, {
+        scale: 0,
+        opacity: 0,
+        x: 50,
+        rotation: 15,
+      })
+
       gsap.to(item, {
-        duration: 0.4,
+        duration: 0.5,
         scale: 1,
         opacity: 1,
+        x: 0,
+        rotation: 0,
         ease: 'back.out(1.7)',
-        delay: index * 0.1,
+        delay: index * 0.08,
+      })
+
+      // 添加悬停动画
+      item.addEventListener('mouseenter', () => {
+        gsap.to(item, {
+          duration: 0.3,
+          scale: 1.05,
+          x: -8,
+          ease: 'power2.out',
+        })
+      })
+
+      item.addEventListener('mouseleave', () => {
+        gsap.to(item, {
+          duration: 0.3,
+          scale: 1,
+          x: 0,
+          ease: 'power2.out',
+        })
       })
     }
   })
 }
 
 const playAnswerAnimation = () => {
+  // 回答窗口入场动画
+  if (answerWindowRef.value) {
+    gsap.fromTo(
+      answerWindowRef.value,
+      {
+        opacity: 0,
+        y: 30,
+        scale: 0.9,
+        rotationX: -15,
+      },
+      {
+        duration: 0.8,
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        rotationX: 0,
+        ease: 'back.out(1.7)',
+      },
+    )
+  }
+
+  // 回答文本打字机效果
   if (answerTextRef.value) {
     gsap.fromTo(
       answerTextRef.value,
       { opacity: 0, y: 20 },
-      { duration: 0.6, opacity: 1, y: 0, ease: 'power2.out' },
+      {
+        duration: 0.6,
+        opacity: 1,
+        y: 0,
+        ease: 'power2.out',
+        delay: 0.3,
+      },
     )
+
+    // 添加文字逐渐显示效果
+    const textContent = answerTextRef.value.textContent
+    if (textContent) {
+      answerTextRef.value.innerHTML = ''
+      let index = 0
+      const typeWriter = () => {
+        if (index < textContent.length) {
+          answerTextRef.value.innerHTML += textContent.charAt(index)
+          index++
+          setTimeout(typeWriter, 20) // 打字速度
+        }
+      }
+      setTimeout(typeWriter, 500)
+    }
   }
 }
 
@@ -901,11 +1086,65 @@ onMounted(() => {
   // 添加键盘事件监听
   document.addEventListener('keydown', handleKeydown)
 
-  // 入场动画
+  // 增强的入场动画
   gsap.fromTo(
     orbRef.value,
-    { scale: 0, opacity: 0 },
-    { duration: 0.8, scale: 1, opacity: 1, ease: 'back.out(1.7)' },
+    {
+      scale: 0,
+      opacity: 0,
+      y: 100,
+      rotation: -180,
+    },
+    {
+      duration: 1.2,
+      scale: 1,
+      opacity: 1,
+      y: 0,
+      rotation: 0,
+      ease: 'back.out(1.7)',
+      onComplete: () => {
+        // 入场完成后的微妙呼吸动画
+        gsap.to(orbRef.value, {
+          duration: 3,
+          scale: 1.05,
+          ease: 'power2.inOut',
+          repeat: -1,
+          yoyo: true,
+        })
+      },
+    },
+  )
+
+  // 光晕入场动画
+  gsap.fromTo(
+    glowRef.value,
+    {
+      scale: 0,
+      opacity: 0,
+    },
+    {
+      duration: 1.5,
+      scale: 1,
+      opacity: 0.3,
+      ease: 'power2.out',
+      delay: 0.3,
+    },
+  )
+
+  // 图标入场动画
+  gsap.fromTo(
+    iconRef.value.$el,
+    {
+      scale: 0,
+      rotation: 360,
+    },
+    {
+      duration: 0.8,
+      scale: 1,
+      rotation: 0,
+      ease: 'back.out(1.7)',
+      delay: 0.5,
+    },
   )
 
   // 点击外部关闭菜单
@@ -950,6 +1189,28 @@ onUnmounted(() => {
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  animation: float-idle 4s ease-in-out infinite;
+}
+
+.floating-orb:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  animation: none; /* 悬停时停止浮动动画 */
+}
+
+.floating-orb:active {
+  transform: translateY(0px) scale(0.98);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes float-idle {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
 }
 
 .floating-orb.large {
@@ -970,14 +1231,52 @@ onUnmounted(() => {
 
 .floating-orb.recording .orb-background {
   background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  animation: recording-pulse 1s ease-in-out infinite;
+}
+
+@keyframes recording-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.05);
+    filter: brightness(1.2);
+  }
 }
 
 .floating-orb.thinking .orb-background {
   background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  animation: thinking-rotate 3s linear infinite;
+}
+
+@keyframes thinking-rotate {
+  0% {
+    transform: rotate(0deg);
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    filter: hue-rotate(360deg);
+  }
 }
 
 .floating-orb.answering .orb-background {
   background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+  animation: answering-glow 2s ease-in-out infinite;
+}
+
+@keyframes answering-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(253, 203, 110, 0.3);
+    filter: brightness(1);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(253, 203, 110, 0.6);
+    filter: brightness(1.1);
+  }
 }
 
 .orb-glow {
@@ -996,12 +1295,20 @@ onUnmounted(() => {
 @keyframes glow-pulse {
   0%,
   100% {
-    transform: scale(1);
+    transform: scale(1) rotate(0deg);
     opacity: 0.3;
   }
+  25% {
+    transform: scale(1.05) rotate(90deg);
+    opacity: 0.5;
+  }
   50% {
-    transform: scale(1.1);
+    transform: scale(1.1) rotate(180deg);
     opacity: 0.6;
+  }
+  75% {
+    transform: scale(1.05) rotate(270deg);
+    opacity: 0.5;
   }
 }
 
@@ -1009,6 +1316,55 @@ onUnmounted(() => {
   position: relative;
   z-index: 2;
   transition: all 0.3s ease;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.floating-orb:hover .orb-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.floating-orb.recording .orb-icon {
+  animation: icon-bounce 0.6s ease-in-out infinite;
+}
+
+@keyframes icon-bounce {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.floating-orb.thinking .orb-icon {
+  animation: icon-spin 2s linear infinite;
+}
+
+@keyframes icon-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.floating-orb.answering .orb-icon {
+  animation: icon-pulse 1s ease-in-out infinite;
+}
+
+@keyframes icon-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.8;
+  }
 }
 
 .sound-waves {
@@ -1055,6 +1411,20 @@ onUnmounted(() => {
   height: 4px;
   background: rgba(255, 255, 255, 0.8);
   border-radius: 50%;
+  animation: particle-twinkle 1.5s ease-in-out infinite;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+}
+
+@keyframes particle-twinkle {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
 }
 
 .floating-menu {
@@ -1086,8 +1456,20 @@ onUnmounted(() => {
 
 .menu-item:hover {
   background: rgba(255, 255, 255, 1);
-  transform: translateX(-4px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  transform: translateX(-8px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  animation: menu-item-glow 0.3s ease-out forwards;
+}
+
+@keyframes menu-item-glow {
+  0% {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  }
+  100% {
+    box-shadow:
+      0 8px 25px rgba(0, 0, 0, 0.2),
+      0 0 20px rgba(102, 126, 234, 0.3);
+  }
 }
 
 .menu-btn {

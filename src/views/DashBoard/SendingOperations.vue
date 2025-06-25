@@ -16,7 +16,7 @@ import KeyBoard from '@/components/KeyBoard.vue'
 const { linear, angular, rosUrl } = defineProps({
   linear: {
     type: Number,
-    default: 5,
+    default: 1,
   },
   angular: {
     type: Number,

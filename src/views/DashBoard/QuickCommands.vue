@@ -14,6 +14,35 @@
 </template>
 
 <script setup>
+import ROSLIB from 'roslib'
+import { onUnmounted } from 'vue'
+
+const { rosUrl } = defineProps({
+  rosUrl: {
+    type: String,
+    default: 'ws://0.0.0.0:9091',
+  },
+})
+
+let topic = null
+let message = null
+
+const ros = new ROSLIB.Ros({
+  url: rosUrl,
+})
+
+ros.on('connection', () => {
+  topic ??= new ROSLIB.Topic({
+    ros,
+    name: '/cmd_vel',
+    messageType: 'geometry_msgs/Twist',
+  })
+  message ??= new ROSLIB.Message({
+    linear: { x: 0, y: 0, z: 0 },
+    angular: { x: 0, y: 0, z: 0 },
+  })
+})
+
 // 按钮事件处理函数
 const handleRefreshMap = () => {
   // TODO: 实现刷新地图逻辑
@@ -26,9 +55,19 @@ const handleReturnToOrigin = () => {
 }
 
 const handleEmergencyStop = () => {
-  // TODO: 实现急停逻辑
-  console.log('急停')
+  if (topic) {
+    topic.publish(message)
+    console.log('急停')
+  } else {
+    console.log('ros连接失败')
+  }
 }
+
+onUnmounted(() => {
+  if (!topic) {
+    ros.close()
+  }
+})
 </script>
 
 <style scoped>
