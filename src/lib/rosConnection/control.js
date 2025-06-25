@@ -25,7 +25,6 @@ export class Controler {
       angular: { x: 0, y: 0, z: angular },
     })
     this.cmdVel.publish(twist)
-    console.log('已发送数据')
   }
 
   // 从vue事件中更新状态array
