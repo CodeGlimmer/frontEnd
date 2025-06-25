@@ -143,7 +143,7 @@
                       label="移动步数"
                       suffix="步"
                       prepend-inner-icon="mdi-numeric"
-                      hint="范围: -1000 ~ 1000 步"
+                      hint="范围: -10000 ~ 10000 步(20cm)"
                       persistent-hint
                       :rules="[
                         (v) => (v >= stepperRange.A.min && v <= stepperRange.A.max) || '超出范围',
@@ -185,7 +185,7 @@
                       label="移动步数"
                       suffix="步"
                       prepend-inner-icon="mdi-numeric"
-                      hint="范围: -1000 ~ 1000 步"
+                      hint="范围: -10000 ~ 10000 步(20cm)"
                       persistent-hint
                       :rules="[
                         (v) => (v >= stepperRange.B.min && v <= stepperRange.B.max) || '超出范围',
@@ -455,8 +455,8 @@ const servoInputs = reactive({
 
 // 步进电机范围配置
 const stepperRange = reactive({
-  A: { min: -1000, max: 1000, step: 10 },
-  B: { min: -1000, max: 1000, step: 10 },
+  A: { min: -10000, max: 10000, step: 10 },
+  B: { min: -10000, max: 10000, step: 10 },
 })
 
 // 舵机范围配置
