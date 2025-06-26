@@ -2,7 +2,7 @@
   <v-container fluid class="dashboard-container">
     <v-row class="dashboard-grid">
       <!-- ROS URL 输入表单 -->
-      <v-col cols="12" class="form-section">
+      <v-col cols="12" class="form-section dashboard-item" data-delay="0">
         <v-card
           class="ros-form-container"
           :class="{ collapsed: !isFormExpanded }"
@@ -66,7 +66,7 @@
       </v-col>
 
       <!-- WorkingStatus -->
-      <v-col cols="12" class="status-section">
+      <v-col cols="12" class="status-section dashboard-item" data-delay="100">
         <WorkingStatus />
       </v-col>
     </v-row>
@@ -74,7 +74,7 @@
     <!-- 视频和速度监控行 -->
     <v-row class="video-velocity-row" no-gutters>
       <!-- 视频显示区域 -->
-      <v-col cols="12" lg="7" class="video-section pr-lg-3">
+      <v-col cols="12" lg="7" class="video-section pr-lg-3 dashboard-item" data-delay="200">
         <v-card
           class="video-display-container"
           elevation="12"
@@ -215,7 +215,7 @@
         </v-card>
       </v-col>
       <!-- VelocityShow -->
-      <v-col cols="12" lg="5" class="velocity-section pl-lg-3">
+      <v-col cols="12" lg="5" class="velocity-section pl-lg-3 dashboard-item" data-delay="300">
         <v-card elevation="8" rounded="xl" class="velocity-card hover-card">
           <v-card-title class="velocity-title">
             <v-icon class="mr-2" color="primary">mdi-speedometer</v-icon>
@@ -231,14 +231,14 @@
     <!-- 操作和命令行 -->
     <v-row class="operations-commands-row">
       <!-- SendingOperations -->
-      <v-col cols="12" md="3" class="operations-section">
+      <v-col cols="12" md="3" class="operations-section dashboard-item" data-delay="400">
         <v-card elevation="8" rounded="xl" class="operations-card">
           <SendingOperations :rosUrl class="operations-component" />
         </v-card>
       </v-col>
 
       <!-- QuickCommands -->
-      <v-col cols="12" md="9" class="commands-section">
+      <v-col cols="12" md="9" class="commands-section dashboard-item" data-delay="500">
         <v-card rounded="xl" class="commands-card hover-card">
           <QuickCommands class="commands-component" :rosUrl />
         </v-card>
@@ -406,11 +406,49 @@ watch(videoDisplayMode, (newMode) => {
   videoDisplayModeIndex.value = newMode === 'ros' ? 0 : 1
 })
 
+// iPhone 风格动画
+const initializeIPhoneAnimation = () => {
+  // 获取所有需要动画的元素
+  const dashboardItems = document.querySelectorAll('.dashboard-item')
+
+  // 设置初始状态
+  dashboardItems.forEach((item) => {
+    item.style.opacity = '0'
+    item.style.transform = 'scale(0.85) translateY(15px)'
+    item.style.filter = 'blur(2px)'
+  })
+
+  // 依次显示元素，使用优雅的动画曲线
+  dashboardItems.forEach((item, index) => {
+    const delay = parseInt(item.dataset.delay) || index * 120
+
+    setTimeout(() => {
+      item.style.transition = 'all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+      item.style.opacity = '1'
+      item.style.transform = 'scale(1) translateY(0)'
+      item.style.filter = 'blur(0px)'
+
+      // 轻微的弹性效果
+      setTimeout(() => {
+        item.style.transform = 'scale(1.008) translateY(-0.5px)'
+        setTimeout(() => {
+          item.style.transform = 'scale(1) translateY(0)'
+        }, 200)
+      }, 400)
+    }, delay + 150)
+  })
+}
+
 // 组件挂载时加载存储的配置
 onMounted(() => {
   loadConfigFromStorage()
   // 初始化时同步索引
   videoDisplayModeIndex.value = videoDisplayMode.value === 'ros' ? 0 : 1
+
+  // 启动 iPhone 风格进入动画（仅执行一次）
+  setTimeout(() => {
+    initializeIPhoneAnimation()
+  }, 200)
 })
 </script>
 
@@ -418,10 +456,46 @@ onMounted(() => {
 /* Dashboard 容器样式 */
 .dashboard-container {
   padding: 24px;
+  perspective: 1000px;
 }
 
 .dashboard-grid {
   gap: 24px;
+}
+
+/* iPhone 风格动画样式 */
+.dashboard-item {
+  opacity: 0;
+  transform: scale(0.85) translateY(15px);
+  filter: blur(2px);
+  transform-origin: center center;
+  backface-visibility: hidden;
+  will-change: transform, opacity, filter;
+}
+
+/* 添加微妙的光泽动画 */
+@keyframes subtle-glow {
+  0%,
+  100% {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.15),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* 悬停时的微妙动画 */
+.dashboard-item:hover {
+  transform: translateY(-1px) scale(1.005);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 防止动画期间的闪烁 */
+.dashboard-item * {
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
 }
 
 /* 行间距调整 */
@@ -575,6 +649,8 @@ onMounted(() => {
 /* 视频内容区域样式 */
 .video-content-area {
   padding: 32px;
+  background: linear-gradient(135deg, rgba(250, 251, 252, 0.2) 0%, rgba(248, 250, 252, 0.05) 100%);
+  backdrop-filter: blur(1px);
 }
 
 .video-transition-container {
@@ -595,48 +671,76 @@ onMounted(() => {
 .ros-mode-card {
   background: linear-gradient(
     135deg,
-    rgba(var(--v-theme-success), 0.1),
-    rgba(var(--v-theme-success), 0.05)
+    rgba(var(--v-theme-success), 0.03),
+    rgba(var(--v-theme-success), 0.01)
   );
-  border: 1px solid rgba(var(--v-theme-success), 0.2);
+  border: 1px solid rgba(var(--v-theme-success), 0.08);
+  backdrop-filter: blur(1px);
 }
 
 .ros-indicator {
   position: absolute;
-  top: -16px;
-  left: -16px;
+  top: -12px;
+  left: -12px;
   z-index: 20;
+  opacity: 0.9;
+  transition: all 0.3s ease;
+}
+
+.ros-indicator:hover {
+  opacity: 1;
+  transform: scale(1.1);
 }
 
 .ros-label {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 12px;
+  right: 12px;
   z-index: 10;
+  opacity: 0.85;
+  transition: all 0.3s ease;
+}
+
+.ros-label:hover {
+  opacity: 1;
 }
 
 /* Web 模式卡片样式 */
 .web-mode-card {
   background: linear-gradient(
     135deg,
-    rgba(var(--v-theme-primary), 0.1),
-    rgba(var(--v-theme-primary), 0.05)
+    rgba(var(--v-theme-primary), 0.03),
+    rgba(var(--v-theme-primary), 0.01)
   );
-  border: 1px solid rgba(var(--v-theme-primary), 0.2);
+  border: 1px solid rgba(var(--v-theme-primary), 0.08);
+  backdrop-filter: blur(1px);
 }
 
 .web-indicator {
   position: absolute;
-  top: -16px;
-  right: -16px;
+  top: -12px;
+  right: -12px;
   z-index: 20;
+  opacity: 0.9;
+  transition: all 0.3s ease;
+}
+
+.web-indicator:hover {
+  opacity: 1;
+  transform: scale(1.1);
 }
 
 .web-label {
   position: absolute;
-  top: 16px;
-  left: 16px;
+  top: 12px;
+  left: 12px;
   z-index: 10;
+  opacity: 0.85;
+  transition: all 0.3s ease;
+}
+
+.web-label:hover {
+  opacity: 1;
 }
 
 /* 状态指示器样式 */
@@ -650,16 +754,20 @@ onMounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  border: 2px solid currentColor;
+  border: 1px solid currentColor;
   border-radius: 50%;
-  animation: pulse-ring 2s infinite;
-  opacity: 0.6;
+  animation: pulse-ring 3s infinite;
+  opacity: 0.3;
 }
 
 @keyframes pulse-ring {
   0% {
     transform: scale(1);
-    opacity: 0.6;
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.15;
   }
   100% {
     transform: scale(1.4);
@@ -866,7 +974,9 @@ onMounted(() => {
 .video-fade-leave-to {
   opacity: 0;
   transform: translateY(-30px) scale(1.1);
-  filter: blur(5px);
+  filter:
+    bl订单概览 AGV实时监控 订单预测 更多 TOOLS General options You can set it up,
+    or opt out SETTING ￼ SIGN OUT ROS 连接配置 AGV Status 充电中 电池状态 ur(5px);
 }
 
 /* 状态指示器动画 */

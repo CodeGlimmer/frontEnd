@@ -1,6 +1,6 @@
 <template>
   <div class="main-viewer" :class="{ 'dark-mode': isDarkMode }">
-    <a-layout class="tw:gap-2">
+    <a-layout class="tw:gap-2 tw:h-full">
       <a-layout-sider
         :width="350"
         class="layout-sider tw:rounded-xl tw:!shadow-m-elevation-8 tw:hover:!shadow-m-elevation-12"

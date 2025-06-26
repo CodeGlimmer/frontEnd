@@ -7,6 +7,8 @@
         <v-btn
           ref="menuToggleBtn"
           icon="mdi-apps"
+          class="button-item"
+          data-delay="0"
           @click="showNavigationDrawer = !showNavigationDrawer"
           @mouseenter="onButtonHover"
           @mouseleave="onButtonLeave"
@@ -22,7 +24,8 @@
             ref="dashboardBtn"
             prepend-icon="mdi-view-dashboard-outline"
             variant="outlined"
-            class="me-2"
+            class="me-2 button-item"
+            data-delay="100"
             to="/index/"
             @mouseenter="onButtonHover"
             @mouseleave="onButtonLeave"
@@ -34,7 +37,8 @@
             ref="orderBtn"
             prepend-icon="mdi-database-outline"
             variant="outlined"
-            class="me-2"
+            class="me-2 button-item"
+            data-delay="200"
             to="/index/ordermanagement"
             @mouseenter="onButtonHover"
             @mouseleave="onButtonLeave"
@@ -46,7 +50,8 @@
             ref="agvBtn"
             prepend-icon="mdi-eye-outline"
             variant="outlined"
-            class="me-2"
+            class="me-2 button-item"
+            data-delay="300"
             to="/index/agvmonitoring"
             @mouseenter="onButtonHover"
             @mouseleave="onButtonLeave"
@@ -58,7 +63,8 @@
             ref="schedulingBtn"
             prepend-icon="mdi-invoice-text-clock-outline"
             variant="outlined"
-            class="me-2"
+            class="me-2 button-item"
+            data-delay="400"
             to="/index/schedulingplanning"
             @mouseenter="onButtonHover"
             @mouseleave="onButtonLeave"
@@ -75,7 +81,8 @@
               ref="mobileMenuBtn"
               v-bind="props"
               icon="mdi-dots-vertical"
-              class="me-2"
+              class="me-2 button-item"
+              data-delay="100"
               @mouseenter="onButtonHover"
               @mouseleave="onButtonLeave"
               @mousedown="onButtonPress"
@@ -111,6 +118,8 @@
           :prepend-icon="theme === 'light' ? 'mdi-weather-sunny' : 'mdi-weather-night'"
           :text="$vuetify.display.smAndUp ? 'Toggle Theme' : ''"
           slim
+          class="button-item"
+          data-delay="500"
           @click="handleThemeChange"
           @mouseenter="onButtonHover"
           @mouseleave="onButtonLeave"
@@ -146,6 +155,8 @@
               v-if="$vuetify.display.mdAndUp"
               variant="text"
               icon="mdi-chevron-left"
+              class="button-item"
+              data-delay="600"
               @click.stop="rail = !rail"
               @mouseenter="onButtonHover"
               @mouseleave="onButtonLeave"
@@ -157,6 +168,8 @@
               v-else
               variant="text"
               icon="mdi-close"
+              class="button-item"
+              data-delay="600"
               @click.stop="showNavigationDrawer = false"
               @mouseenter="onButtonHover"
               @mouseleave="onButtonLeave"
@@ -286,31 +299,37 @@
                   <v-col cols="6">
                     <v-btn
                       ref="settingBtn"
-                      prepend-icon="mdi-cog"
+                      icon="mdi-cog"
                       size="small"
-                      :block="$vuetify.display.xs"
+                      class="button-item elegant-text-btn"
+                      data-delay="700"
                       to="/index/setting"
                       @mouseenter="onButtonHover"
                       @mouseleave="onButtonLeave"
                       @mousedown="onButtonPress"
                       @mouseup="onButtonRelease"
-                      >setting</v-btn
                     >
+                      <v-icon>mdi-cog</v-icon>
+                      <span class="btn-text">Setting</span>
+                    </v-btn>
                   </v-col>
                   <v-col cols="6">
                     <v-btn
                       ref="signOutBtn"
-                      prepend-icon="mdi-logout"
+                      icon="mdi-logout"
                       color="error"
                       size="small"
-                      :block="$vuetify.display.xs"
+                      class="button-item elegant-text-btn"
+                      data-delay="800"
                       @click="signOut"
                       @mouseenter="onButtonHover"
                       @mouseleave="onButtonLeave"
                       @mousedown="onButtonPress"
                       @mouseup="onButtonRelease"
-                      >sign out</v-btn
                     >
+                      <v-icon>mdi-logout</v-icon>
+                      <span class="btn-text">Sign Out</span>
+                    </v-btn>
                   </v-col>
                 </v-row>
               </v-container>
@@ -327,7 +346,8 @@
                   icon="mdi-dots-horizontal-circle"
                   color="primary"
                   size="large"
-                  class="mb-2"
+                  class="mb-2 button-item"
+                  data-delay="900"
                   @mouseenter="onButtonHover"
                   @mouseleave="onButtonLeave"
                   @mousedown="onButtonPress"
@@ -804,56 +824,37 @@ const handleVisualViewportChange = () => {
   adjustForKeyboard()
 }
 
-// 初始化按钮动画
+// iPhone 风格按钮进入动画
 const initButtonAnimations = () => {
   nextTick(() => {
-    // 获取所有按钮元素
-    const buttons = [
-      menuToggleBtn.value,
-      dashboardBtn.value,
-      orderBtn.value,
-      agvBtn.value,
-      schedulingBtn.value,
-      mobileMenuBtn.value,
-      themeToggleBtn.value,
-      railToggleBtn.value,
-      drawerCloseBtn.value,
-      settingBtn.value,
-      signOutBtn.value,
-      optionsMenuBtn.value,
-    ].filter(Boolean)
+    // 获取所有带有 button-item 类的按钮
+    const buttonItems = document.querySelectorAll('.button-item')
 
-    // 为每个按钮设置初始状态并添加入场动画
-    buttons.forEach((button, index) => {
-      if (button) {
-        // 设置初始状态
-        gsap.set(button, {
-          scale: 0.8,
-          opacity: 0,
-          y: 20,
-        })
+    // 设置初始状态
+    buttonItems.forEach((button) => {
+      button.style.opacity = '0'
+      button.style.transform = 'scale(0.85) translateY(10px)'
+      button.style.filter = 'blur(1px)'
+    })
 
-        // 入场动画
-        gsap.to(button, {
-          scale: 1,
-          opacity: 1,
-          y: 0,
-          duration: 0.6,
-          delay: index * 0.1,
-          ease: 'back.out(1.7)',
-          onComplete: () => {
-            // 添加轻微的浮动动画
-            gsap.to(button, {
-              y: -2,
-              duration: 2,
-              repeat: -1,
-              yoyo: true,
-              ease: 'power2.inOut',
-              delay: Math.random() * 2,
-            })
-          },
-        })
-      }
+    // 依次显示按钮，使用优雅的动画曲线
+    buttonItems.forEach((button, index) => {
+      const delay = parseInt(button.dataset.delay) || index * 100
+
+      setTimeout(() => {
+        button.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+        button.style.opacity = '1'
+        button.style.transform = 'scale(1) translateY(0)'
+        button.style.filter = 'blur(0px)'
+
+        // 轻微的弹性效果
+        setTimeout(() => {
+          button.style.transform = 'scale(1.005) translateY(-0.5px)'
+          setTimeout(() => {
+            button.style.transform = 'scale(1) translateY(0)'
+          }, 150)
+        }, 300)
+      }, delay + 100)
     })
   })
 }
@@ -862,7 +863,7 @@ onMounted(() => {
   // 初始化悬浮球
   initializeFloatingOrb()
 
-  // 初始化按钮动画
+  // 初始化按钮进入动画
   initButtonAnimations()
 
   // 添加事件监听器
@@ -912,6 +913,65 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 @import '@/assets/styles/themeTransition.css';
+
+/* iPhone 风格按钮进入动画样式 */
+.button-item {
+  opacity: 0;
+  transform: scale(0.85) translateY(10px);
+  filter: blur(1px);
+  transform-origin: center center;
+  backface-visibility: hidden;
+  will-change: transform, opacity, filter;
+}
+
+/* 悬停时的微妙动画 */
+.button-item:hover {
+  transform: translateY(-0.5px) scale(1.003) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* 优雅的文字显示按钮样式 */
+.elegant-text-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  min-width: 40px;
+  width: auto;
+
+  .v-icon {
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    z-index: 2;
+  }
+
+  .btn-text {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    z-index: 1;
+  }
+
+  &:hover {
+    min-width: 80px;
+    border-radius: 20px;
+
+    .v-icon {
+      opacity: 0;
+      transform: translateX(-10px) scale(0.8);
+    }
+
+    .btn-text {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+}
 
 .layout-wrapper {
   position: relative;
