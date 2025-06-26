@@ -33,7 +33,7 @@ import { onMounted, onBeforeUnmount, ref, useId } from 'vue'
 const props = defineProps({
   rosUrl: {
     type: String,
-    default: 'ws://localhost:9090',
+    default: 'ws://192.168.0.100:9090',
   },
 })
 

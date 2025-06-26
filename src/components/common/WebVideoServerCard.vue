@@ -44,21 +44,16 @@
     </v-card-item>
 
     <div ref="videoContainer" class="video-container" :class="{ fullscreen: isFullScreen }">
-      <!-- 视频元素 -->
-      <video
-        ref="videoElement"
+      <!-- 图像元素 -->
+      <img
+        ref="imageElement"
         class="video-player"
         :src="videoUrl"
-        autoplay
-        muted
-        playsinline
+        @load="handleImageLoad"
+        @error="handleImageError"
         @loadstart="handleLoadStart"
-        @loadeddata="handleLoadedData"
-        @error="handleVideoError"
-        @canplay="handleCanPlay"
-        @waiting="handleWaiting"
-        @playing="handlePlaying"
-      ></video>
+        alt="Video Stream"
+      />
 
       <!-- 加载覆盖层 -->
       <div
@@ -184,7 +179,7 @@ const props = defineProps({
 const emit = defineEmits(['connection-change', 'connection-error', 'status-update'])
 
 // 响应式引用
-const videoElement = ref(null)
+const imageElement = ref(null)
 const videoContainer = ref(null)
 const connectionStatus = ref('disconnected')
 const isLoading = ref(false)
@@ -271,9 +266,9 @@ const connectVideo = () => {
   isLoading.value = true
   loadingMessage.value = '正在连接视频流...'
 
-  // 设置视频源会触发相应的事件处理器
-  if (videoElement.value) {
-    videoElement.value.src = urlInput.value
+  // 设置图像源会触发相应的事件处理器
+  if (imageElement.value) {
+    imageElement.value.src = urlInput.value
   }
 }
 
@@ -281,9 +276,8 @@ const disconnectVideo = () => {
   connectionStatus.value = 'disconnected'
   isLoading.value = false
 
-  if (videoElement.value) {
-    videoElement.value.src = ''
-    videoElement.value.load()
+  if (imageElement.value) {
+    imageElement.value.src = ''
   }
 
   updateStatusMessage('已断开连接')
@@ -296,59 +290,39 @@ const refreshVideo = () => {
   }
 }
 
-// 视频事件处理器
+// 图像事件处理器
 const handleLoadStart = () => {
   connectionStatus.value = 'connecting'
   isLoading.value = true
-  loadingMessage.value = '正在加载视频...'
+  loadingMessage.value = '正在加载视频流...'
 }
 
-const handleLoadedData = () => {
-  loadingMessage.value = '视频已加载，准备播放...'
-}
-
-const handleCanPlay = () => {
+const handleImageLoad = () => {
   connectionStatus.value = 'connected'
   isLoading.value = false
   updateStatusMessage('视频流连接成功')
   emit('connection-change', 'connected')
 }
 
-const handleWaiting = () => {
-  isLoading.value = true
-  loadingMessage.value = '缓冲中...'
-}
-
-const handlePlaying = () => {
-  isLoading.value = false
-}
-
-const handleVideoError = (event) => {
+const handleImageError = (event) => {
   connectionStatus.value = 'error'
   isLoading.value = false
 
-  const error = event.target.error
-  let errorMessage = '视频加载失败'
+  let errorMessage = '视频流加载失败'
 
-  if (error) {
-    switch (error.code) {
-      case error.MEDIA_ERR_ABORTED:
-        errorMessage = '视频加载被中止'
-        break
-      case error.MEDIA_ERR_NETWORK:
-        errorMessage = '网络错误，无法加载视频'
-        break
-      case error.MEDIA_ERR_DECODE:
-        errorMessage = '视频解码错误'
-        break
-      case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
-        errorMessage = '不支持的视频格式或URL'
-        break
+  // 检查是否是网络错误或其他常见错误
+  if (event.target) {
+    if (!navigator.onLine) {
+      errorMessage = '网络连接断开，无法加载视频流'
+    } else if (urlInput.value && !urlInput.value.startsWith('http')) {
+      errorMessage = '无效的URL格式'
+    } else {
+      errorMessage = '无法连接到视频流服务器'
     }
   }
 
   updateStatusMessage(errorMessage)
-  emit('connection-error', { type: 'video_error', message: errorMessage })
+  emit('connection-error', { type: 'image_error', message: errorMessage })
 }
 
 // 全屏功能
@@ -538,7 +512,7 @@ onBeforeUnmount(() => {
   max-height: none;
 }
 
-/* 视频播放器 */
+/* 视频流显示器 */
 .video-player {
   width: 100%;
   height: 100%;
