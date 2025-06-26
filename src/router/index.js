@@ -115,6 +115,14 @@ export default createRouter({
                     sidebar: () => import('@/views/AgvMonitoring/AgvMonitoringSideBar.vue'),
                   },
                 },
+                {
+                  path: 'web-video-server',
+                  name: 'web-video-server',
+                  components: {
+                    main: () => import('@/views/AgvMonitoring/WebVideoServer.vue'),
+                    sidebar: () => import('@/views/AgvMonitoring/AgvMonitoringSideBar.vue'),
+                  },
+                },
               ],
             },
             {

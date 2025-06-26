@@ -41,5 +41,12 @@
       value="arm"
       to="/index/agvmonitoring/agv-arm"
     ></v-list-item>
+
+    <v-list-item
+      prepend-icon="mdi-video-wireless"
+      title="Web视频流"
+      value="web-video"
+      to="/index/agvmonitoring/web-video-server"
+    ></v-list-item>
   </v-list>
 </template>

@@ -128,10 +128,10 @@ const startVideoStream = () => {
       const buffer = imageData.data
       // TODO 实现了视屏画面的显示，但是颜色配置异常，需要调整
       for (let idx = 0; idx < rawData.length; idx += 4) {
-        buffer[idx + 3] = rawData[idx].charCodeAt()
-        buffer[idx + 2] = rawData[idx + 1].charCodeAt()
-        buffer[idx + 1] = rawData[idx + 2].charCodeAt()
-        buffer[idx] = rawData[idx + 3].charCodeAt()
+        buffer[idx + 3] = rawData[idx + 3].charCodeAt()
+        buffer[idx + 2] = rawData[idx].charCodeAt()
+        buffer[idx + 1] = rawData[idx + 1].charCodeAt()
+        buffer[idx] = rawData[idx + 2].charCodeAt()
       }
 
       canvas.width = width

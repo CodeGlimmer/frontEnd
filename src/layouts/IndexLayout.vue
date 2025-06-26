@@ -358,10 +358,12 @@
       <!-- Router内容区域 -->
       <v-main class="main-content">
         <div class="scrollable-content">
-          <router-view v-slot="{ Component }" name="main">
-            <v-scroll-x-transition :duration="{ enter: 1000, leave: 500 }">
-              <component :is="Component" />
-            </v-scroll-x-transition>
+          <router-view v-slot="{ Component, route }" name="main">
+            <transition name="page-transition" mode="out-in">
+              <div :key="route.path" class="page-wrapper">
+                <component :is="Component" />
+              </div>
+            </transition>
           </router-view>
         </div>
       </v-main>
@@ -407,6 +409,8 @@ const display = useDisplay()
 const pic = ref('https://randomuser.me/api/portraits/men/9.jpg')
 const username = ref('')
 const email = ref('')
+
+// 移除复杂的路由动画状态，改用纯 CSS 实现
 
 // 按钮 refs
 const menuToggleBtn = ref(null)
@@ -464,6 +468,8 @@ const handleUserClick = (event) => {
     // 在移动端不做额外处理
   }
 }
+
+// 路由动画现在完全由 CSS 处理，无需 JavaScript 函数
 
 // 按钮动画函数
 const onButtonHover = (event) => {
@@ -1236,13 +1242,141 @@ onMounted(() => {
   }
 }
 
-/* 内容淡入动画 */
-@keyframes contentFadeIn {
-  from {
+/* 路由容器样式 */
+.page-wrapper {
+  /* 确保路由容器占满可用空间 */
+  width: 100%;
+  min-height: 100%;
+
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* 令人惊艳的页面切换动画 */
+.page-transition-enter-active {
+  transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.page-transition-leave-active {
+  transition: all 0.5s cubic-bezier(0.55, 0, 0.1, 1);
+}
+
+.page-transition-enter-from {
+  opacity: 0;
+  transform: translateY(30px) scale(0.95) rotateX(-5deg);
+  filter: blur(8px);
+}
+
+.page-transition-leave-to {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.98) rotateX(3deg);
+  filter: blur(4px);
+}
+
+/* 页面内容的交错动画 */
+.page-wrapper .v-card,
+.page-wrapper .v-sheet:not(.v-navigation-drawer .v-sheet),
+.page-wrapper .v-container > .v-row,
+.page-wrapper .v-list:not(.v-navigation-drawer .v-list) {
+  animation: pageContentFadeIn 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* 为不同元素设置不同的延迟 */
+.page-wrapper .v-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.page-wrapper .v-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.page-wrapper .v-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.page-wrapper .v-card:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.page-wrapper .v-sheet:nth-child(1) {
+  animation-delay: 0.15s;
+}
+.page-wrapper .v-sheet:nth-child(2) {
+  animation-delay: 0.25s;
+}
+.page-wrapper .v-sheet:nth-child(3) {
+  animation-delay: 0.35s;
+}
+
+.page-wrapper .v-row:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.page-wrapper .v-row:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.page-wrapper .v-row:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* 页面内容淡入动画 */
+@keyframes pageContentFadeIn {
+  0% {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(20px) scale(0.95);
   }
-  to {
+  50% {
+    opacity: 0.7;
+    transform: translateY(5px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 特殊元素的增强动画 */
+.page-wrapper .v-btn {
+  animation: buttonSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  opacity: 0;
+  transform: translateX(-20px);
+  animation-delay: 0.4s;
+}
+
+@keyframes buttonSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* 表单元素的特殊动画 */
+.page-wrapper .v-text-field,
+.page-wrapper .v-select,
+.page-wrapper .v-textarea {
+  animation: formFieldRise 0.7s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+  opacity: 0;
+  transform: translateY(15px);
+}
+
+.page-wrapper .v-text-field:nth-child(1) {
+  animation-delay: 0.2s;
+}
+.page-wrapper .v-text-field:nth-child(2) {
+  animation-delay: 0.3s;
+}
+.page-wrapper .v-text-field:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes formFieldRise {
+  0% {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  100% {
     opacity: 1;
     transform: translateY(0);
   }
@@ -1250,8 +1384,83 @@ onMounted(() => {
 
 /* 主内容区域的微妙动画增强 */
 .main-content .scrollable-content {
-  /* 添加微妙的进入动画 */
-  animation: contentFadeIn 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  /* 为路由容器提供基础样式 */
+  position: relative;
+
+  /* 确保滚动在动画期间正常工作 */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 响应式动画优化 */
+@media (prefers-reduced-motion: reduce) {
+  .page-wrapper,
+  .page-transition-enter-active,
+  .page-transition-leave-active {
+    /* 为偏好减少动画的用户禁用页面动画 */
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* 高性能设备的增强动画 */
+@media (min-width: 1024px) and (min-height: 768px) {
+  .page-wrapper {
+    /* 在大屏设备上启用更丰富的动画效果 */
+    perspective: 1000px;
+  }
+
+  .page-wrapper > * {
+    /* 为大屏设备提供更好的 3D 动画支持 */
+    transform-style: preserve-3d;
+  }
+}
+
+/* 移动设备优化 */
+@media (max-width: 768px) {
+  .page-wrapper {
+    /* 移动设备上简化动画以提高性能 */
+    perspective: none;
+  }
+
+  .page-transition-enter-active {
+    /* 移动设备上缩短动画时间 */
+    transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .page-transition-leave-active {
+    /* 移动设备上更快的离开动画 */
+    transition: all 0.3s cubic-bezier(0.55, 0, 0.1, 1);
+  }
+
+  .page-transition-enter-from {
+    /* 移动设备上简化的进入效果 */
+    transform: translateY(20px) scale(0.98);
+    filter: blur(4px);
+  }
+
+  .page-transition-leave-to {
+    /* 移动设备上简化的离开效果 */
+    transform: translateY(-10px) scale(0.99);
+    filter: blur(2px);
+  }
+
+  /* 移动设备上减少子元素动画延迟 */
+  .page-wrapper .v-card,
+  .page-wrapper .v-sheet,
+  .page-wrapper .v-row {
+    animation-duration: 0.6s;
+  }
+
+  .page-wrapper .v-card:nth-child(n) {
+    animation-delay: 0.05s;
+  }
+  .page-wrapper .v-sheet:nth-child(n) {
+    animation-delay: 0.08s;
+  }
+  .page-wrapper .v-row:nth-child(n) {
+    animation-delay: 0.05s;
+  }
 }
 
 /* App Bar 的 Hyprland 风格增强 */

@@ -1,5 +1,5 @@
 <template>
-  <v-card class="agv-monitor tw:!h-fit tw:!w-fit" elevation="12" :loading="isLoading">
+  <v-card class="agv-monitor" elevation="12" :loading="isLoading">
     <v-card-title class="d-flex align-center justify-space-between py-2">
       <span class="text-subtitle-1 font-weight-medium">
         {{ titles[currentIndex] }}
@@ -22,7 +22,7 @@
 
     <v-divider></v-divider>
 
-    <v-card-text class="pa-2">
+    <v-card-text class="pa-4 flex-grow-1">
       <div class="carousel-container">
         <transition-group name="slide" tag="div" class="carousel-wrapper">
           <!-- Linear Velocity Chart -->
@@ -744,10 +744,15 @@ onBeforeUnmount(() => {
 <style scoped>
 .agv-monitor {
   position: relative;
+  width: 100%;
+  min-width: 350px;
   height: 100%;
+  min-height: 400px;
   overflow: hidden;
   border-radius: 8px;
   transition: box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .agv-monitor:hover {
@@ -757,8 +762,10 @@ onBeforeUnmount(() => {
 .carousel-container {
   position: relative;
   width: 100%;
-  height: 300px;
+  height: 350px;
+  min-height: 320px;
   overflow: hidden;
+  flex: 1;
 }
 
 .carousel-wrapper {
@@ -888,5 +895,42 @@ onBeforeUnmount(() => {
 /* Material Design动画 */
 .v-alert {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 响应式调整 */
+@media (max-width: 1280px) {
+  .agv-monitor {
+    min-width: 300px;
+    min-height: 350px;
+  }
+
+  .carousel-container {
+    height: 300px;
+    min-height: 280px;
+  }
+}
+
+@media (max-width: 960px) {
+  .agv-monitor {
+    min-width: 280px;
+    min-height: 320px;
+  }
+
+  .carousel-container {
+    height: 280px;
+    min-height: 250px;
+  }
+}
+
+@media (max-width: 600px) {
+  .agv-monitor {
+    min-width: 250px;
+    min-height: 300px;
+  }
+
+  .carousel-container {
+    height: 250px;
+    min-height: 220px;
+  }
 }
 </style>
